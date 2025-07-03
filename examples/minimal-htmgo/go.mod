@@ -3,7 +3,7 @@ module minimal-htmgo
 go 1.23.0
 
 require (
-	github.com/go-chi/chi/v5 v5.1.0
+	github.com/go-chi/chi/v5 v5.2.2
 	github.com/maddalax/htmgo/framework v1.0.6-0.20250106162619-24b41a7604a5
 )
 
