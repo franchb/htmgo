@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/astgen"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/copyassets"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/css"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/run"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/util"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/astgen"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/copyassets"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/css"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/run"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/util"
 )
 
 type Change struct {

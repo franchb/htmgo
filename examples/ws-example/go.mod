@@ -3,8 +3,8 @@ module ws-example
 go 1.23.0
 
 require (
-	github.com/maddalax/htmgo/extensions/websocket v0.0.0-20241109180553-34e816ff7c8a
-	github.com/maddalax/htmgo/framework v1.0.7-0.20250703190716-06f01b3d7c1b
+	github.com/franchb/htmgo/extensions/websocket v0.0.0-20241109180553-34e816ff7c8a
+	github.com/franchb/htmgo/framework v1.0.7-0.20250703190716-06f01b3d7c1b
 )
 
 require (
@@ -16,3 +16,7 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.4.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 )
+
+replace github.com/franchb/htmgo/framework => ../../framework
+
+replace github.com/franchb/htmgo/extensions/websocket => ../../extensions/websocket

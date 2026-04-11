@@ -1,9 +1,9 @@
 package snippets
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/hx"
-	"github.com/maddalax/htmgo/framework/js"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/hx"
+	"github.com/franchb/htmgo/framework/js"
 	"time"
 )
 

@@ -3,10 +3,10 @@ package downloadtemplate
 import (
 	"flag"
 	"fmt"
-	"github.com/maddalax/htmgo/cli/htmgo/internal/dirutil"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/process"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/run"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/util"
+	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/run"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/util"
 	"log"
 	"log/slog"
 	"os"
@@ -43,7 +43,7 @@ func DownloadTemplate(outPath string) {
 
 	fmt.Printf("Downloading template %s\n to %s", templateName, tempOut)
 
-	err := process.Run(process.NewRawCommand("clone-template", "git clone https://github.com/maddalax/htmgo --depth=1 "+tempOut, process.ExitOnError))
+	err := process.Run(process.NewRawCommand("clone-template", "git clone https://github.com/franchb/htmgo --depth=1 "+tempOut, process.ExitOnError))
 
 	if err != nil {
 		log.Fatalf("Error cloning the template, error: %s\n", err.Error())

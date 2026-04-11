@@ -1,7 +1,7 @@
 package docs
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"htmgo-site/ui"
 )
 
@@ -24,9 +24,9 @@ func Installation(ctx *h.RequestContext) *h.Page {
 			),
 			HelpText("If you have not read the htmx docs, please do so before continuing, many of the concepts htmgo uses will become clearer."),
 			StepTitle("1. Install htmgo"),
-			ui.SingleLineBashCodeSnippet(`GOPROXY=direct go install github.com/maddalax/htmgo/cli/htmgo@latest`),
+			ui.SingleLineBashCodeSnippet(`GOPROXY=direct go install github.com/franchb/htmgo/cli/htmgo@latest`),
 			Text("If you are using Windows, you will need to use the following command instead:"),
-			ui.SingleLineBashCodeSnippet(`set GOPROXY=direct && go install github.com/maddalax/htmgo/cli/htmgo@latest`),
+			ui.SingleLineBashCodeSnippet(`set GOPROXY=direct && go install github.com/franchb/htmgo/cli/htmgo@latest`),
 			HelpText("Make sure GOPROXY=direct is set, otherwise you may have issues."),
 			StepTitle("2. Create new project"),
 			ui.SingleLineBashCodeSnippet(`htmgo template`),

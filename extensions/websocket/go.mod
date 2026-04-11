@@ -1,10 +1,10 @@
-module github.com/maddalax/htmgo/extensions/websocket
+module github.com/franchb/htmgo/extensions/websocket
 
 go 1.23.0
 
 require (
+	github.com/franchb/htmgo/framework v1.0.7-0.20250703190716-06f01b3d7c1b
 	github.com/gobwas/ws v1.4.0
-	github.com/maddalax/htmgo/framework v1.0.7-0.20250703190716-06f01b3d7c1b
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
 	github.com/stretchr/testify v1.9.0
 )
@@ -19,3 +19,5 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/franchb/htmgo/framework => ../../framework

@@ -2,7 +2,7 @@ package partials
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"htmgo-site/internal/httpjson"
 	"time"
 )
@@ -67,14 +67,14 @@ func Star(ctx *h.RequestContext) *h.Element {
 
 	fmt.Printf("making github star request\n")
 	count := 0
-	response, err := httpjson.Get[Repo]("https://api.github.com/repos/maddalax/htmgo")
+	response, err := httpjson.Get[Repo]("https://api.github.com/repos/franchb/htmgo")
 
 	if err == nil && response != nil {
 		count = response.StarCount
 	}
 
 	return h.A(
-		h.Href("https://github.com/maddalax/htmgo"),
+		h.Href("https://github.com/franchb/htmgo"),
 		h.Target("_blank"),
 		h.Class("inline-flex items-center rounded overflow-hidden shadow-sm"),
 		h.Div(

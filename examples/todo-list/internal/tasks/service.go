@@ -3,8 +3,8 @@ package tasks
 import (
 	"context"
 	"github.com/google/uuid"
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/service"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
 	"time"
 	"todolist/ent"
 	"todolist/ent/predicate"

@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"simpleauth/internal/db"
 )
 

@@ -3,7 +3,7 @@ package partials
 import (
 	"chat/chat"
 	"chat/components"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"net/http"
 	"time"
 )

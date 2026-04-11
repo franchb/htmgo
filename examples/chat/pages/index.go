@@ -3,7 +3,7 @@ package pages
 import (
 	"chat/components"
 	"chat/partials"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 )
 
 func ChatAppFirstScreen(ctx *h.RequestContext) *h.Page {

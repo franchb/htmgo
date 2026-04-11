@@ -2,9 +2,9 @@ package copyassets
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/cli/htmgo/internal/dirutil"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/module"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/module"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
 	"golang.org/x/mod/modfile"
 	"log"
 	"os"
@@ -38,7 +38,7 @@ func getModuleVersion(modulePath string) (string, error) {
 func CopyAssets() {
 	dirutil.CreateHtmgoDir()
 
-	moduleName := "github.com/maddalax/htmgo/framework"
+	moduleName := "github.com/franchb/htmgo/framework"
 	modulePath := module.GetDependencyPath(moduleName)
 
 	assetDir := ""

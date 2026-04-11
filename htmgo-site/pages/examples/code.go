@@ -3,7 +3,7 @@ package examples
 import (
 	"bytes"
 	"fmt"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"htmgo-site/ui"
 	"io"
 	"log/slog"
@@ -17,12 +17,12 @@ import (
 
 func GetGithubPath(path string) string {
 	path = strings.ReplaceAll(path, "/examples/", "/snippets/")
-	return fmt.Sprintf("https://github.com/maddalax/htmgo/tree/master/htmgo-site/partials%s.go", path)
+	return fmt.Sprintf("https://github.com/franchb/htmgo/tree/master/htmgo-site/partials%s.go", path)
 }
 
 func GetGithubRawPath(path string) string {
 	path = strings.ReplaceAll(path, "/examples/", "/snippets/")
-	return fmt.Sprintf("https://raw.githubusercontent.com/maddalax/htmgo/master/htmgo-site/partials%s.go", path)
+	return fmt.Sprintf("https://raw.githubusercontent.com/franchb/htmgo/master/htmgo-site/partials%s.go", path)
 }
 
 var RenderCodeToStringCached = h.CachedPerKeyT(time.Minute*30, func(snippet *Snippet) (string, h.GetElementFunc) {

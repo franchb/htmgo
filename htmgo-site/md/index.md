@@ -22,7 +22,7 @@ func IndexPage(ctx *h.RequestContext) *h.Page {
 2. live reload (rebuilds css, go, ent schema, and routes upon change)
 3. automatic page and partial registration based on file path
 4. built in tailwindcss support, no need to configure anything by default
-5. custom [htmx extensions](https://github.com/maddalax/htmgo/tree/master/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
+5. custom [htmx extensions](https://github.com/franchb/htmgo/tree/master/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
 
 ------
 

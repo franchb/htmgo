@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go binary for Linux
-RUN CGO_ENABLED=0 GOPRIVATE=github.com/maddalax LOG_LEVEL=debug go run github.com/maddalax/htmgo/cli/htmgo@latest build
+RUN CGO_ENABLED=0 GOPRIVATE=github.com/franchb LOG_LEVEL=debug go run github.com/franchb/htmgo/cli/htmgo@latest build
 
 RUN CGO_ENABLED=1 GOOS=linux go build -tags prod -o ./dist -a -ldflags '-linkmode external -extldflags "-static"' .
 

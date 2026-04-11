@@ -1,7 +1,7 @@
 package h
 
 import (
-	"github.com/maddalax/htmgo/framework/hx"
+	"github.com/franchb/htmgo/framework/hx"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

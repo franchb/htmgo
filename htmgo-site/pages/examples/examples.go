@@ -27,7 +27,7 @@ var UserAuthSnippet = Snippet{
 	sidebarName:    "User Authentication",
 	path:           "/examples/user-auth",
 	externalRoute:  "https://auth-example.htmgo.dev",
-	sourceCodePath: "https://github.com/maddalax/htmgo/tree/master/examples/simple-auth",
+	sourceCodePath: "https://github.com/franchb/htmgo/tree/master/examples/simple-auth",
 }
 
 var ChatSnippet = Snippet{
@@ -37,7 +37,7 @@ var ChatSnippet = Snippet{
 	sidebarName:    "Chat App Using SSE",
 	path:           "/examples/chat",
 	externalRoute:  "https://chat-example.htmgo.dev",
-	sourceCodePath: "https://github.com/maddalax/htmgo/tree/master/examples/chat",
+	sourceCodePath: "https://github.com/franchb/htmgo/tree/master/examples/chat",
 }
 
 var HackerNewsSnippet = Snippet{
@@ -47,7 +47,7 @@ var HackerNewsSnippet = Snippet{
 	sidebarName:    "HackerNews Clone",
 	path:           "/examples/hackernews",
 	externalRoute:  "https://hn.htmgo.dev",
-	sourceCodePath: "https://github.com/maddalax/htmgo/tree/master/examples/hackernews",
+	sourceCodePath: "https://github.com/franchb/htmgo/tree/master/examples/hackernews",
 }
 
 var HtmgoSiteSnippet = Snippet{
@@ -57,7 +57,7 @@ var HtmgoSiteSnippet = Snippet{
 	sidebarName:    "Htmgo Doc Site",
 	path:           "/examples/htmgo-site",
 	externalRoute:  "https://htmgo.dev",
-	sourceCodePath: "https://github.com/maddalax/htmgo/tree/master/htmgo-site",
+	sourceCodePath: "https://github.com/franchb/htmgo/tree/master/htmgo-site",
 }
 
 var TodoListSnippet = Snippet{
@@ -67,7 +67,7 @@ var TodoListSnippet = Snippet{
 	sidebarName:    "Todo List",
 	path:           "/examples/todolist",
 	externalRoute:  "https://todo-example.htmgo.dev",
-	sourceCodePath: "https://github.com/maddalax/htmgo/tree/master/examples/todo-list",
+	sourceCodePath: "https://github.com/franchb/htmgo/tree/master/examples/todo-list",
 }
 
 var ClickToEditSnippet = Snippet{

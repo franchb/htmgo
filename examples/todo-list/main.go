@@ -2,8 +2,8 @@ package main
 
 import (
 	"embed"
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/service"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
 	_ "github.com/mattn/go-sqlite3"
 	"io/fs"
 	"net/http"

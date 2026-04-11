@@ -2,10 +2,10 @@ package run
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/astgen"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/copyassets"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/css"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/astgen"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/copyassets"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/css"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
 	"os"
 )
 

@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
-	"github.com/maddalax/htmgo/cli/htmgo/internal"
-	"github.com/maddalax/htmgo/cli/htmgo/internal/dirutil"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/module"
+	"github.com/franchb/htmgo/cli/htmgo/internal"
+	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/module"
 	"log"
 	"log/slog"
 	"os"
@@ -96,7 +96,7 @@ func startWatcher(cb func(version string, file []*fsnotify.Event)) {
 
 	rootDir := "."
 
-	frameworkPath := module.GetDependencyPath("github.com/maddalax/htmgo/framework")
+	frameworkPath := module.GetDependencyPath("github.com/franchb/htmgo/framework")
 
 	if !strings.HasPrefix(frameworkPath, "github.com/") {
 		assetPath := filepath.Join(frameworkPath, "assets", "dist")

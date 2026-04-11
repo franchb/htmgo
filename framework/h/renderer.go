@@ -2,7 +2,7 @@ package h
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/framework/hx"
+	"github.com/franchb/htmgo/framework/hx"
 	"html"
 	"html/template"
 	"strings"

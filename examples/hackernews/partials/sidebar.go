@@ -2,7 +2,7 @@ package partials
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"hackernews/components"
 	"hackernews/internal/news"
 	"hackernews/internal/parse"

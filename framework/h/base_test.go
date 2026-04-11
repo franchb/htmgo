@@ -1,7 +1,7 @@
 package h
 
 import (
-	"github.com/maddalax/htmgo/framework/hx"
+	"github.com/franchb/htmgo/framework/hx"
 	"net/http"
 	"testing"
 
@@ -90,7 +90,7 @@ func TestGetPartialPath(t *testing.T) {
 	}
 	path := GetPartialPath(partial)
 
-	expectedSegment := "github.com/maddalax/htmgo/framework/h.TestGetPartialPath.func1"
+	expectedSegment := "github.com/franchb/htmgo/framework/h.TestGetPartialPath.func1"
 	assert.Contains(t, path, expectedSegment)
 }
 

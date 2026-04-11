@@ -2,7 +2,7 @@ package interactivity
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"htmgo-site/ui"
 )
 
@@ -42,12 +42,12 @@ func EventsAndCommands(ctx *h.RequestContext) *h.Page {
 			ui.GoCodeSnippet(OnEventBlurSnippet),
 			h.P(
 				h.Text(`For more details on how they work, see the source for `),
-				Link("lifecycle.", "https://github.com/maddalax/htmgo/blob/master/framework/h/lifecycle.go"),
+				Link("lifecycle.", "https://github.com/franchb/htmgo/blob/master/framework/h/lifecycle.go"),
 				h.Text(" Any method that returns *Lifecycle can be used as an event handler, and any method that returns *Command can be used as a command."),
 			),
 			h.P(
 				h.Text(`The current list of commands supported can be found `),
-				Link("here.", "https://github.com/maddalax/htmgo/blob/master/framework/js/commands.go"),
+				Link("here.", "https://github.com/franchb/htmgo/blob/master/framework/js/commands.go"),
 			),
 			HelpText("Note: Each command you attach to the event handler will be passed 'self' and 'event' (if applicable) as arguments. self is the current element, and event is the event object."),
 			Text("Example: Evaluating arbitrary Javascript"),

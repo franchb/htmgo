@@ -2,7 +2,7 @@ package docs
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"htmgo-site/pages/base"
 	"htmgo-site/partials"
 	"strings"

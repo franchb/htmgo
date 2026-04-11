@@ -1,9 +1,9 @@
 package ws
 
 import (
-	"github.com/maddalax/htmgo/extensions/websocket/internal/wsutil"
-	"github.com/maddalax/htmgo/extensions/websocket/session"
-	"github.com/maddalax/htmgo/framework/service"
+	"github.com/franchb/htmgo/extensions/websocket/internal/wsutil"
+	"github.com/franchb/htmgo/extensions/websocket/session"
+	"github.com/franchb/htmgo/framework/service"
 )
 
 func StartListener(locator *service.Locator) {

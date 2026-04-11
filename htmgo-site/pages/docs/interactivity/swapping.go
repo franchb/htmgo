@@ -2,7 +2,7 @@ package interactivity
 
 import . "htmgo-site/pages/docs"
 import "htmgo-site/ui"
-import "github.com/maddalax/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/h"
 
 func Swapping(ctx *h.RequestContext) *h.Page {
 	return DocPage(

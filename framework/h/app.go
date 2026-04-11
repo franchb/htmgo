@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/maddalax/htmgo/framework/hx"
-	"github.com/maddalax/htmgo/framework/service"
+	"github.com/franchb/htmgo/framework/hx"
+	"github.com/franchb/htmgo/framework/service"
 )
 
 type RequestContext struct {

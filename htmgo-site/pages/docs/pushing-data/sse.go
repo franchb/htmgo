@@ -1,7 +1,7 @@
 package pushing_data
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	. "htmgo-site/pages/docs"
 	"htmgo-site/ui"
 )

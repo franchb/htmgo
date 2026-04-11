@@ -1,11 +1,11 @@
 package websocket
 
 import (
-	"github.com/maddalax/htmgo/extensions/websocket/internal/wsutil"
-	"github.com/maddalax/htmgo/extensions/websocket/opts"
-	"github.com/maddalax/htmgo/extensions/websocket/ws"
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/service"
+	"github.com/franchb/htmgo/extensions/websocket/internal/wsutil"
+	"github.com/franchb/htmgo/extensions/websocket/opts"
+	"github.com/franchb/htmgo/extensions/websocket/ws"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
 )
 
 func EnableExtension(app *h.App, opts opts.ExtensionOpts) {

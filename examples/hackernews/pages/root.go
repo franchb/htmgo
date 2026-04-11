@@ -1,13 +1,13 @@
 package pages
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 )
 
 func RootPage(children ...h.Ren) h.Ren {
 	banner := h.A(
 		h.Class("bg-neutral-200 text-neutral-600 text-center p-2 flex items-center justify-center"),
-		h.Href("https://github.com/maddalax/htmgo"),
+		h.Href("https://github.com/franchb/htmgo"),
 		h.Attribute("target", "_blank"),
 		h.Text("Built with htmgo.dev"),
 	)
