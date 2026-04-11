@@ -8,6 +8,7 @@ on:
       - 'framework/**'
       - 'framework-ui/**'
       - 'cli/**'
+      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
 jobs:
@@ -60,20 +61,34 @@ jobs:
           mkdir -p static-site
 
           # Crawl all known routes explicitly
+          # Do NOT use --convert-links: it rewrites URLs to .html and encodes query strings
+          # in asset filenames, breaking both navigation and JS MIME types on Cloudflare Pages.
+          # Instead we keep absolute URLs and sed-replace localhost post-crawl.
           while IFS= read -r route; do
             [ -z "$route" ] && continue
             url="http://localhost:3123${route}"
             echo "Fetching: $url"
             wget -q --no-host-directories --directory-prefix=./static-site \
-                 --page-requisites --convert-links --adjust-extension \
+                 --page-requisites --adjust-extension \
                  "$url" || echo "Warning: failed to fetch $url"
           done < htmgo-site/scripts/crawl-routes.txt
 
           # Also run a mirror crawl to catch any linked assets we missed
-          wget -q --mirror --convert-links --adjust-extension --page-requisites \
+          wget -q --mirror --adjust-extension --page-requisites \
                --no-host-directories --directory-prefix=./static-site \
                --reject-regex='/partials/' \
                http://localhost:3123/ || true
+
+          # Clean up files with query strings in filenames (e.g. htmgo.js?v=xxx)
+          # Cloudflare Pages ignores query strings, so just keep the base filename
+          find ./static-site -name '*\?*' | while read -r file; do
+            clean="${file%%\?*}"
+            if [ ! -f "$clean" ]; then
+              mv "$file" "$clean"
+            else
+              rm -f "$file"
+            fi
+          done
 
           kill $SERVER_PID 2>/dev/null || true
 
@@ -93,13 +108,13 @@ jobs:
             's|http://localhost:3123|https://htmgo.franchb.com|g' {} +
 
           # Create _redirects for Cloudflare Pages
-          cat > _redirects << 'REDIRECTS'
+          cat > _redirects <<'EOF'
           /docs /docs/introduction 302
           /discord https://discord.gg/htmgo 302
-          REDIRECTS
+          EOF
 
           # Create 404 page
-          cat > 404.html << 'HTML404'
+          cat > 404.html <<'EOF'
           <!DOCTYPE html>
           <html>
           <head>
@@ -111,10 +126,7 @@ jobs:
             <p>Redirecting to <a href="/docs/introduction">documentation</a>...</p>
           </body>
           </html>
-          HTML404
-
-          # Ensure .nojekyll exists (not needed for Cloudflare but good practice)
-          touch .nojekyll
+          EOF
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
