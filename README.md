@@ -3,12 +3,10 @@
 ### build simple and scalable systems with go + htmx
 
 -------
-[![Go Report Card](https://goreportcard.com/badge/github.com/maddalax/htmgo)](https://goreportcard.com/report/github.com/maddalax/htmgo)
-![Build](https://github.com/maddalax/htmgo/actions/workflows/run-framework-tests.yml/badge.svg)
-[![Go Reference](https://pkg.go.dev/badge/github.com/maddalax/htmgo/framework@v1.0.2/h.svg)](https://htmgo.dev/docs)
-[![codecov](https://codecov.io/github/maddalax/htmgo/graph/badge.svg?token=ANPD11LSGN)](https://codecov.io/github/maddalax/htmgo)
+[![Go Report Card](https://goreportcard.com/badge/github.com/franchb/htmgo)](https://goreportcard.com/report/github.com/franchb/htmgo)
+![Build](https://github.com/franchb/htmgo/actions/workflows/run-framework-tests.yml/badge.svg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/franchb/htmgo/framework@v1.0.2/h.svg)](https://htmgo.dev/docs)
 [![Join Discord](https://img.shields.io/badge/Join%20Discord-gray?style=flat&logo=discord&logoColor=white&link=https://htmgo.dev/discord)](https://htmgo.dev/discord)
-![GitHub Sponsors](https://img.shields.io/github/sponsors/maddalax)
 
 
 
@@ -39,7 +37,7 @@ func IndexPage(ctx *h.RequestContext) *h.Page {
 2. live reload (rebuilds css, go, ent schema, and routes upon change)
 3. automatic page and partial registration based on file path
 4. built in tailwindcss support, no need to configure anything by default
-5. custom [htmx extensions](https://github.com/maddalax/htmgo/tree/b610aefa36e648b98a13823a6f8d87566120cfcc/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
+5. custom [htmx extensions](https://github.com/franchb/htmgo/tree/b610aefa36e648b98a13823a6f8d87566120cfcc/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
 
 **get started:**
 
@@ -47,4 +45,4 @@ View documentation on [htmgo.dev](https://htmgo.dev/docs).
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=maddalax/htmgo&type=Date)](https://star-history.com/#maddalax/htmgo&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=franchb/htmgo&type=Date)](https://star-history.com/#franchb/htmgo&Date)

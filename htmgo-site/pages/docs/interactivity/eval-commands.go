@@ -1,7 +1,7 @@
 package interactivity
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"htmgo-site/ui"
 )
 

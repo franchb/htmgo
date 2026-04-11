@@ -1,6 +1,6 @@
 package opts
 
-import "github.com/maddalax/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/h"
 
 type ExtensionOpts struct {
 	WsPath    string

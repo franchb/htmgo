@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/maddalax/htmgo/framework/service"
+	"github.com/franchb/htmgo/framework/service"
 	"log"
 	"time"
 )

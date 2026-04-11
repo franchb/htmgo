@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	. "htmgo-site/pages/docs"
 	"htmgo-site/ui"
 )
@@ -35,6 +35,11 @@ const htmgoConfig = `
 
 # if tailwindcss is enabled, htmgo will automatically compile your tailwind and output it to assets/dist
 tailwind: true
+
+# optional: pin a specific tailwind version (e.g. "v3.4.16", "v4.2.2", or "latest")
+# if omitted, htmgo auto-detects: projects using @tailwind directives get v3.4.16,
+# otherwise defaults to latest (v4)
+# tailwind_version: latest
 
 # which directories to ignore when watching for changes, supports glob patterns through https://github.com/bmatcuk/doublestar
 watch_ignore: [".git", "node_modules", "dist/*"]

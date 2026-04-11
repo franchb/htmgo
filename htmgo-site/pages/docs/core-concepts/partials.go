@@ -1,7 +1,7 @@
 package core_concepts
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	. "htmgo-site/pages/docs"
 	"htmgo-site/partials"
 	"htmgo-site/ui"

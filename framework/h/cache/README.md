@@ -75,8 +75,8 @@ You can provide your own cache implementation using the `WithCacheStore` option:
 package main
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/h/cache"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h/cache"
 	"time"
 )
 
@@ -105,8 +105,8 @@ You can override the default cache provider for your entire application:
 package main
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/h/cache"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h/cache"
 )
 
 func init() {
@@ -132,7 +132,7 @@ Here's an example of integrating the high-performance `go-freelru` library:
 import (
   "time"
   "github.com/elastic/go-freelru"
-  "github.com/maddalax/htmgo/framework/h/cache"
+  "github.com/franchb/htmgo/framework/h/cache"
 )
 
 type FreeLRUAdapter[K comparable, V any] struct {

@@ -2,7 +2,7 @@ package session
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"github.com/puzpuzpuz/xsync/v3"
 )
 

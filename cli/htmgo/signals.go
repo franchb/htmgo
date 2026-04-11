@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
 	"os"
 	"os/signal"
 	"syscall"

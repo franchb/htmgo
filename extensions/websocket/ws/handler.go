@@ -2,8 +2,8 @@ package ws
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/extensions/websocket/internal/wsutil"
-	"github.com/maddalax/htmgo/extensions/websocket/session"
+	"github.com/franchb/htmgo/extensions/websocket/internal/wsutil"
+	"github.com/franchb/htmgo/extensions/websocket/session"
 	"sync"
 )
 

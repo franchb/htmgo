@@ -1,7 +1,7 @@
 package misc
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"htmgo-site/internal/urlhelper"
 	. "htmgo-site/pages/docs"
 	"htmgo-site/ui"

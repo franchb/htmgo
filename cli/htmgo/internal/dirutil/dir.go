@@ -3,8 +3,8 @@ package dirutil
 import (
 	"errors"
 	"fmt"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/process"
-	"github.com/maddalax/htmgo/framework/config"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/framework/config"
 	"io"
 	"log/slog"
 	"os"

@@ -1,7 +1,7 @@
 package dirwalk
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"io/fs"
 	"os"
 	"strings"

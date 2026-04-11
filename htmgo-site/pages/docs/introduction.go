@@ -1,7 +1,7 @@
 package docs
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"htmgo-site/ui"
 )
 
@@ -35,7 +35,7 @@ func Introduction(ctx *h.RequestContext) *h.Page {
 			`),
 			ui.GoCodeSnippet(IntroSnippet),
 			h.P(
-				Link("The site you are reading now", "https://github.com/maddalax/htmgo/tree/master/htmgo-site"),
+				Link("The site you are reading now", "https://github.com/franchb/htmgo/tree/master/htmgo-site"),
 				h.Text(" was written with htmgo!"),
 			),
 			NextStep(

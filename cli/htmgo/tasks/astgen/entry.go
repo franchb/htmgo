@@ -13,9 +13,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/maddalax/htmgo/cli/htmgo/internal/dirutil"
-	"github.com/maddalax/htmgo/cli/htmgo/tasks/process"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/framework/h"
 	"golang.org/x/mod/modfile"
 )
 
@@ -36,7 +36,7 @@ type Partial struct {
 const GeneratedDirName = "__htmgo"
 const HttpModuleName = "net/http"
 const ChiModuleName = "github.com/go-chi/chi/v5"
-const ModuleName = "github.com/maddalax/htmgo/framework/h"
+const ModuleName = "github.com/franchb/htmgo/framework/h"
 
 var PackageName = fmt.Sprintf("package %s", GeneratedDirName)
 var GeneratedFileLine = fmt.Sprintf("// Package %s THIS FILE IS GENERATED. DO NOT EDIT.", GeneratedDirName)

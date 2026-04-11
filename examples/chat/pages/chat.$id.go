@@ -6,8 +6,8 @@ import (
 	"chat/partials"
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/js"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/js"
 	"time"
 )
 

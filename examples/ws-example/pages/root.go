@@ -1,7 +1,7 @@
 package pages
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 )
 
 func RootPage(ctx *h.RequestContext, children ...h.Ren) h.Ren {

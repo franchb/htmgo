@@ -12,15 +12,15 @@ import (
 	"sync"
 )
 
-const frameworkRepo = "github.com/maddalax/htmgo/framework"
-const htmlToHtmgoRepo = "github.com/maddalax/htmgo/tools/html-to-htmgo"
+const frameworkRepo = "github.com/franchb/htmgo/framework"
+const htmlToHtmgoRepo = "github.com/franchb/htmgo/tools/html-to-htmgo"
 
 var depsToUpdate = []string{
 	frameworkRepo,
 	htmlToHtmgoRepo,
 }
 
-const githubAPIURL = "https://api.github.com/repos/maddalax/htmgo/commits"
+const githubAPIURL = "https://api.github.com/repos/franchb/htmgo/commits"
 
 // Commit represents the structure of a commit object returned by the GitHub API.
 type Commit struct {
@@ -89,14 +89,14 @@ func fileExists(path string) bool {
 func updateDepToLatestVersion(dep string, goModPath string, latestCommitHash string) {
 	if containsDep(dep, goModPath) {
 		dir := filepath.Dir(goModPath)
-		// Run go get github.com/maddalax/htmgo/framework@<latestCommitHash>.
+		// Run go get github.com/franchb/htmgo/framework@<latestCommitHash>.
 		fmt.Printf("Running 'go get' with latest commit hash in %s\n", dep)
 		RunCommand(dir, "go", "get", fmt.Sprintf("%s@%s", dep, latestCommitHash))
 		RunCommand(dir, "go", "mod", "tidy")
 	}
 }
 
-// containsDep checks if 'github.com/maddalax/htmgo/framework' is in the go.mod file.
+// containsDep checks if 'github.com/franchb/htmgo/framework' is in the go.mod file.
 func containsDep(dep string, goModPath string) bool {
 	file, err := os.Open(goModPath)
 	if err != nil {

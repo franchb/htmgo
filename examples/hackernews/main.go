@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/service"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
 	"hackernews/__htmgo"
 	"io/fs"
 	"net/http"

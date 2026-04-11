@@ -1,7 +1,7 @@
 package partials
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/h"
 	"time"
 )
 

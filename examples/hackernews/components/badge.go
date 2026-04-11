@@ -1,6 +1,6 @@
 package components
 
-import "github.com/maddalax/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/h"
 
 func Badge(text string, active bool, children ...h.Ren) *h.Element {
 	return h.Button(

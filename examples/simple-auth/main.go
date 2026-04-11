@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/service"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
 	"io/fs"
 	"net/http"
 	"simpleauth/__htmgo"

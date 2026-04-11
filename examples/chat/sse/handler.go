@@ -3,8 +3,8 @@ package sse
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/maddalax/htmgo/framework/h"
-	"github.com/maddalax/htmgo/framework/service"
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
 	"log/slog"
 	"net/http"
 	"sync"

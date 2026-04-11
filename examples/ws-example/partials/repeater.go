@@ -2,8 +2,8 @@ package partials
 
 import (
 	"fmt"
-	"github.com/maddalax/htmgo/extensions/websocket/ws"
-	"github.com/maddalax/htmgo/framework/h"
+	"github.com/franchb/htmgo/extensions/websocket/ws"
+	"github.com/franchb/htmgo/framework/h"
 )
 
 type RepeaterProps struct {

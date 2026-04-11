@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/maddalax/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/h"
 
 func FormError(error string) *h.Element {
 	return h.Div(
