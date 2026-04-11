@@ -6,7 +6,7 @@ toolchain go1.26.0
 
 require (
 	github.com/franchb/htmgo/extensions/websocket v0.0.0-00010101000000-000000000000
-	github.com/franchb/htmgo/framework v0.0.0-20260411081622-8ee0c30de603
+	github.com/franchb/htmgo/framework v0.0.0-20260411172522-3bf12b2718d9
 )
 
 require (

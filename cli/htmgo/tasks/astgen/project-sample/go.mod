@@ -4,12 +4,10 @@ go 1.26
 
 toolchain go1.26.0
 
-require (
-	github.com/franchb/htmgo/framework v0.0.0-20260411081622-8ee0c30de603
-	github.com/go-chi/chi/v5 v5.2.5
-)
+require github.com/franchb/htmgo/framework v0.0.0-20260411172522-3bf12b2718d9
 
 require (
+	github.com/go-chi/chi/v5 v5.2.5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
