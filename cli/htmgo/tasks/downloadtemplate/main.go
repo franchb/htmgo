@@ -80,6 +80,8 @@ func DownloadTemplate(outPath string) {
 		fmt.Sprintf("module %s", templateName),
 		fmt.Sprintf("module %s", newModuleName))
 
+	removeReplaceDirectives(filepath.Join(newDir, "go.mod"))
+
 	_ = util.ReplaceTextInDirRecursive(newDir, templateName, newModuleName, func(file string) bool {
 		return strings.HasSuffix(file, ".go") || strings.HasPrefix(file, "Dockerfile")
 	})
@@ -95,4 +97,21 @@ func DownloadTemplate(outPath string) {
 
 	fmt.Printf("To build the project, run the following command:\n")
 	fmt.Printf("cd %s && htmgo build\n", outPath)
+}
+
+// removeReplaceDirectives strips all "replace" lines from a go.mod file.
+// Templates use replace directives for local development, but standalone
+// projects must resolve dependencies from the module proxy.
+func removeReplaceDirectives(goModPath string) {
+	data, err := os.ReadFile(goModPath)
+	if err != nil {
+		return
+	}
+	var kept []string
+	for _, line := range strings.Split(string(data), "\n") {
+		if !strings.HasPrefix(strings.TrimSpace(line), "replace ") {
+			kept = append(kept, line)
+		}
+	}
+	os.WriteFile(goModPath, []byte(strings.Join(kept, "\n")), 0644)
 }
