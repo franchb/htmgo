@@ -510,7 +510,7 @@ func GetModuleName() string {
 
 	checkDir := CheckPagesDirectory(wd)
 	if checkDir != nil {
-		fmt.Fprintf(os.Stderr, checkDir.Error())
+		fmt.Fprintf(os.Stderr, "%s", checkDir.Error())
 		return ""
 	}
 
