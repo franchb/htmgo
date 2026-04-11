@@ -1,0 +1,124 @@
+name: Deploy Docs to Cloudflare Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'htmgo-site/**'
+      - 'framework/**'
+      - 'framework-ui/**'
+      - 'cli/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install htmgo CLI
+        run: cd cli/htmgo && go install .
+
+      - name: Build htmgo-site
+        run: |
+          cd htmgo-site
+          npm install
+          htmgo build
+
+      - name: Start server and crawl
+        run: |
+          cd htmgo-site/dist
+          PORT=3123 ./htmgo-site &
+          SERVER_PID=$!
+
+          # Wait for server to be ready
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:3123/ | grep -q "200"; then
+              echo "Server is ready"
+              break
+            fi
+            echo "Waiting for server... ($i/30)"
+            sleep 1
+          done
+
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p static-site
+
+          # Crawl all known routes explicitly
+          while IFS= read -r route; do
+            [ -z "$route" ] && continue
+            url="http://localhost:3123${route}"
+            echo "Fetching: $url"
+            wget -q --no-host-directories --directory-prefix=./static-site \
+                 --page-requisites --convert-links --adjust-extension \
+                 "$url" || echo "Warning: failed to fetch $url"
+          done < htmgo-site/scripts/crawl-routes.txt
+
+          # Also run a mirror crawl to catch any linked assets we missed
+          wget -q --mirror --convert-links --adjust-extension --page-requisites \
+               --no-host-directories --directory-prefix=./static-site \
+               --reject-regex='/partials/' \
+               http://localhost:3123/ || true
+
+          kill $SERVER_PID 2>/dev/null || true
+
+      - name: Post-crawl fixups
+        run: |
+          cd static-site
+
+          # Convert path.html files to path/index.html for clean URLs
+          find . -name '*.html' -not -name 'index.html' | while read -r file; do
+            dir="${file%.html}"
+            mkdir -p "$dir"
+            mv "$file" "$dir/index.html"
+          done
+
+          # Replace localhost references with production URL
+          find . -name '*.html' -exec sed -i \
+            's|http://localhost:3123|https://htmgo.franchb.com|g' {} +
+
+          # Create _redirects for Cloudflare Pages
+          cat > _redirects << 'REDIRECTS'
+          /docs /docs/introduction 302
+          /discord https://discord.gg/htmgo 302
+          REDIRECTS
+
+          # Create 404 page
+          cat > 404.html << 'HTML404'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Page Not Found - htmgo</title>
+            <meta http-equiv="refresh" content="3;url=/docs/introduction">
+          </head>
+          <body style="font-family: system-ui; text-align: center; padding: 4rem;">
+            <h1>Page Not Found</h1>
+            <p>Redirecting to <a href="/docs/introduction">documentation</a>...</p>
+          </body>
+          </html>
+          HTML404
+
+          # Ensure .nojekyll exists (not needed for Cloudflare but good practice)
+          touch .nojekyll
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ./static-site --project-name=htmgo-docs
