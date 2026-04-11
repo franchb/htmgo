@@ -4,8 +4,8 @@ go 1.23.0
 
 require (
 	github.com/alecthomas/chroma/v2 v2.14.0
-	github.com/franchb/htmgo/framework v1.0.7-0.20250703190716-06f01b3d7c1b
-	github.com/franchb/htmgo/tools/html-to-htmgo v0.0.0-20250703190716-06f01b3d7c1b
+	github.com/franchb/htmgo/framework v0.0.0-20260411081622-8ee0c30de603
+	github.com/franchb/htmgo/tools/html-to-htmgo v0.0.0-20260411081622-8ee0c30de603
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/google/uuid v1.6.0
 	github.com/yuin/goldmark v1.7.4
