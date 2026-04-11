@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23' # Specify the Go version you need
+          go-version: '1.26'
 
       - name: Install dependencies
         run: cd ./cli/htmgo && go mod download
