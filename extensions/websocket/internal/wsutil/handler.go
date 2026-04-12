@@ -80,6 +80,8 @@ func WsHttpHandler(opts *ws2.ExtensionOpts) http.HandlerFunc {
 
 			for {
 				select {
+				case <-ctx.Done():
+					return
 				case <-done:
 					fmt.Printf("closing connection: \n")
 					return

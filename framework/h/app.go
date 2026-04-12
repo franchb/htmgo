@@ -33,7 +33,11 @@ type RequestContext struct {
 }
 
 func GetRequestContext(r *http.Request) *RequestContext {
-	return r.Context().Value(requestContextKey).(*RequestContext)
+	val := r.Context().Value(requestContextKey)
+	if val == nil {
+		return nil
+	}
+	return val.(*RequestContext)
 }
 
 func (c *RequestContext) SetCookie(cookie *http.Cookie) {
@@ -179,7 +183,11 @@ func populateHxFields(cc *RequestContext) {
 func (app *App) UseWithContext(h func(w http.ResponseWriter, r *http.Request, context map[string]any)) {
 	app.Router.Use(func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cc := r.Context().Value(requestContextKey).(*RequestContext)
+			cc := GetRequestContext(r)
+			if cc == nil {
+				handler.ServeHTTP(w, r)
+				return
+			}
 			if cc.kv == nil {
 				cc.kv = make(map[string]interface{})
 			}
@@ -192,7 +200,11 @@ func (app *App) UseWithContext(h func(w http.ResponseWriter, r *http.Request, co
 func (app *App) Use(h func(ctx *RequestContext)) {
 	app.Router.Use(func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cc := r.Context().Value(requestContextKey).(*RequestContext)
+			cc := GetRequestContext(r)
+			if cc == nil {
+				handler.ServeHTTP(w, r)
+				return
+			}
 			h(cc)
 			handler.ServeHTTP(w, r)
 		})

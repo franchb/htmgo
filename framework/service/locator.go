@@ -51,10 +51,11 @@ func (l *Locator) getCache(key string) any {
 	return l.cache[key]
 }
 
-// getTypeKey returns the string representation of the type T without allocating
-// an instance. Requires Go 1.22+.
+// getTypeKey returns the string representation of *T, matching the key format
+// used by Set (which registers under the provider's return type, always a pointer).
+// Requires Go 1.22+.
 func getTypeKey[T any]() string {
-	return reflect.TypeFor[T]().String()
+	return reflect.TypeFor[*T]().String()
 }
 
 // Get returns a service from the locator
@@ -78,14 +79,19 @@ func Get[T any](locator *Locator) *T {
 	locator.mutex.RUnlock()
 
 	if entry.lifecycle == Singleton {
-		// Double-checked locking: re-check cache after acquiring write lock.
+		// Compute outside the lock to avoid deadlocking when constructors
+		// resolve other services through the same locator.
+		value := entry.cb().(*T)
+
 		locator.mutex.Lock()
-		defer locator.mutex.Unlock()
+		// Double-check: another goroutine may have filled the cache while
+		// we were computing.
 		if cached := locator.getCache(t); cached != nil {
+			locator.mutex.Unlock()
 			return cached.(*T)
 		}
-		value := entry.cb().(*T)
 		locator.setCache(t, value)
+		locator.mutex.Unlock()
 		return value
 	}
 

@@ -235,7 +235,7 @@ func (l *LifeCycle) fromAttributeMap(event string, key string, value string, con
 func (l *LifeCycle) Render(context *RenderContext) {
 	type eventEntry struct {
 		event string
-		sb    strings.Builder
+		value string
 	}
 
 	entries := make([]eventEntry, 0, len(l.handlers))
@@ -263,7 +263,7 @@ func (l *LifeCycle) Render(context *RenderContext) {
 		}
 
 		if sb.Len() > 0 {
-			entries = append(entries, eventEntry{event: event, sb: sb})
+			entries = append(entries, eventEntry{event: event, value: sb.String()})
 		}
 	}
 
@@ -272,6 +272,6 @@ func (l *LifeCycle) Render(context *RenderContext) {
 	}
 
 	for _, e := range entries {
-		Attribute(e.event, e.sb.String()).Render(context)
+		Attribute(e.event, e.value).Render(context)
 	}
 }

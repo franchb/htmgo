@@ -2,7 +2,6 @@ package astgen
 
 import (
 	"go/format"
-	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -21,22 +20,18 @@ func WriteFile(path string, cb func() string) {
 
 	os.MkdirAll(dir, 0755)
 
-	bytes := []byte(cb())
+	src := []byte(cb())
 
-	slog.Debug("astgen.WriteFile", slog.String("path", path), slog.String("content", string(bytes)))
+	slog.Debug("astgen.WriteFile", slog.String("path", path), slog.String("content", string(src)))
 
-	var err error
-	bytes, err = format.Source(bytes)
+	formatted, err := format.Source(src)
 
 	if err != nil {
-		log.Printf("Failed to format source: %v\n", err.Error())
-		data := string(bytes)
-		println(data)
-		return
+		PanicF("failed to format generated source for %s: %v\n%s", path, err, string(src))
 	}
 
 	// Save the buffer to a file
-	err = os.WriteFile(path, bytes, 0644)
+	err = os.WriteFile(path, formatted, 0644)
 	if err != nil {
 		PanicF("Failed to write buffer to file: %v", err)
 	}

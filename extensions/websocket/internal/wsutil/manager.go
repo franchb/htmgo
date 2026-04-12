@@ -64,6 +64,7 @@ type SocketManager struct {
 	totalMessages     atomic.Int64
 	messagesPerSecond int
 	secondsElapsed    int
+	closeOnce         sync.Once
 	done              chan struct{}
 }
 
@@ -87,7 +88,9 @@ func (manager *SocketManager) StartMetrics() {
 }
 
 func (manager *SocketManager) Close() {
-	close(manager.done)
+	manager.closeOnce.Do(func() {
+		close(manager.done)
+	})
 }
 
 func (manager *SocketManager) Metrics() ManagerMetrics {
@@ -197,6 +200,10 @@ func (manager *SocketManager) Listen(listener chan SocketEvent) {
 	}
 }
 
+// dispatch sends an event to all listeners using non-blocking sends.
+// This is intentional: a slow or full listener must not block broadcasts to
+// other listeners or to WebSocket writers. Callers that need reliable delivery
+// should use a sufficiently buffered channel via Listen().
 func (manager *SocketManager) dispatch(event SocketEvent) {
 	for _, listener := range manager.listeners {
 		select {

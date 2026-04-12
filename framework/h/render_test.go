@@ -414,8 +414,9 @@ func TestCacheByKeyConcurrent(t *testing.T) {
 	wg.Wait()
 
 	assert.Equal(t, int32(5), callCount.Load())
-	// renderCount is at least 2 (one for "key", one for "key2") but may vary with concurrent execution
-	assert.GreaterOrEqual(t, renderCount.Load(), int32(2))
+	// Singleflight guarantees exactly one compute per unique key.
+	// There are 2 unique keys ("key" and "key2"), so exactly 2 renders.
+	assert.Equal(t, int32(2), renderCount.Load())
 }
 
 func TestCacheByKeyT1_2(t *testing.T) {

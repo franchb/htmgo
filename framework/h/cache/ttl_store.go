@@ -130,8 +130,29 @@ func (s *TTLStore[K, V]) GetOrCompute(key K, compute func() V, ttl time.Duration
 	}
 	s.mutex.RUnlock()
 
-	// Compute value with no locks held
-	value := compute()
+	// Compute value with no locks held.
+	// Wrap in a closure so that a panicking compute() still unblocks waiters
+	// and cleans up the inflight slot (otherwise they deadlock on c.wg.Wait()).
+	var value V
+	panicked := true
+	func() {
+		defer func() {
+			if panicked {
+				c.wg.Done()
+				s.imu.Lock()
+				delete(s.inflight, key)
+				s.imu.Unlock()
+			}
+		}()
+		value = compute()
+		panicked = false
+	}()
+	if panicked {
+		// re-panic is handled by the runtime; this line is unreachable,
+		// but kept for clarity.
+		var zero V
+		return zero
+	}
 
 	// Store the result
 	s.mutex.Lock()

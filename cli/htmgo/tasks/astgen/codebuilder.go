@@ -93,8 +93,8 @@ func (cb *CodeBuilder) String() string {
 		return cb.builder.String()
 	}
 	var out strings.Builder
-	for _, p := range cb.prepends {
-		out.WriteString(p)
+	for i := len(cb.prepends) - 1; i >= 0; i-- {
+		out.WriteString(cb.prepends[i])
 		out.WriteString("\n")
 	}
 	out.WriteString(cb.builder.String())

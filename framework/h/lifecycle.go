@@ -156,7 +156,7 @@ type ComplexJsCommand struct {
 
 // NewComplexJsCommand creates a new complex JavaScript command.
 func NewComplexJsCommand(command string) ComplexJsCommand {
-	name := "__eval_" + util.RandSeq(6)
+	name := "__eval_" + util.RandSeq(12)
 	return ComplexJsCommand{Command: command, TempFuncName: name}
 }
 

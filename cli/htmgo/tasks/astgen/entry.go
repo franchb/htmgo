@@ -264,7 +264,7 @@ func buildGetPartialFromContext(builder *CodeBuilder, partials []Partial) {
 	builder.AppendLine(registerFunction)
 }
 
-func writeGenerated() {
+func writeGenerated() error {
 	config := dirutil.GetConfig()
 
 	cwd := process.GetWorkingDir()
@@ -273,8 +273,7 @@ func writeGenerated() {
 	})
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	partials = h.Filter(partials, func(partial Partial) bool {
@@ -287,6 +286,7 @@ func writeGenerated() {
 
 	writePartialsFile(partials)
 	writePagesFile(pages)
+	return nil
 }
 
 func writePartialsFile(partials []Partial) {
@@ -509,7 +509,9 @@ func GenAst(flags ...process.RunFlag) error {
 		}
 		return fmt.Errorf("error getting module name")
 	}
-	writeGenerated()
+	if err := writeGenerated(); err != nil {
+		return err
+	}
 	writeAssetsFile()
 
 	WriteFile("__htmgo/setup-generated.go", func() string {

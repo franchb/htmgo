@@ -90,7 +90,7 @@ func startWatcher(cb func(version string, file []*fsnotify.Event)) {
 								dedupe = append(dedupe, e)
 							}
 						}
-						cb(fmt.Sprintf("%06x", rand.Int32()), dedupe)
+						cb(fmt.Sprintf("%06x", rand.IntN(1<<24)), dedupe)
 					})
 				}
 
