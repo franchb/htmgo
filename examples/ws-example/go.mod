@@ -6,7 +6,7 @@ toolchain go1.26.0
 
 require (
 	github.com/franchb/htmgo/extensions/websocket v0.0.0-00010101000000-000000000000
-	github.com/franchb/htmgo/framework v0.0.0-20260412023854-358a61b926ff
+	github.com/franchb/htmgo/framework v0.0.0-20260412072145-964b788aa6e0
 )
 
 require (
@@ -17,6 +17,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	golang.org/x/sys v0.6.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace github.com/franchb/htmgo/framework => ../../framework
