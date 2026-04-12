@@ -6,7 +6,7 @@ toolchain go1.26.0
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/franchb/htmgo/framework v0.0.0-20260411172522-3bf12b2718d9
+	github.com/franchb/htmgo/framework v0.0.0-20260412023854-358a61b926ff
 	github.com/google/uuid v1.6.0
 	github.com/mattn/go-sqlite3 v1.14.42
 )

@@ -5,7 +5,7 @@ go 1.26
 toolchain go1.26.0
 
 require (
-	github.com/franchb/htmgo/framework v0.0.0-20260411172522-3bf12b2718d9
+	github.com/franchb/htmgo/framework v0.0.0-20260412023854-358a61b926ff
 	github.com/gobwas/ws v1.4.0
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
 	github.com/stretchr/testify v1.11.1
