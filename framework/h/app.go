@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/franchb/htmgo/framework/config"
 	"github.com/franchb/htmgo/framework/hx"
 	"github.com/franchb/htmgo/framework/service"
 )
@@ -247,8 +248,12 @@ func (app *App) start() {
 
 	slog.SetLogLoggerLevel(GetLogLevel())
 
-	// Determine the public asset path prefix used to serve static files.
-	publicPrefix := "/public"
+	// Read the configured public asset path so the middleware skip matches
+	// what the application actually serves static files under.
+	publicPrefix := config.Get().PublicAssetPath
+	if publicPrefix == "" {
+		publicPrefix = "/public"
+	}
 
 	app.Router.Use(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

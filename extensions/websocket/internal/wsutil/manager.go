@@ -87,6 +87,8 @@ func (manager *SocketManager) StartMetrics() {
 	}()
 }
 
+// Close stops the background metrics goroutine. Call this during graceful
+// shutdown to avoid leaking the goroutine started by StartMetrics.
 func (manager *SocketManager) Close() {
 	manager.closeOnce.Do(func() {
 		close(manager.done)

@@ -2,9 +2,11 @@ package ws
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/franchb/htmgo/extensions/websocket/internal/wsutil"
 	"github.com/franchb/htmgo/extensions/websocket/session"
-	"sync"
+	"github.com/puzpuzpuz/xsync/v3"
 )
 
 type MessageHandler struct {
@@ -107,6 +109,11 @@ func (h *MessageHandler) OnSocketDisconnected(event wsutil.SocketEvent) {
 		hashes.Range(func(hash KeyHash, _ bool) bool {
 			hashesToSessionId.Delete(hash)
 			handlers.Delete(hash)
+			// Remove from all event-name maps to prevent unbounded growth.
+			serverEventNamesToHash.Range(func(_ string, eventHashes *xsync.MapOf[KeyHash, bool]) bool {
+				eventHashes.Delete(hash)
+				return true
+			})
 			return true
 		})
 		sessionIdToHashes.Delete(sessionId)

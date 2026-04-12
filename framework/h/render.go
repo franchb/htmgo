@@ -52,6 +52,10 @@ func Render(node Ren, opts ...RenderOpt) string {
 
 	node.Render(context)
 	result := context.builder.String()
-	renderContextPool.Put(context)
+	// Don't return oversized builders to the pool; a single large render
+	// should not permanently inflate memory for all subsequent renders.
+	if context.builder.Cap() <= 64*1024 {
+		renderContextPool.Put(context)
+	}
 	return result
 }

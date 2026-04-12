@@ -48,7 +48,8 @@ func NewTTLStoreWithInterval[K comparable, V any](cleanInterval time.Duration) S
 
 // NewTTLStoreWithMaxSize creates a new TTL-based cache store with a maximum number of entries.
 // When the cache exceeds maxSize during Set or GetOrCompute, the oldest entries are evicted.
-// A maxSize of 0 or less means unlimited.
+// Note: eviction is O(n) per insertion that exceeds maxSize. For large caches where eviction
+// performance matters, use LRUStore instead. A maxSize of 0 or less means unlimited.
 func NewTTLStoreWithMaxSize[K comparable, V any](maxSize int) Store[K, V] {
 	s := &TTLStore[K, V]{
 		cache:     make(map[K]*entry[V]),
@@ -257,6 +258,8 @@ func (s *TTLStore[K, V]) clearExpired() {
 }
 
 // evictOldest removes the entry with the earliest expiration time.
+// This is O(n) in the number of cache entries because it scans the entire map.
+// For large caches, prefer LRUStore which has O(1) eviction.
 // Must be called with the write lock held.
 func (s *TTLStore[K, V]) evictOldest() {
 	var oldestKey K
