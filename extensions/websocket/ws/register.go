@@ -25,9 +25,9 @@ type ServerSideEvent struct {
 type KeyHash = string
 
 var handlers = xsync.NewMapOf[KeyHash, Handler]()
-var sessionIdToHashes = xsync.NewMapOf[session.Id, map[KeyHash]bool]()
+var sessionIdToHashes = xsync.NewMapOf[session.Id, *xsync.MapOf[KeyHash, bool]]()
 var hashesToSessionId = xsync.NewMapOf[KeyHash, session.Id]()
-var serverEventNamesToHash = xsync.NewMapOf[string, map[KeyHash]bool]()
+var serverEventNamesToHash = xsync.NewMapOf[string, *xsync.MapOf[KeyHash, bool]]()
 
 var socketMessageListener = make(chan wsutil.SocketEvent, 100)
 var serverSideMessageListener = make(chan ServerSideEvent, 100)
@@ -62,10 +62,10 @@ func AddServerSideHandler(ctx *h.RequestContext, event string, handler Handler) 
 	sessionId := session.GetSessionId(ctx)
 	hash := makeId()
 	handlers.LoadOrStore(hash, handler)
-	m, _ := serverEventNamesToHash.LoadOrCompute(event, func() map[KeyHash]bool {
-		return make(map[KeyHash]bool)
+	m, _ := serverEventNamesToHash.LoadOrCompute(event, func() *xsync.MapOf[KeyHash, bool] {
+		return xsync.NewMapOf[KeyHash, bool]()
 	})
-	m[hash] = true
+	m.Store(hash, true)
 	storeHashForSession(sessionId, hash)
 	storeSessionIdForHash(sessionId, hash)
 	return h.AttributePairs("data-handler-id", hash, "data-handler-event", event)
@@ -81,10 +81,10 @@ func AddClientSideHandler(ctx *h.RequestContext, event string, handler Handler) 
 }
 
 func storeHashForSession(sessionId session.Id, hash KeyHash) {
-	m, _ := sessionIdToHashes.LoadOrCompute(sessionId, func() map[KeyHash]bool {
-		return make(map[KeyHash]bool)
+	m, _ := sessionIdToHashes.LoadOrCompute(sessionId, func() *xsync.MapOf[KeyHash, bool] {
+		return xsync.NewMapOf[KeyHash, bool]()
 	})
-	m[hash] = true
+	m.Store(hash, true)
 }
 
 func storeSessionIdForHash(sessionId session.Id, hash KeyHash) {

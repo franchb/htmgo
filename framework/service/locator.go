@@ -51,16 +51,21 @@ func (l *Locator) getCache(key string) any {
 	return l.cache[key]
 }
 
+// getTypeKey returns the string representation of *T, matching the key format
+// used by Set (which registers under the provider's return type, always a pointer).
+// Requires Go 1.22+.
+func getTypeKey[T any]() string {
+	return reflect.TypeFor[*T]().String()
+}
+
 // Get returns a service from the locator
 // If the service is not found, log.Fatalf is called
 // If the service is a singleton, it will be cached after first invocation
 func Get[T any](locator *Locator) *T {
+	t := getTypeKey[T]()
+
 	locator.mutex.RLock()
-	i := new(T)
-	t := reflect.TypeOf(i).String()
-
 	cached := locator.getCache(t)
-
 	if cached != nil {
 		locator.mutex.RUnlock()
 		return cached.(*T)
@@ -68,16 +73,29 @@ func Get[T any](locator *Locator) *T {
 
 	entry, ok := locator.services[t]
 	if !ok {
+		locator.mutex.RUnlock()
 		log.Fatalf("%s is not registered in the service locator", t)
 	}
-	cb := entry.cb().(*T)
 	locator.mutex.RUnlock()
-	locator.mutex.Lock()
+
 	if entry.lifecycle == Singleton {
-		locator.setCache(t, cb)
+		// Compute outside the lock to avoid deadlocking when constructors
+		// resolve other services through the same locator.
+		value := entry.cb().(*T)
+
+		locator.mutex.Lock()
+		// Double-check: another goroutine may have filled the cache while
+		// we were computing.
+		if cached := locator.getCache(t); cached != nil {
+			locator.mutex.Unlock()
+			return cached.(*T)
+		}
+		locator.setCache(t, value)
+		locator.mutex.Unlock()
+		return value
 	}
-	locator.mutex.Unlock()
-	return cb
+
+	return entry.cb().(*T)
 }
 
 // Set registers a service with the locator

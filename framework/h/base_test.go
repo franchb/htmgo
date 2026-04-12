@@ -101,7 +101,10 @@ func TestGetPartialPathWithQs(t *testing.T) {
 	qs := NewQs("param1", "value1", "param2", "value2")
 	pathWithQs := GetPartialPathWithQs(partial, qs)
 
-	assert.Contains(t, pathWithQs, "param1=value1&param2=value2")
+	// Query param map iteration order is non-deterministic, so check each
+	// key=value pair individually instead of asserting a specific ordering.
+	assert.Contains(t, pathWithQs, "param1=value1")
+	assert.Contains(t, pathWithQs, "param2=value2")
 }
 
 func TestSwapManyPartial(t *testing.T) {

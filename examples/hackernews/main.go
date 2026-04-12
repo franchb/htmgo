@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/service"
-	"hackernews/__htmgo"
 	"io/fs"
 	"net/http"
+
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
+
+	"hackernews/__htmgo"
 )
 
 func main() {
@@ -22,14 +24,12 @@ func main() {
 				panic(err)
 			}
 
-			http.FileServerFS(sub)
-
 			app.Router.Handle("/item", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				id := r.URL.Query().Get("id")
 				w.Header().Set("Location", fmt.Sprintf("/?item=%s", id))
 				w.WriteHeader(302)
 			}))
-			app.Router.Handle("/public/*", http.StripPrefix("/public", http.FileServerFS(sub)))
+			app.Router.Handle("/public/*", h.StaticCacheMiddleware(http.StripPrefix("/public", http.FileServerFS(sub))))
 			__htmgo.Register(app.Router)
 		},
 	})

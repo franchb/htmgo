@@ -2,7 +2,6 @@ package h
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/franchb/htmgo/framework/hx"
 	"github.com/franchb/htmgo/framework/internal/util"
 	"strings"
@@ -41,7 +40,7 @@ func (l *LifeCycle) OnEvent(event hx.Event, cmd ...Command) *LifeCycle {
 
 	if strings.HasPrefix(event, "htmx:") {
 		event = event[5:]
-		event = util.ConvertCamelToDash(fmt.Sprintf("hx-on::%s", event))
+		event = util.ConvertCamelToDash("hx-on::" + event)
 	}
 
 	if l.handlers[event] == nil {
@@ -157,7 +156,7 @@ type ComplexJsCommand struct {
 
 // NewComplexJsCommand creates a new complex JavaScript command.
 func NewComplexJsCommand(command string) ComplexJsCommand {
-	name := fmt.Sprintf("__eval_%s", util.RandSeq(6))
+	name := "__eval_" + util.RandSeq(12)
 	return ComplexJsCommand{Command: command, TempFuncName: name}
 }
 
@@ -428,12 +427,12 @@ func EvalCommandsOnSelector(selector string, cmds ...Command) ComplexJsCommand {
 }
 
 func EvalCommands(element *Element, cmds ...Command) ComplexJsCommand {
-	id := strings.ReplaceAll(uuid.NewString(), "-", "")
+	id := util.RandSeq(32)
 	element.AppendChildren(
 		Attribute("data-eval-commands-id", id),
 	)
 	return EvalCommandsOnSelector(
-		fmt.Sprintf(`[data-eval-commands-id='%s']`, id), cmds...)
+		"[data-eval-commands-id='"+id+"']", cmds...)
 }
 
 // PreventDefault prevents the default action of the event.

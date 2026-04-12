@@ -37,6 +37,16 @@ func New[K comparable, V any]() *Map[K, V] {
 	}
 }
 
+// NewWithCapacity creates a new Map with pre-allocated capacity for both the
+// internal map and keys slice. Use this when the approximate number of entries
+// is known in advance to avoid repeated allocations.
+func NewWithCapacity[K comparable, V any](cap int) *Map[K, V] {
+	return &Map[K, V]{
+		keys:   make([]K, 0, cap),
+		values: make(map[K]V, cap),
+	}
+}
+
 // Set adds or updates a key-value pair in the Map.
 func (om *Map[K, V]) Set(key K, value V) {
 	// Check if the key already exists

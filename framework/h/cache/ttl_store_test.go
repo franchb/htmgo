@@ -211,7 +211,8 @@ func TestTTLStore_UpdateExisting(t *testing.T) {
 
 func TestTTLStore_CleanupGoroutine(t *testing.T) {
 	// This test verifies that expired entries are cleaned up automatically
-	store := NewTTLStore[string, string]()
+	// Use a short cleaner interval since the default is 1 minute
+	store := NewTTLStoreWithInterval[string, string](time.Second)
 	defer store.Close()
 
 	// Add many short-lived entries

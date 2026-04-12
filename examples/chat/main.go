@@ -1,17 +1,19 @@
 package main
 
 import (
-	"chat/__htmgo"
-	"chat/chat"
-	"chat/internal/db"
-	"chat/sse"
 	"fmt"
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/service"
 	"io/fs"
 	"net/http"
 	"runtime"
 	"time"
+
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
+
+	"chat/__htmgo"
+	"chat/chat"
+	"chat/internal/db"
+	"chat/sse"
 )
 
 func main() {
@@ -43,9 +45,7 @@ func main() {
 				panic(err)
 			}
 
-			http.FileServerFS(sub)
-
-			app.Router.Handle("/public/*", http.StripPrefix("/public", http.FileServerFS(sub)))
+			app.Router.Handle("/public/*", h.StaticCacheMiddleware(http.StripPrefix("/public", http.FileServerFS(sub))))
 			app.Router.Handle("/sse/chat/{id}", sse.Handle())
 
 			__htmgo.Register(app.Router)

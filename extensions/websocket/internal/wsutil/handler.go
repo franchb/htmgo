@@ -1,6 +1,7 @@
 package wsutil
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gobwas/ws"
@@ -23,7 +24,11 @@ func WsHttpHandler(opts *ws2.ExtensionOpts) http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		cc := r.Context().Value(h.RequestContextKey).(*h.RequestContext)
+		cc := h.GetRequestContext(r)
+		if cc == nil {
+			http.Error(w, "websocket: missing request context", http.StatusInternalServerError)
+			return
+		}
 		locator := cc.ServiceLocator()
 		manager := service.Get[SocketManager](locator)
 
@@ -48,9 +53,22 @@ func WsHttpHandler(opts *ws2.ExtensionOpts) http.HandlerFunc {
 		done := make(chan bool, 1000)
 		writer := make(WriterChan, 1000)
 
+		// Shared context for coordinating reader and writer shutdown.
+		ctx, cancel := context.WithCancel(context.Background())
+
 		wg := sync.WaitGroup{}
 
 		manager.Add(roomId, sessionId, writer, done)
+
+		// cleanup closes the connection and cancels the shared context.
+		// It is safe to call multiple times.
+		cleanupOnce := sync.Once{}
+		cleanup := func() {
+			cleanupOnce.Do(func() {
+				cancel()
+				conn.Close()
+			})
+		}
 
 		/*
 		 * This goroutine is responsible for writing messages to the client
@@ -59,21 +77,15 @@ func WsHttpHandler(opts *ws2.ExtensionOpts) http.HandlerFunc {
 		go func() {
 			defer manager.Disconnect(sessionId)
 			defer wg.Done()
-
-			defer func() {
-				for len(writer) > 0 {
-					<-writer
-				}
-				for len(done) > 0 {
-					<-done
-				}
-			}()
+			defer cleanup()
 
 			ticker := time.NewTicker(5 * time.Second)
 			defer ticker.Stop()
 
 			for {
 				select {
+				case <-ctx.Done():
+					return
 				case <-done:
 					fmt.Printf("closing connection: \n")
 					return
@@ -91,9 +103,16 @@ func WsHttpHandler(opts *ws2.ExtensionOpts) http.HandlerFunc {
 		/*
 		 * This goroutine is responsible for reading messages from the client
 		 */
+		wg.Add(1)
 		go func() {
-			defer conn.Close()
+			defer wg.Done()
+			defer cleanup()
 			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
 				msg, op, err := wsutil.ReadClientData(conn)
 				if err != nil {
 					return

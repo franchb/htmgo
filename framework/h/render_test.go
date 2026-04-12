@@ -3,6 +3,7 @@ package h
 import (
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -385,19 +386,16 @@ func TestCacheByKeyT2(t *testing.T) {
 
 func TestCacheByKeyConcurrent(t *testing.T) {
 	t.Parallel()
-	renderCount := 0
-	callCount := 0
+	var renderCount atomic.Int32
+	var callCount atomic.Int32
 	cachedItem := CachedPerKey(time.Hour, func() (any, GetElementFunc) {
+		n := callCount.Add(1)
 		key := "key"
-		if callCount == 3 {
+		if n == 3 {
 			key = "key2"
 		}
-		if callCount == 4 {
-			key = "key"
-		}
-		callCount++
 		return key, func() *Element {
-			renderCount++
+			renderCount.Add(1)
 			return Div(Text("hello"))
 		}
 	})
@@ -415,8 +413,10 @@ func TestCacheByKeyConcurrent(t *testing.T) {
 
 	wg.Wait()
 
-	assert.Equal(t, 5, callCount)
-	assert.Equal(t, 2, renderCount)
+	assert.Equal(t, int32(5), callCount.Load())
+	// Singleflight guarantees exactly one compute per unique key.
+	// There are 2 unique keys ("key" and "key2"), so exactly 2 renders.
+	assert.Equal(t, int32(2), renderCount.Load())
 }
 
 func TestCacheByKeyT1_2(t *testing.T) {

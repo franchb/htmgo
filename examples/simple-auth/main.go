@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/service"
 	"io/fs"
 	"net/http"
+
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
+
 	"simpleauth/__htmgo"
 	"simpleauth/internal/db"
 )
@@ -26,9 +28,7 @@ func main() {
 				panic(err)
 			}
 
-			http.FileServerFS(sub)
-
-			app.Router.Handle("/public/*", http.StripPrefix("/public", http.FileServerFS(sub)))
+			app.Router.Handle("/public/*", h.StaticCacheMiddleware(http.StripPrefix("/public", http.FileServerFS(sub))))
 			__htmgo.Register(app.Router)
 		},
 	})

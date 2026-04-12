@@ -18,7 +18,8 @@ type CodeBuilder struct {
 	validateTemplate      *template.Template
 	funcTemplate          *template.Template
 	interfaceTemplate     *template.Template
-	result                string
+	prepends              []string
+	builder               strings.Builder
 	astu                  *AstUtil
 }
 
@@ -81,14 +82,23 @@ type Case struct {
 }
 
 func (cb *CodeBuilder) Append(result string) *CodeBuilder {
-	cb.result += "\n"
-	cb.result += result
-	cb.result += "\n"
+	cb.builder.WriteString("\n")
+	cb.builder.WriteString(result)
+	cb.builder.WriteString("\n")
 	return cb
 }
 
 func (cb *CodeBuilder) String() string {
-	return cb.result
+	if len(cb.prepends) == 0 {
+		return cb.builder.String()
+	}
+	var out strings.Builder
+	for i := len(cb.prepends) - 1; i >= 0; i-- {
+		out.WriteString(cb.prepends[i])
+		out.WriteString("\n")
+	}
+	out.WriteString(cb.builder.String())
+	return out.String()
 }
 
 func (cb *CodeBuilder) SyncFromAst() *CodeBuilder {
@@ -102,7 +112,9 @@ func (cb *CodeBuilder) SyncToAst() *CodeBuilder {
 }
 
 func (cb *CodeBuilder) SetResult(result string) *CodeBuilder {
-	cb.result = result
+	cb.prepends = cb.prepends[:0]
+	cb.builder.Reset()
+	cb.builder.WriteString(result)
 	return cb
 }
 
@@ -134,7 +146,7 @@ func NewCodeBuilder(astu *AstUtil) *CodeBuilder {
 		{{else}}
 		return {{range $index, $ret := .Return}}{{if $index}}, {{end}}nil{{end}}
 		{{end}}
-	}   
+	}
 	`))
 
 	commandSwitchTemplate, _ := template.New("commandSwitch").Parse(`
@@ -190,7 +202,7 @@ func NewCodeBuilder(astu *AstUtil) *CodeBuilder {
 }
 
 func (cb *CodeBuilder) PrependLine(line string) {
-	cb.result = line + "\n" + cb.result
+	cb.prepends = append(cb.prepends, line)
 }
 
 func (cb *CodeBuilder) PrependLineF(format string, args ...interface{}) {
@@ -198,27 +210,31 @@ func (cb *CodeBuilder) PrependLineF(format string, args ...interface{}) {
 }
 
 func (cb *CodeBuilder) AppendLine(line string) {
-	cb.result += line + "\n"
+	cb.builder.WriteString(line)
+	cb.builder.WriteString("\n")
 }
 
 func (cb *CodeBuilder) PrependLineIfNotExist(format string) {
-	if !strings.Contains(cb.result, format) {
+	full := cb.String()
+	if !strings.Contains(full, format) {
 		cb.PrependLine(format)
 	}
 }
 
 func (cb *CodeBuilder) AppendLineIfNotExist(line string) {
-	if !strings.Contains(cb.result, line) {
-		cb.result += line + "\n"
+	full := cb.String()
+	if !strings.Contains(full, line) {
+		cb.builder.WriteString(line)
+		cb.builder.WriteString("\n")
 	}
 }
 
 func (cb *CodeBuilder) HasString(str string) bool {
-	return strings.Contains(cb.result, str)
+	return strings.Contains(cb.String(), str)
 }
 
 func (cb *CodeBuilder) HasStringF(str string, args ...interface{}) bool {
-	return strings.Contains(cb.result, fmt.Sprintf(str, args...))
+	return strings.Contains(cb.String(), fmt.Sprintf(str, args...))
 }
 
 func (cb *CodeBuilder) AppendLineF(format string, args ...interface{}) {
@@ -236,7 +252,8 @@ func (cb *CodeBuilder) ExecuteTemplate(template *template.Template, data map[str
 
 func (cb *CodeBuilder) AddImport(imp string) *CodeBuilder {
 	line := fmt.Sprintf(`import "%s"`, imp)
-	if !strings.Contains(cb.result, line) {
+	full := cb.String()
+	if !strings.Contains(full, line) {
 		cb.AppendLine(line)
 	}
 	return cb
@@ -261,7 +278,7 @@ func (cb *CodeBuilder) BuildNewCommandMethod(_struct Struct) string {
 			{Type: fmt.Sprintf("*%s", _struct.Name)},
 		},
 		Body: cb.Template(`
-			result := {{.ReturnType}}{} 
+			result := {{.ReturnType}}{}
     		{{range .Fields}}result.{{.Name}} = {{.Name}}
     		{{end}}{{if .Body}}
     		{{.Body}}{{end}}

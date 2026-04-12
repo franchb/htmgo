@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"reflect"
 	"runtime"
+	"sync"
 )
 
 type Partial struct {
@@ -91,8 +92,16 @@ func SwapManyXPartial(ctx *RequestContext, swaps ...SwapArg) *Partial {
 	)
 }
 
+var partialPathCache sync.Map
+
 func GetPartialPath(partial PartialFunc) string {
-	return "/" + runtime.FuncForPC(reflect.ValueOf(partial).Pointer()).Name()
+	ptr := reflect.ValueOf(partial).Pointer()
+	if cached, ok := partialPathCache.Load(ptr); ok {
+		return cached.(string)
+	}
+	path := "/" + runtime.FuncForPC(ptr).Name()
+	partialPathCache.Store(ptr, path)
+	return path
 }
 
 func GetPartialPathWithQs(partial func(ctx *RequestContext) *Partial, qs *Qs) string {

@@ -2,11 +2,13 @@ package main
 
 import (
 	"embed"
+	"io/fs"
+	"net/http"
+
 	"github.com/franchb/htmgo/framework/h"
 	"github.com/franchb/htmgo/framework/service"
 	_ "github.com/mattn/go-sqlite3"
-	"io/fs"
-	"net/http"
+
 	"todolist/__htmgo"
 	"todolist/ent"
 	"todolist/infrastructure/db"
@@ -33,9 +35,7 @@ func main() {
 				panic(err)
 			}
 
-			http.FileServerFS(sub)
-
-			app.Router.Handle("/public/*", http.StripPrefix("/public", http.FileServerFS(sub)))
+			app.Router.Handle("/public/*", h.StaticCacheMiddleware(http.StripPrefix("/public", http.FileServerFS(sub))))
 
 			__htmgo.Register(app.Router)
 		},

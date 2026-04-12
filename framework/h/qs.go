@@ -58,6 +58,11 @@ func (q *Qs) ToString() string {
 // The URL from the *RequestContext would normally be the url from an XHR request through htmx,
 // which is not the current browser url a visitor may be on.
 func GetQueryParam(ctx *RequestContext, key string) string {
+	// Parse fresh from the request URL. We intentionally do not use the
+	// parsedQuery cache here because callers may swap ctx.Request.URL
+	// between calls (e.g. the browser-URL fallback path below).
+	// The per-request QueryParam method uses the cache for the common
+	// single-URL-per-request hot path.
 	value, ok := ctx.Request.URL.Query()[key]
 	if value == nil || !ok {
 		current := ctx.currentBrowserUrl

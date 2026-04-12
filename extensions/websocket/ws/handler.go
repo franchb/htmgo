@@ -2,9 +2,11 @@ package ws
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/franchb/htmgo/extensions/websocket/internal/wsutil"
 	"github.com/franchb/htmgo/extensions/websocket/session"
-	"sync"
+	"github.com/puzpuzpuz/xsync/v3"
 )
 
 type MessageHandler struct {
@@ -18,48 +20,71 @@ func NewMessageHandler(manager *wsutil.SocketManager) *MessageHandler {
 func (h *MessageHandler) OnServerSideEvent(e ServerSideEvent) {
 	fmt.Printf("received server side event: %s\n", e.Event)
 	hashes, ok := serverEventNamesToHash.Load(e.Event)
+	if !ok {
+		return
+	}
 
-	// If we are not broadcasting to everyone, filter it down to just the current session that invoked the event
-	// TODO optimize this
+	// Collect the hashes we need to invoke. If not broadcasting to everyone,
+	// intersect with the hashes registered for this specific session.
+	type handlerEntry struct {
+		hash      KeyHash
+		sessionId session.Id
+		cb        Handler
+	}
+
+	var toRun []handlerEntry
+
 	if e.SessionId != "*" {
 		hashesForSession, ok2 := sessionIdToHashes.Load(e.SessionId)
-
 		if ok2 {
-			subset := make(map[KeyHash]bool)
-			for hash := range hashes {
-				if _, ok := hashesForSession[hash]; ok {
-					subset[hash] = true
+			hashesForSession.Range(func(hash KeyHash, _ bool) bool {
+				if _, found := hashes.Load(hash); found {
+					if cb, cbOk := handlers.Load(hash); cbOk {
+						if sid, sidOk := hashesToSessionId.Load(hash); sidOk {
+							toRun = append(toRun, handlerEntry{hash: hash, sessionId: sid, cb: cb})
+						}
+					}
+				}
+				return true
+			})
+		}
+	} else {
+		hashes.Range(func(hash KeyHash, _ bool) bool {
+			if cb, cbOk := handlers.Load(hash); cbOk {
+				if sid, sidOk := hashesToSessionId.Load(hash); sidOk {
+					toRun = append(toRun, handlerEntry{hash: hash, sessionId: sid, cb: cb})
 				}
 			}
-			hashes = subset
-		}
+			return true
+		})
 	}
 
-	if ok {
-		lock.Lock()
-		callingHandler.Store(true)
-		wg := sync.WaitGroup{}
-		for hash := range hashes {
-			cb, ok := handlers.Load(hash)
-			if ok {
-				wg.Add(1)
-				go func(e ServerSideEvent) {
-					defer wg.Done()
-					sessionId, ok2 := hashesToSessionId.Load(hash)
-					if ok2 {
-						cb(HandlerData{
-							SessionId: sessionId,
-							Socket:    h.manager.Get(string(sessionId)),
-							Manager:   h.manager,
-						})
-					}
-				}(e)
-			}
-		}
-		wg.Wait()
-		callingHandler.Store(false)
-		lock.Unlock()
+	if len(toRun) == 0 {
+		return
 	}
+
+	// Set the calling flag under the lock, then release before executing handlers.
+	lock.Lock()
+	callingHandler.Store(true)
+	lock.Unlock()
+
+	var wg sync.WaitGroup
+	for _, entry := range toRun {
+		wg.Add(1)
+		go func(he handlerEntry) {
+			defer wg.Done()
+			he.cb(HandlerData{
+				SessionId: he.sessionId,
+				Socket:    h.manager.Get(string(he.sessionId)),
+				Manager:   h.manager,
+			})
+		}(entry)
+	}
+	wg.Wait()
+
+	lock.Lock()
+	callingHandler.Store(false)
+	lock.Unlock()
 }
 
 func (h *MessageHandler) OnClientSideEvent(handlerId string, sessionId session.Id) {
@@ -81,10 +106,18 @@ func (h *MessageHandler) OnSocketDisconnected(event wsutil.SocketEvent) {
 	sessionId := session.Id(event.SessionId)
 	hashes, ok := sessionIdToHashes.Load(sessionId)
 	if ok {
-		for hash := range hashes {
+		hashes.Range(func(hash KeyHash, _ bool) bool {
 			hashesToSessionId.Delete(hash)
 			handlers.Delete(hash)
-		}
+			// Remove from all event-name maps to prevent unbounded growth.
+			serverEventNamesToHash.Range(func(_ string, eventHashes *xsync.MapOf[KeyHash, bool]) bool {
+				eventHashes.Delete(hash)
+				return true
+			})
+			return true
+		})
 		sessionIdToHashes.Delete(sessionId)
 	}
+	// Clean up session state.
+	session.Delete(sessionId)
 }

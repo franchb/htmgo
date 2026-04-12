@@ -1,16 +1,18 @@
 package util
 
-import (
-	"regexp"
-	"strings"
-)
-
-var re = regexp.MustCompile("([a-z])([A-Z])")
-
 // ConvertCamelToDash converts a camelCase string to dash-case
 func ConvertCamelToDash(s string) string {
-	// Find uppercase letters and prepend a dash
-	s = re.ReplaceAllString(s, "$1-$2")
-	// Convert the string to lower case
-	return strings.ToLower(s)
+	buf := make([]byte, 0, len(s)+len(s)/2)
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c >= 'A' && c <= 'Z' {
+			if i > 0 && s[i-1] >= 'a' && s[i-1] <= 'z' {
+				buf = append(buf, '-')
+			}
+			buf = append(buf, c+('a'-'A'))
+		} else {
+			buf = append(buf, c)
+		}
+	}
+	return string(buf)
 }
