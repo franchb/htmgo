@@ -473,32 +473,40 @@ func CheckPagesDirectory(path string) error {
 
 var (
 	cachedModuleName string
-	moduleNameOnce   sync.Once
+	moduleNameMu     sync.Mutex
 )
 
+// GetModuleName returns the module name from go.mod, caching the result on
+// success. Failures are NOT cached so that watch-mode retries succeed once
+// the project is fully initialized.
 func GetModuleName() string {
-	moduleNameOnce.Do(func() {
-		wd := process.GetWorkingDir()
-		modPath := filepath.Join(wd, "go.mod")
+	moduleNameMu.Lock()
+	defer moduleNameMu.Unlock()
 
-		if HasModuleFile(modPath) == false {
-			fmt.Fprintf(os.Stderr, "Module not found: go.mod file does not exist.")
-			return
-		}
+	if cachedModuleName != "" {
+		return cachedModuleName
+	}
 
-		checkDir := CheckPagesDirectory(wd)
-		if checkDir != nil {
-			fmt.Fprintf(os.Stderr, "%s", checkDir.Error())
-			return
-		}
+	wd := process.GetWorkingDir()
+	modPath := filepath.Join(wd, "go.mod")
 
-		goModBytes, err := os.ReadFile(modPath)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error reading go.mod: %v\n", err)
-			return
-		}
-		cachedModuleName = modfile.ModulePath(goModBytes)
-	})
+	if HasModuleFile(modPath) == false {
+		fmt.Fprintf(os.Stderr, "Module not found: go.mod file does not exist.")
+		return ""
+	}
+
+	checkDir := CheckPagesDirectory(wd)
+	if checkDir != nil {
+		fmt.Fprintf(os.Stderr, "%s", checkDir.Error())
+		return ""
+	}
+
+	goModBytes, err := os.ReadFile(modPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error reading go.mod: %v\n", err)
+		return ""
+	}
+	cachedModuleName = modfile.ModulePath(goModBytes)
 	return cachedModuleName
 }
 

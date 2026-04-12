@@ -233,15 +233,30 @@ func GetLogLevel() slog.Level {
 // StaticCacheMiddleware adds Cache-Control headers for static file requests.
 // Requests with a query string (e.g. ?v=hash) are treated as immutable with a
 // one-year max-age; all other static requests get a one-hour max-age.
+// Headers are only applied to successful responses (2xx/304) so that transient
+// 404s or errors are not cached by browsers or CDNs.
 func StaticCacheMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cacheHeader := "public, max-age=3600"
 		if r.URL.RawQuery != "" {
-			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-		} else {
-			w.Header().Set("Cache-Control", "public, max-age=3600")
+			cacheHeader = "public, max-age=31536000, immutable"
 		}
-		next.ServeHTTP(w, r)
+		sw := &cacheControlWriter{ResponseWriter: w, cacheHeader: cacheHeader}
+		next.ServeHTTP(sw, r)
 	})
+}
+
+// cacheControlWriter injects Cache-Control only for successful responses.
+type cacheControlWriter struct {
+	http.ResponseWriter
+	cacheHeader string
+}
+
+func (cw *cacheControlWriter) WriteHeader(code int) {
+	if code == http.StatusOK || code == http.StatusNotModified {
+		cw.ResponseWriter.Header().Set("Cache-Control", cw.cacheHeader)
+	}
+	cw.ResponseWriter.WriteHeader(code)
 }
 
 func (app *App) start() {

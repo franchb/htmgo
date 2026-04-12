@@ -171,6 +171,11 @@ func renderScripts(context *RenderContext, parent *Element) {
 			n++
 		}
 	}
+	// Zero out the tail to release stale Body/ChildOf references,
+	// preventing memory retention when RenderContext is pooled.
+	for i := n; i < len(context.scripts); i++ {
+		context.scripts[i] = ScriptEntry{}
+	}
 	context.scripts = context.scripts[:n]
 }
 

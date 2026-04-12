@@ -339,7 +339,7 @@ func (manager *SocketManager) writeTextRaw(writer WriterChan, message string) {
 	select {
 	case writer <- message:
 	case <-t.C:
-		fmt.Printf("could not send %s to channel after 3s\n", message)
+		fmt.Printf("could not send websocket message after 3s (bytes=%d)\n", len(message))
 	}
 }
 

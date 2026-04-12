@@ -25,6 +25,10 @@ func WsHttpHandler(opts *ws2.ExtensionOpts) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		cc := h.GetRequestContext(r)
+		if cc == nil {
+			http.Error(w, "websocket: missing request context", http.StatusInternalServerError)
+			return
+		}
 		locator := cc.ServiceLocator()
 		manager := service.Get[SocketManager](locator)
 
