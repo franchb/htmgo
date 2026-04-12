@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
@@ -127,60 +128,95 @@ func hasOnlyReqContextParam(funcType *ast.FuncType) bool {
 	return ident.Name == "h" && selectorExpr.Sel.Name == "RequestContext"
 }
 
-func findPublicFuncsReturningHPartial(dir string, predicate func(partial Partial) bool) ([]Partial, error) {
+// findPagesAndPartials walks the directory tree once, parsing each Go file a single time,
+// and classifies exported functions into pages (returning *h.Page) and partials (returning *h.Partial).
+// Files under pagesDir are checked for both pages and partials; all other files only for partials.
+func findPagesAndPartials(rootDir string, pagesDir string, partialPredicate func(partial Partial) bool) ([]Page, []Partial, error) {
+	var pages []Page
 	var partials []Partial
 	cwd := process.GetWorkingDir()
 
-	// Walk through the directory to find all Go files.
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	// Make pagesDir absolute so it matches the absolute paths from filepath.Walk.
+	absPagesDir := pagesDir
+	if !filepath.IsAbs(pagesDir) {
+		absPagesDir = filepath.Join(rootDir, pagesDir)
+	}
+	normalizedPagesDir := normalizePath(absPagesDir)
+
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Only process Go files.
 		if !strings.HasSuffix(path, ".go") {
 			return nil
 		}
 
-		// Parse the Go file.
 		fset := token.NewFileSet()
 		node, err := parser.ParseFile(fset, path, nil, parser.AllErrors)
 		if err != nil {
 			return err
 		}
 
-		// Inspect the AST for function declarations.
+		// Determine if this file is under the pages directory.
+		normalizedPath := normalizePath(path)
+		isUnderPages := strings.HasPrefix(normalizedPath, normalizedPagesDir+"/") ||
+			normalizedPath == normalizedPagesDir
+
 		ast.Inspect(node, func(n ast.Node) bool {
-			// Check if the node is a function declaration.
-			if funcDecl, ok := n.(*ast.FuncDecl); ok {
-				// Only consider exported (public) partials.
-				if funcDecl.Name.IsExported() {
-					// Check the return type.
-					if funcDecl.Type.Results != nil {
-						for _, result := range funcDecl.Type.Results.List {
-							// Check if the return type is *h.Partial.
-							if starExpr, ok := result.Type.(*ast.StarExpr); ok {
-								if selectorExpr, ok := starExpr.X.(*ast.SelectorExpr); ok {
-									// Check if the package name is 'h' and type is 'Partial'.
-									if ident, ok := selectorExpr.X.(*ast.Ident); ok && ident.Name == "h" {
-										if selectorExpr.Sel.Name == "Partial" && hasOnlyReqContextParam(funcDecl.Type) {
-											p := Partial{
-												Package:  node.Name.Name,
-												Path:     normalizePath(sliceCommonPrefix(cwd, path)),
-												Import:   sliceCommonPrefix(cwd, normalizePath(filepath.Dir(path))),
-												FuncName: funcDecl.Name.Name,
-											}
-											if predicate(p) {
-												partials = append(partials, p)
-											}
-											break
-										}
-									}
-								}
-							}
-						}
+			funcDecl, ok := n.(*ast.FuncDecl)
+			if !ok {
+				return true
+			}
+			if !funcDecl.Name.IsExported() {
+				return true
+			}
+			if funcDecl.Type.Results == nil {
+				return true
+			}
+			if !hasOnlyReqContextParam(funcDecl.Type) {
+				return true
+			}
+
+			for _, result := range funcDecl.Type.Results.List {
+				starExpr, ok := result.Type.(*ast.StarExpr)
+				if !ok {
+					continue
+				}
+				selectorExpr, ok := starExpr.X.(*ast.SelectorExpr)
+				if !ok {
+					continue
+				}
+				ident, ok := selectorExpr.X.(*ast.Ident)
+				if !ok || ident.Name != "h" {
+					continue
+				}
+
+				switch selectorExpr.Sel.Name {
+				case "Page":
+					if isUnderPages {
+						// Use paths relative to cwd to match the original behavior
+						// of findPublicFuncsReturningHPage which walked from "pages/".
+						relPath, _ := filepath.Rel(cwd, path)
+						pages = append(pages, Page{
+							Package:  node.Name.Name,
+							Import:   normalizePath(filepath.Dir(relPath)),
+							Path:     normalizePath(relPath),
+							FuncName: funcDecl.Name.Name,
+						})
+					}
+				case "Partial":
+					p := Partial{
+						Package:  node.Name.Name,
+						Path:     normalizePath(sliceCommonPrefix(cwd, path)),
+						Import:   sliceCommonPrefix(cwd, normalizePath(filepath.Dir(path))),
+						FuncName: funcDecl.Name.Name,
+					}
+					if partialPredicate(p) {
+						partials = append(partials, p)
 					}
 				}
+				break
 			}
 			return true
 		})
@@ -189,74 +225,10 @@ func findPublicFuncsReturningHPartial(dir string, predicate func(partial Partial
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return partials, nil
-}
-
-func findPublicFuncsReturningHPage(dir string) ([]Page, error) {
-	var pages = make([]Page, 0)
-
-	// Walk through the directory to find all Go files.
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Only process Go files.
-		if !strings.HasSuffix(path, ".go") {
-			return nil
-		}
-
-		// Parse the Go file.
-		fset := token.NewFileSet()
-		node, err := parser.ParseFile(fset, path, nil, parser.AllErrors)
-		if err != nil {
-			return err
-		}
-
-		// Inspect the AST for function declarations.
-		ast.Inspect(node, func(n ast.Node) bool {
-			// Check if the node is a function declaration.
-			if funcDecl, ok := n.(*ast.FuncDecl); ok {
-				// Only consider exported (public) functions.
-				if funcDecl.Name.IsExported() {
-					// Check the return type.
-					if funcDecl.Type.Results != nil {
-						for _, result := range funcDecl.Type.Results.List {
-							// Check if the return type is *h.Partial.
-							if starExpr, ok := result.Type.(*ast.StarExpr); ok {
-								if selectorExpr, ok := starExpr.X.(*ast.SelectorExpr); ok {
-									// Check if the package name is 'h' and type is 'Partial'.
-									if ident, ok := selectorExpr.X.(*ast.Ident); ok && ident.Name == "h" {
-										if selectorExpr.Sel.Name == "Page" && hasOnlyReqContextParam(funcDecl.Type) {
-											pages = append(pages, Page{
-												Package:  node.Name.Name,
-												Import:   normalizePath(filepath.Dir(path)),
-												Path:     normalizePath(path),
-												FuncName: funcDecl.Name.Name,
-											})
-											break
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			return true
-		})
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return pages, nil
+	return pages, partials, nil
 }
 
 func buildGetPartialFromContext(builder *CodeBuilder, partials []Partial) {
@@ -265,13 +237,13 @@ func buildGetPartialFromContext(builder *CodeBuilder, partials []Partial) {
 	var routerHandlerMethod = func(path string, caller string) string {
 		return fmt.Sprintf(`
 			router.Handle("%s", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		     cc := r.Context().Value(h.RequestContextKey).(*h.RequestContext)					
+		     cc := h.GetRequestContext(r)
          partial := %s(cc)
 					if partial == nil {
-						w.WriteHeader(404)	
+						w.WriteHeader(404)
 						return
-					}		
-					h.PartialView(w, partial)	
+					}
+					h.PartialView(w, partial)
 			}))`, path, caller)
 	}
 
@@ -292,17 +264,12 @@ func buildGetPartialFromContext(builder *CodeBuilder, partials []Partial) {
 	builder.AppendLine(registerFunction)
 }
 
-func writePartialsFile() {
+func writeGenerated() {
 	config := dirutil.GetConfig()
 
 	cwd := process.GetWorkingDir()
-	partialPath := filepath.Join(cwd)
-	partials, err := findPublicFuncsReturningHPartial(partialPath, func(partial Partial) bool {
+	pages, partials, err := findPagesAndPartials(cwd, "pages", func(partial Partial) bool {
 		return partial.FuncName != "GetPartialFromContext"
-	})
-
-	partials = h.Filter(partials, func(partial Partial) bool {
-		return !dirutil.IsGlobExclude(partial.Path, config.AutomaticPartialRoutingIgnore)
 	})
 
 	if err != nil {
@@ -310,6 +277,19 @@ func writePartialsFile() {
 		return
 	}
 
+	partials = h.Filter(partials, func(partial Partial) bool {
+		return !dirutil.IsGlobExclude(partial.Path, config.AutomaticPartialRoutingIgnore)
+	})
+
+	pages = h.Filter(pages, func(page Page) bool {
+		return !dirutil.IsGlobExclude(page.Path, config.AutomaticPageRoutingIgnore)
+	})
+
+	writePartialsFile(partials)
+	writePagesFile(pages)
+}
+
+func writePartialsFile(partials []Partial) {
 	builder := NewCodeBuilder(nil)
 	builder.AppendLine(GeneratedFileLine)
 	builder.AppendLine(PackageName)
@@ -327,7 +307,7 @@ func writePartialsFile() {
 
 	buildGetPartialFromContext(builder, partials)
 
-	WriteFile(filepath.Join(GeneratedDirName, "partials-generated.go"), func(content *ast.File) string {
+	WriteFile(filepath.Join(GeneratedDirName, "partials-generated.go"), func() string {
 		return builder.String()
 	})
 }
@@ -364,20 +344,12 @@ func formatRoute(path string) string {
 	return strings.ReplaceAll(filepath.Clean(path), `\`, "/")
 }
 
-func writePagesFile() {
-	config := dirutil.GetConfig()
-
+func writePagesFile(pages []Page) {
 	builder := NewCodeBuilder(nil)
 	builder.AppendLine(GeneratedFileLine)
 	builder.AppendLine(PackageName)
 	builder.AddImport(HttpModuleName)
 	builder.AddImport(ChiModuleName)
-
-	pages, _ := findPublicFuncsReturningHPage("pages")
-
-	pages = h.Filter(pages, func(page Page) bool {
-		return !dirutil.IsGlobExclude(page.Path, config.AutomaticPageRoutingIgnore)
-	})
 
 	if len(pages) > 0 {
 		builder.AddImport(ModuleName)
@@ -402,7 +374,7 @@ func writePagesFile() {
 		body += fmt.Sprintf(
 			`
 			router.Get("%s", func(writer http.ResponseWriter, request *http.Request) {
-				cc := request.Context().Value(h.RequestContextKey).(*h.RequestContext)
+				cc := h.GetRequestContext(request)
 				h.HtmlView(writer, %s(cc))
 			})
 			`, formatRoute(page.Path), call,
@@ -419,7 +391,7 @@ func writePagesFile() {
 
 	builder.Append(builder.BuildFunction(f))
 
-	WriteFile(filepath.Join(GeneratedDirName, "pages-generated.go"), func(content *ast.File) string {
+	WriteFile(filepath.Join(GeneratedDirName, "pages-generated.go"), func() string {
 		return builder.String()
 	})
 }
@@ -477,7 +449,7 @@ func writeAssetsFile() {
 	str := builder.String()
 
 	if hasAssets {
-		WriteFile(filepath.Join(GeneratedDirName, "assets", "assets-generated.go"), func(content *ast.File) string {
+		WriteFile(filepath.Join(GeneratedDirName, "assets", "assets-generated.go"), func() string {
 			return str
 		})
 	}
@@ -499,28 +471,35 @@ func CheckPagesDirectory(path string) error {
 	return nil
 }
 
+var (
+	cachedModuleName string
+	moduleNameOnce   sync.Once
+)
+
 func GetModuleName() string {
-	wd := process.GetWorkingDir()
-	modPath := filepath.Join(wd, "go.mod")
+	moduleNameOnce.Do(func() {
+		wd := process.GetWorkingDir()
+		modPath := filepath.Join(wd, "go.mod")
 
-	if HasModuleFile(modPath) == false {
-		fmt.Fprintf(os.Stderr, "Module not found: go.mod file does not exist.")
-		return ""
-	}
+		if HasModuleFile(modPath) == false {
+			fmt.Fprintf(os.Stderr, "Module not found: go.mod file does not exist.")
+			return
+		}
 
-	checkDir := CheckPagesDirectory(wd)
-	if checkDir != nil {
-		fmt.Fprintf(os.Stderr, "%s", checkDir.Error())
-		return ""
-	}
+		checkDir := CheckPagesDirectory(wd)
+		if checkDir != nil {
+			fmt.Fprintf(os.Stderr, "%s", checkDir.Error())
+			return
+		}
 
-	goModBytes, err := os.ReadFile(modPath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error reading go.mod: %v\n", err)
-		return ""
-	}
-	modName := modfile.ModulePath(goModBytes)
-	return modName
+		goModBytes, err := os.ReadFile(modPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error reading go.mod: %v\n", err)
+			return
+		}
+		cachedModuleName = modfile.ModulePath(goModBytes)
+	})
+	return cachedModuleName
 }
 
 func GenAst(flags ...process.RunFlag) error {
@@ -530,11 +509,10 @@ func GenAst(flags ...process.RunFlag) error {
 		}
 		return fmt.Errorf("error getting module name")
 	}
-	writePartialsFile()
-	writePagesFile()
+	writeGenerated()
 	writeAssetsFile()
 
-	WriteFile("__htmgo/setup-generated.go", func(content *ast.File) string {
+	WriteFile("__htmgo/setup-generated.go", func() string {
 
 		return fmt.Sprintf(`
 			// Package __htmgo THIS FILE IS GENERATED. DO NOT EDIT.

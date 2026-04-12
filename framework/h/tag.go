@@ -81,7 +81,6 @@ func Meta(name string, content string) *Element {
 			"name", name,
 			"content", content,
 		),
-		children: make([]Ren, 0),
 	}
 }
 
@@ -92,7 +91,6 @@ func LinkWithVersion(href string, rel string, version string) *Element {
 			"href", href+"?v="+version,
 			"rel", rel,
 		),
-		children: make([]Ren, 0),
 	}
 }
 
@@ -103,7 +101,6 @@ func Link(href string, rel string) *Element {
 			"href", href,
 			"rel", rel,
 		),
-		children: make([]Ren, 0),
 	}
 }
 
@@ -113,7 +110,6 @@ func ScriptWithVersion(url string, version string) *Element {
 		attributes: AttributePairs(
 			"src", url+"?v="+version,
 		),
-		children: make([]Ren, 0),
 	}
 }
 
@@ -123,7 +119,6 @@ func Script(url string) *Element {
 		attributes: AttributePairs(
 			"src", url,
 		),
-		children: make([]Ren, 0),
 	}
 }
 

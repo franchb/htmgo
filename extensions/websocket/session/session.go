@@ -66,6 +66,11 @@ func Set(sessionId Id, key string, value any) {
 	actual.Store(key, value)
 }
 
+// Delete removes the session and all its associated state from the cache.
+func Delete(sessionId Id) {
+	cache.Delete(sessionId)
+}
+
 func UseState[T any](sessionId Id, key string, initial T) (func() T, func(T)) {
 	var get = func() T {
 		return Get[T](sessionId, key, initial)

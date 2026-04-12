@@ -10,12 +10,14 @@ import (
 func TestBaseExtensions(t *testing.T) {
 	// Test when not in development
 	os.Unsetenv("ENV")
+	resetEnvCache()
 	result := BaseExtensions()
 	expected := "path-deps, response-targets, mutation-error, htmgo, sse"
 	assert.Equal(t, expected, result)
 
 	// Test when in development
 	os.Setenv("ENV", "development")
+	resetEnvCache()
 	result = BaseExtensions()
 	expected = "path-deps, response-targets, mutation-error, htmgo, sse, livereload"
 	assert.Equal(t, expected, result)

@@ -58,7 +58,7 @@ func GroupByOrdered[T any, K comparable](slice []T, key func(item T) K) *ordered
 
 // Filter returns a new slice with only items that match the predicate.
 func Filter[T any](slice []T, predicate func(item T) bool) []T {
-	var result []T
+	result := make([]T, 0, len(slice))
 	for _, v := range slice {
 		if predicate(v) {
 			result = append(result, v)
@@ -69,9 +69,9 @@ func Filter[T any](slice []T, predicate func(item T) bool) []T {
 
 // Map returns a new slice with the results of the mapper function.
 func Map[T, U any](slice []T, mapper func(item T) U) []U {
-	var result []U
-	for _, v := range slice {
-		result = append(result, mapper(v))
+	result := make([]U, len(slice))
+	for i, v := range slice {
+		result[i] = mapper(v)
 	}
 	return result
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
@@ -28,10 +29,11 @@ type RequestContext struct {
 	hxTriggerName     string
 	hxTriggerId       string
 	kv                map[string]interface{}
+	parsedQuery       url.Values
 }
 
 func GetRequestContext(r *http.Request) *RequestContext {
-	return r.Context().Value(RequestContextKey).(*RequestContext)
+	return r.Context().Value(requestContextKey).(*RequestContext)
 }
 
 func (c *RequestContext) SetCookie(cookie *http.Cookie) {
@@ -78,7 +80,10 @@ func (c *RequestContext) UrlParam(key string) string {
 }
 
 func (c *RequestContext) QueryParam(key string) string {
-	return c.Request.URL.Query().Get(key)
+	if c.parsedQuery == nil {
+		c.parsedQuery = c.Request.URL.Query()
+	}
+	return c.parsedQuery.Get(key)
 }
 
 func (c *RequestContext) IsBoosted() bool {
@@ -153,6 +158,12 @@ func Start(opts AppOpts) {
 	instance.start()
 }
 
+// requestContextKeyType is an unexported type used as a context key to avoid collisions.
+type requestContextKeyType struct{}
+
+var requestContextKey = requestContextKeyType{}
+
+// Deprecated: RequestContextKey is the legacy string context key. Use GetRequestContext instead.
 const RequestContextKey = "htmgo.request.context"
 
 func populateHxFields(cc *RequestContext) {
@@ -168,7 +179,10 @@ func populateHxFields(cc *RequestContext) {
 func (app *App) UseWithContext(h func(w http.ResponseWriter, r *http.Request, context map[string]any)) {
 	app.Router.Use(func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cc := r.Context().Value(RequestContextKey).(*RequestContext)
+			cc := r.Context().Value(requestContextKey).(*RequestContext)
+			if cc.kv == nil {
+				cc.kv = make(map[string]interface{})
+			}
 			h(w, r, cc.kv)
 			handler.ServeHTTP(w, r)
 		})
@@ -178,7 +192,7 @@ func (app *App) UseWithContext(h func(w http.ResponseWriter, r *http.Request, co
 func (app *App) Use(h func(ctx *RequestContext)) {
 	app.Router.Use(func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cc := r.Context().Value(RequestContextKey).(*RequestContext)
+			cc := r.Context().Value(requestContextKey).(*RequestContext)
 			h(cc)
 			handler.ServeHTTP(w, r)
 		})
@@ -203,20 +217,45 @@ func GetLogLevel() slog.Level {
 	}
 }
 
+// StaticCacheMiddleware adds Cache-Control headers for static file requests.
+// Requests with a query string (e.g. ?v=hash) are treated as immutable with a
+// one-year max-age; all other static requests get a one-hour max-age.
+func StaticCacheMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.RawQuery != "" {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		} else {
+			w.Header().Set("Cache-Control", "public, max-age=3600")
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (app *App) start() {
 
 	slog.SetLogLoggerLevel(GetLogLevel())
 
+	// Determine the public asset path prefix used to serve static files.
+	publicPrefix := "/public"
+
 	app.Router.Use(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip RequestContext creation for static file requests.
+			if strings.HasPrefix(r.URL.Path, publicPrefix+"/") || r.URL.Path == publicPrefix {
+				h.ServeHTTP(w, r)
+				return
+			}
+
 			cc := &RequestContext{
 				locator:  app.Opts.ServiceLocator,
 				Request:  r,
 				Response: w,
-				kv:       make(map[string]interface{}),
 			}
 			populateHxFields(cc)
-			ctx := context.WithValue(r.Context(), RequestContextKey, cc)
+			ctx := context.WithValue(r.Context(), requestContextKey, cc)
+			// Also store with legacy string key for backward compat with generated code
+			// and external consumers that use h.RequestContextKey directly.
+			ctx = context.WithValue(ctx, RequestContextKey, cc)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		})
 	})

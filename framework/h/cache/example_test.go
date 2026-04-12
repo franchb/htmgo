@@ -134,6 +134,14 @@ type DistributedCacheAdapter struct {
 	cache *MockDistributedCache
 }
 
+func (a *DistributedCacheAdapter) Get(key any) (string, bool) {
+	a.cache.mutex.RLock()
+	defer a.cache.mutex.RUnlock()
+	keyStr := fmt.Sprintf("htmgo:%v", key)
+	val, ok := a.cache.data[keyStr]
+	return val, ok
+}
+
 func (a *DistributedCacheAdapter) Set(key any, value string, ttl time.Duration) {
 	a.cache.mutex.Lock()
 	defer a.cache.mutex.Unlock()

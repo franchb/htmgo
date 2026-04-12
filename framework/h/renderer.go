@@ -1,7 +1,6 @@
 package h
 
 import (
-	"fmt"
 	"github.com/franchb/htmgo/framework/hx"
 	"html"
 	"html/template"
@@ -47,16 +46,17 @@ type RenderContext struct {
 }
 
 func (ctx *RenderContext) AddScript(funcName string, body string) {
-	script := fmt.Sprintf(`
-	<script id="%s">
-		function %s(self, event) {
-				let e = event;
-				%s
-		}
-	</script>`, funcName, funcName, body)
+	var sb strings.Builder
+	sb.WriteString("\n\t<script id=\"")
+	sb.WriteString(funcName)
+	sb.WriteString("\">\n\t\tfunction ")
+	sb.WriteString(funcName)
+	sb.WriteString("(self, event) {\n\t\t\t\tlet e = event;\n\t\t\t\t")
+	sb.WriteString(body)
+	sb.WriteString("\n\t\t}\n\t</script>")
 
 	ctx.scripts = append(ctx.scripts, ScriptEntry{
-		Body:    script,
+		Body:    sb.String(),
 		ChildOf: ctx.currentElement,
 	})
 }
@@ -85,53 +85,18 @@ func (node *Element) Render(context *RenderContext) {
 		context.builder.WriteString("<")
 		context.builder.WriteString(node.tag)
 		node.attributes.Each(func(key string, value string) {
-			NewAttribute(key, value).Render(context)
+			context.builder.WriteString(" ")
+			context.builder.WriteString(key)
+			if value != "" {
+				context.builder.WriteString(`="`)
+				context.builder.WriteString(html.EscapeString(value))
+				context.builder.WriteString(`"`)
+			}
 		})
 	}
 
-	totalChildren := 0
-	shouldFlatten := false
-	for _, child := range node.children {
-		switch c := child.(type) {
-		case *ChildList:
-			shouldFlatten = true
-			totalChildren += len(c.Children)
-		default:
-			totalChildren++
-		}
-	}
-
-	if shouldFlatten {
-		// first pass, flatten the children
-		flatChildren := make([]Ren, totalChildren)
-		index := 0
-		for _, child := range node.children {
-			switch c := child.(type) {
-			case *ChildList:
-				for _, ren := range c.Children {
-					flatChildren[index] = ren
-					index++
-				}
-			default:
-				flatChildren[index] = child
-				index++
-			}
-		}
-
-		node.children = flatChildren
-	}
-
-	// second pass, render any attributes within the tag
-	for _, child := range node.children {
-		switch child.(type) {
-		case *AttributeMapOrdered:
-			child.Render(context)
-		case *AttributeR:
-			child.Render(context)
-		case *LifeCycle:
-			child.Render(context)
-		}
-	}
+	// Single-pass: render attribute-like children (within the tag)
+	renderChildAttrs(context, node.children)
 
 	// close the tag
 	if node.tag != "" {
@@ -143,19 +108,8 @@ func (node *Element) Render(context *RenderContext) {
 
 	// void elements do not have children
 	if !voidTags[node.tag] {
-		// render the children elements that are not attributes
-		for _, child := range node.children {
-			switch child.(type) {
-			case *AttributeMapOrdered:
-				continue
-			case *AttributeR:
-				continue
-			case *LifeCycle:
-				continue
-			default:
-				child.Render(context)
-			}
-		}
+		// render the content children, handling ChildList inline
+		renderChildContent(context, node.children)
 	}
 
 	if node.tag != "" {
@@ -168,19 +122,56 @@ func (node *Element) Render(context *RenderContext) {
 	}
 }
 
+// renderChildAttrs renders only attribute-like children from the list,
+// recursing into ChildList without flattening.
+func renderChildAttrs(context *RenderContext, children []Ren) {
+	for _, child := range children {
+		switch c := child.(type) {
+		case *AttributeMapOrdered:
+			c.Render(context)
+		case *AttributeR:
+			c.Render(context)
+		case *LifeCycle:
+			c.Render(context)
+		case *ChildList:
+			renderChildAttrs(context, c.Children)
+		}
+	}
+}
+
+// renderChildContent renders non-attribute children from the list,
+// recursing into ChildList without flattening.
+func renderChildContent(context *RenderContext, children []Ren) {
+	for _, child := range children {
+		switch child.(type) {
+		case *AttributeMapOrdered:
+			continue
+		case *AttributeR:
+			continue
+		case *LifeCycle:
+			continue
+		case *ChildList:
+			renderChildContent(context, child.(*ChildList).Children)
+		default:
+			child.Render(context)
+		}
+	}
+}
+
 func renderScripts(context *RenderContext, parent *Element) {
 	if len(context.scripts) == 0 {
 		return
 	}
-	notWritten := make([]ScriptEntry, 0)
+	n := 0
 	for _, script := range context.scripts {
 		if script.ChildOf == parent {
 			context.builder.WriteString(script.Body)
 		} else {
-			notWritten = append(notWritten, script)
+			context.scripts[n] = script
+			n++
 		}
 	}
-	context.scripts = notWritten
+	context.scripts = context.scripts[:n]
 }
 
 func (a *AttributeR) Render(context *RenderContext) {
@@ -222,7 +213,13 @@ func (p *Partial) Render(context *RenderContext) {
 
 func (m *AttributeMapOrdered) Render(context *RenderContext) {
 	m.Each(func(key string, value string) {
-		NewAttribute(key, value).Render(context)
+		context.builder.WriteString(" ")
+		context.builder.WriteString(key)
+		if value != "" {
+			context.builder.WriteString(`="`)
+			context.builder.WriteString(html.EscapeString(value))
+			context.builder.WriteString(`"`)
+		}
 	})
 }
 
@@ -236,18 +233,26 @@ func (l *LifeCycle) fromAttributeMap(event string, key string, value string, con
 }
 
 func (l *LifeCycle) Render(context *RenderContext) {
-	m := make(map[string]string)
+	type eventEntry struct {
+		event string
+		sb    strings.Builder
+	}
+
+	entries := make([]eventEntry, 0, len(l.handlers))
 
 	for event, commands := range l.handlers {
-		m[event] = ""
+		var sb strings.Builder
 
 		for _, command := range commands {
 			switch c := command.(type) {
 			case SimpleJsCommand:
-				m[event] += fmt.Sprintf("var self=this;var e=event;%s;", c.Command)
+				sb.WriteString("var self=this;var e=event;")
+				sb.WriteString(c.Command)
+				sb.WriteString(";")
 			case ComplexJsCommand:
 				context.AddScript(c.TempFuncName, c.Command)
-				m[event] += fmt.Sprintf("%s(this, event);", c.TempFuncName)
+				sb.WriteString(c.TempFuncName)
+				sb.WriteString("(this, event);")
 			case *AttributeMapOrdered:
 				c.Each(func(key string, value string) {
 					l.fromAttributeMap(event, key, value, context)
@@ -257,19 +262,16 @@ func (l *LifeCycle) Render(context *RenderContext) {
 			}
 		}
 
-	}
-
-	children := make([]Ren, 0)
-
-	for event, value := range m {
-		if value != "" {
-			children = append(children, Attribute(event, value))
+		if sb.Len() > 0 {
+			entries = append(entries, eventEntry{event: event, sb: sb})
 		}
 	}
 
-	if len(children) == 0 {
+	if len(entries) == 0 {
 		return
 	}
 
-	Children(children...).Render(context)
+	for _, e := range entries {
+		Attribute(e.event, e.sb.String()).Render(context)
+	}
 }

@@ -1,16 +1,18 @@
 package main
 
 import (
+	"io/fs"
+	"log"
+	"net/http"
+
 	"github.com/franchb/htmgo/framework/h"
 	"github.com/franchb/htmgo/framework/service"
+
 	"htmgo-site/__htmgo"
 	"htmgo-site/internal/cache"
 	"htmgo-site/internal/markdown"
 	"htmgo-site/internal/sitemap"
 	"htmgo-site/internal/urlhelper"
-	"io/fs"
-	"log"
-	"net/http"
 )
 
 func main() {
@@ -42,8 +44,6 @@ func main() {
 				panic(err)
 			}
 
-			http.FileServerFS(sub)
-
 			app.Router.Handle("/sitemap.xml", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				s, err := sitemap.Generate(app.Router)
 				if err != nil {
@@ -54,7 +54,7 @@ func main() {
 				w.Write(s)
 			}))
 
-			app.Router.Handle("/public/*", http.StripPrefix("/public", http.FileServerFS(sub)))
+			app.Router.Handle("/public/*", h.StaticCacheMiddleware(http.StripPrefix("/public", http.FileServerFS(sub))))
 
 			__htmgo.Register(app.Router)
 		},

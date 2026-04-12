@@ -64,19 +64,30 @@ type SocketManager struct {
 	totalMessages     atomic.Int64
 	messagesPerSecond int
 	secondsElapsed    int
+	done              chan struct{}
 }
 
 func (manager *SocketManager) StartMetrics() {
 	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
 		for {
-			time.Sleep(time.Second)
-			manager.lock.Lock()
-			manager.secondsElapsed++
-			totalMessages := manager.totalMessages.Load()
-			manager.messagesPerSecond = int(float64(totalMessages) / float64(manager.secondsElapsed))
-			manager.lock.Unlock()
+			select {
+			case <-manager.done:
+				return
+			case <-ticker.C:
+				manager.lock.Lock()
+				manager.secondsElapsed++
+				totalMessages := manager.totalMessages.Load()
+				manager.messagesPerSecond = int(float64(totalMessages) / float64(manager.secondsElapsed))
+				manager.lock.Unlock()
+			}
 		}
 	}()
+}
+
+func (manager *SocketManager) Close() {
+	close(manager.done)
 }
 
 func (manager *SocketManager) Metrics() ManagerMetrics {
@@ -131,6 +142,7 @@ func NewSocketManager(opts *opts.ExtensionOpts) *SocketManager {
 		idToRoom:          xsync.NewMapOf[string, string](),
 		opts:              opts,
 		goroutinesRunning: atomic.Int32{},
+		done:              make(chan struct{}),
 	}
 }
 
@@ -186,21 +198,13 @@ func (manager *SocketManager) Listen(listener chan SocketEvent) {
 }
 
 func (manager *SocketManager) dispatch(event SocketEvent) {
-	done := make(chan struct{}, 1)
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case <-time.After(5 * time.Second):
-				fmt.Printf("havent dispatched event after 5s, chan blocked: %s\n", event.Type)
-			}
-		}
-	}()
 	for _, listener := range manager.listeners {
-		listener <- event
+		select {
+		case listener <- event:
+		default:
+			fmt.Printf("ws-extension: listener channel full, dropping event: %s\n", event.Type)
+		}
 	}
-	done <- struct{}{}
 }
 
 func (manager *SocketManager) OnMessage(id string, message map[string]any) {
@@ -221,7 +225,7 @@ func (manager *SocketManager) OnMessage(id string, message map[string]any) {
 func (manager *SocketManager) Add(roomId string, id string, writer WriterChan, done DoneChan) {
 	manager.idToRoom.Store(id, roomId)
 
-	sockets, ok := manager.sockets.LoadOrCompute(roomId, func() *xsync.MapOf[string, SocketConnection] {
+	sockets, _ := manager.sockets.LoadOrCompute(roomId, func() *xsync.MapOf[string, SocketConnection] {
 		return xsync.NewMapOf[string, SocketConnection]()
 	})
 
@@ -314,11 +318,19 @@ func (manager *SocketManager) writeCloseRaw(writer WriterChan, message string) {
 }
 
 func (manager *SocketManager) writeTextRaw(writer WriterChan, message string) {
-	timeout := 3 * time.Second
+	// Fast path: try non-blocking send first to avoid timer allocation.
 	select {
 	case writer <- message:
-	case <-time.After(timeout):
-		fmt.Printf("could not send %s to channel after %s\n", message, timeout)
+		return
+	default:
+	}
+	// Slow path: wait with a reusable timer.
+	t := time.NewTimer(3 * time.Second)
+	defer t.Stop()
+	select {
+	case writer <- message:
+	case <-t.C:
+		fmt.Printf("could not send %s to channel after 3s\n", message)
 	}
 }
 
@@ -337,12 +349,18 @@ func (manager *SocketManager) BroadcastText(roomId string, message string, predi
 		return
 	}
 
+	var wg sync.WaitGroup
 	sockets.Range(func(id string, conn SocketConnection) bool {
 		if predicate(conn) {
-			manager.writeText(conn, message)
+			wg.Add(1)
+			go func(c SocketConnection) {
+				defer wg.Done()
+				manager.writeText(c, message)
+			}(conn)
 		}
 		return true
 	})
+	wg.Wait()
 }
 
 func (manager *SocketManager) SendHtml(id string, message string) bool {

@@ -51,16 +51,20 @@ func (l *Locator) getCache(key string) any {
 	return l.cache[key]
 }
 
+// getTypeKey returns the string representation of the type T without allocating
+// an instance. Requires Go 1.22+.
+func getTypeKey[T any]() string {
+	return reflect.TypeFor[T]().String()
+}
+
 // Get returns a service from the locator
 // If the service is not found, log.Fatalf is called
 // If the service is a singleton, it will be cached after first invocation
 func Get[T any](locator *Locator) *T {
+	t := getTypeKey[T]()
+
 	locator.mutex.RLock()
-	i := new(T)
-	t := reflect.TypeOf(i).String()
-
 	cached := locator.getCache(t)
-
 	if cached != nil {
 		locator.mutex.RUnlock()
 		return cached.(*T)
@@ -68,16 +72,24 @@ func Get[T any](locator *Locator) *T {
 
 	entry, ok := locator.services[t]
 	if !ok {
+		locator.mutex.RUnlock()
 		log.Fatalf("%s is not registered in the service locator", t)
 	}
-	cb := entry.cb().(*T)
 	locator.mutex.RUnlock()
-	locator.mutex.Lock()
+
 	if entry.lifecycle == Singleton {
-		locator.setCache(t, cb)
+		// Double-checked locking: re-check cache after acquiring write lock.
+		locator.mutex.Lock()
+		defer locator.mutex.Unlock()
+		if cached := locator.getCache(t); cached != nil {
+			return cached.(*T)
+		}
+		value := entry.cb().(*T)
+		locator.setCache(t, value)
+		return value
 	}
-	locator.mutex.Unlock()
-	return cb
+
+	return entry.cb().(*T)
 }
 
 // Set registers a service with the locator

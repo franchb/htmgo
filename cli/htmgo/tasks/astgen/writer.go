@@ -1,18 +1,16 @@
 package astgen
 
 import (
-	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
-	"go/ast"
 	"go/format"
-	"go/parser"
-	"go/token"
 	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
+
+	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
 )
 
-func WriteFile(path string, cb func(content *ast.File) string) {
+func WriteFile(path string, cb func() string) {
 	currentDir := process.GetWorkingDir()
 
 	path = filepath.Join(currentDir, path)
@@ -23,51 +21,19 @@ func WriteFile(path string, cb func(content *ast.File) string) {
 
 	os.MkdirAll(dir, 0755)
 
-	bytes, err := os.ReadFile(path)
-
-	if err != nil {
-		_, err = os.Create(path)
-		bytes = make([]byte, 0)
-		if err != nil {
-			PanicF("Failed to create file: %v", err)
-		}
-	}
-
-	// Create a FileSet to manage source file positions
-	fset := token.NewFileSet()
-
-	// Parse the file into an AST
-	f, _ := parser.ParseFile(fset, path, nil, parser.AllErrors)
-	if f == nil {
-		f = &ast.File{
-			Name:  ast.NewIdent("replacemeplz"), // Set the package name
-			Decls: []ast.Decl{},                 // No declarations initially
-		}
-	}
-
-	bytes = []byte(cb(f))
+	bytes := []byte(cb())
 
 	slog.Debug("astgen.WriteFile", slog.String("path", path), slog.String("content", string(bytes)))
 
-	formatEnabled := true
+	var err error
+	bytes, err = format.Source(bytes)
 
-	if formatEnabled {
-		bytes, err = format.Source(bytes)
-
-		if err != nil {
-			log.Printf("Failed to format source: %v\n", err.Error())
-			data := string(bytes)
-			println(data)
-			return
-		}
+	if err != nil {
+		log.Printf("Failed to format source: %v\n", err.Error())
+		data := string(bytes)
+		println(data)
+		return
 	}
-
-	cmd := "git add " + path
-	process.Run(process.NewRawCommand(
-		cmd,
-		cmd,
-		process.Silent,
-	))
 
 	// Save the buffer to a file
 	err = os.WriteFile(path, bytes, 0644)

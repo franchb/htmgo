@@ -19,7 +19,7 @@ func Handle() http.HandlerFunc {
 		w.Header().Set("Connection", "keep-alive")
 		w.Header().Set("Access-Control-Allow-Origin", "*") // Optional for CORS
 
-		cc := r.Context().Value(h.RequestContextKey).(*h.RequestContext)
+		cc := h.GetRequestContext(r)
 		locator := cc.ServiceLocator()
 		manager := service.Get[SocketManager](locator)
 

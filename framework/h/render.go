@@ -2,6 +2,7 @@ package h
 
 import (
 	"strings"
+	"sync"
 )
 
 type Ren interface {
@@ -14,18 +15,31 @@ type RenderOptions struct {
 
 type RenderOpt func(context *RenderContext, opt *RenderOptions)
 
+var withDocTypeOpt RenderOpt = func(context *RenderContext, opt *RenderOptions) {
+	opt.doctype = true
+}
+
 func WithDocType() RenderOpt {
-	return func(context *RenderContext, opt *RenderOptions) {
-		opt.doctype = true
-	}
+	return withDocTypeOpt
+}
+
+var renderContextPool = sync.Pool{
+	New: func() any {
+		return &RenderContext{
+			builder: &strings.Builder{},
+		}
+	},
 }
 
 // Render renders the given node recursively, and returns the resulting string.
 func Render(node Ren, opts ...RenderOpt) string {
-	builder := &strings.Builder{}
-	context := &RenderContext{
-		builder: builder,
+	context := renderContextPool.Get().(*RenderContext)
+	context.builder.Reset()
+	if context.scripts != nil {
+		context.scripts = context.scripts[:0]
 	}
+	context.currentElement = nil
+
 	options := &RenderOptions{}
 
 	for _, opt := range opts {
@@ -33,9 +47,11 @@ func Render(node Ren, opts ...RenderOpt) string {
 	}
 
 	if options.doctype {
-		builder.WriteString("<!DOCTYPE html>")
+		context.builder.WriteString("<!DOCTYPE html>")
 	}
 
 	node.Render(context)
-	return builder.String()
+	result := context.builder.String()
+	renderContextPool.Put(context)
+	return result
 }

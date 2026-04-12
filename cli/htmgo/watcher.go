@@ -1,20 +1,24 @@
 package main
 
 import (
-	"github.com/fsnotify/fsnotify"
-	"github.com/google/uuid"
-	"github.com/franchb/htmgo/cli/htmgo/internal"
-	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
-	"github.com/franchb/htmgo/cli/htmgo/tasks/module"
+	"fmt"
 	"log"
 	"log/slog"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/franchb/htmgo/cli/htmgo/internal"
+	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
+	"github.com/franchb/htmgo/cli/htmgo/tasks/module"
 )
 
 func startWatcher(cb func(version string, file []*fsnotify.Event)) {
+	var eventsMu sync.Mutex
 	events := make([]*fsnotify.Event, 0)
 	debouncer := internal.NewDebouncer(500 * time.Millisecond)
 	config := dirutil.GetConfig()
@@ -70,18 +74,23 @@ func startWatcher(cb func(version string, file []*fsnotify.Event)) {
 					if !dirutil.IsGlobMatch(event.Name, config.WatchFiles, config.WatchIgnore) {
 						continue
 					}
+					eventsMu.Lock()
 					events = append(events, &event)
+					eventsMu.Unlock()
 					debouncer.Do(func() {
+						eventsMu.Lock()
+						toProcess := events
+						events = make([]*fsnotify.Event, 0)
+						eventsMu.Unlock()
 						seen := make(map[string]bool)
 						dedupe := make([]*fsnotify.Event, 0)
-						for _, e := range events {
+						for _, e := range toProcess {
 							if _, ok := seen[e.Name]; !ok {
 								seen[e.Name] = true
 								dedupe = append(dedupe, e)
 							}
 						}
-						cb(uuid.NewString()[0:6], dedupe)
-						events = make([]*fsnotify.Event, 0)
+						cb(fmt.Sprintf("%06x", rand.Int32()), dedupe)
 					})
 				}
 

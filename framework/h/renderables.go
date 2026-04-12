@@ -42,13 +42,22 @@ func NewTextContent(content string) *TextContent {
 }
 
 func NewChildList(children ...Ren) *ChildList {
-	cl := &ChildList{
+	if len(children) == 0 {
+		return &ChildList{Children: make([]Ren, 0)}
+	}
+	hasNil := false
+	for _, c := range children {
+		if c == nil {
+			hasNil = true
+			break
+		}
+	}
+	if !hasNil {
+		return &ChildList{Children: children}
+	}
+	return &ChildList{
 		Children: Filter(children, func(item Ren) bool {
 			return item != nil
 		}),
 	}
-	if len(children) == 0 || children == nil {
-		cl.Children = make([]Ren, 0)
-	}
-	return cl
 }

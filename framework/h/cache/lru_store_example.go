@@ -48,6 +48,34 @@ func NewLRUStore[K comparable, V any](maxSize int) Store[K, V] {
 	return s
 }
 
+// Get retrieves a value from the cache. Returns the value and true if found and not expired,
+// or the zero value and false otherwise. Marks the entry as recently used.
+func (s *LRUStore[K, V]) Get(key K) (V, bool) {
+	s.mutex.RLock()
+	elem, exists := s.cache[key]
+	if !exists {
+		s.mutex.RUnlock()
+		var zero V
+		return zero, false
+	}
+	entry := elem.Value.(*lruEntry[K, V])
+	if time.Now().After(entry.expiration) {
+		s.mutex.RUnlock()
+		var zero V
+		return zero, false
+	}
+	val := entry.value
+	s.mutex.RUnlock()
+	// Promote to front requires write lock
+	s.mutex.Lock()
+	// Re-check existence after upgrading lock
+	if elem, exists := s.cache[key]; exists {
+		s.lru.MoveToFront(elem)
+	}
+	s.mutex.Unlock()
+	return val, true
+}
+
 // Set adds or updates an entry in the cache with the given TTL.
 // If the cache is at capacity, the least recently used item is evicted.
 func (s *LRUStore[K, V]) Set(key K, value V, ttl time.Duration) {
@@ -177,24 +205,40 @@ func (s *LRUStore[K, V]) cleanupExpired() {
 	}
 }
 
-// removeExpired scans the cache and removes expired entries.
+// removeExpired scans the cache and removes expired entries in batches
+// to limit write-lock duration.
 func (s *LRUStore[K, V]) removeExpired() {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	const batchSize = 1000
 
+	// Phase 1: RLock, collect up to batchSize expired keys
+	s.mutex.RLock()
 	now := time.Now()
-	// Create a slice to hold elements to remove to avoid modifying list during iteration
-	var toRemove []*list.Element
-
+	expired := make([]K, 0, batchSize)
 	for elem := s.lru.Back(); elem != nil; elem = elem.Prev() {
 		entry := elem.Value.(*lruEntry[K, V])
 		if now.After(entry.expiration) {
-			toRemove = append(toRemove, elem)
+			expired = append(expired, entry.key)
+			if len(expired) >= batchSize {
+				break
+			}
 		}
 	}
+	s.mutex.RUnlock()
 
-	// Remove expired elements
-	for _, elem := range toRemove {
-		s.removeElement(elem)
+	if len(expired) == 0 {
+		return
 	}
+
+	// Phase 2: Lock, delete collected keys (re-verify expiration)
+	s.mutex.Lock()
+	now = time.Now()
+	for _, key := range expired {
+		if elem, exists := s.cache[key]; exists {
+			entry := elem.Value.(*lruEntry[K, V])
+			if now.After(entry.expiration) {
+				s.removeElement(elem)
+			}
+		}
+	}
+	s.mutex.Unlock()
 }

@@ -126,12 +126,12 @@ func OnFileChange(version string, events []*fsnotify.Event) {
 	deps := make([]func() any, 0)
 
 	if tasks.AstGen {
-		go func() {
-			util.Trace("generate ast", func() any {
+		deps = append(deps, func() any {
+			return util.Trace("generate ast", func() any {
 				astgen.GenAst()
 				return nil
 			})
-		}()
+		})
 	}
 
 	if tasks.Css {
