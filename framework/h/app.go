@@ -1,26 +1,23 @@
 package h
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gofiber/fiber/v3"
+
 	"github.com/franchb/htmgo/framework/config"
 	"github.com/franchb/htmgo/framework/hx"
 	"github.com/franchb/htmgo/framework/service"
 )
 
 type RequestContext struct {
-	Request           *http.Request
-	Response          http.ResponseWriter
+	Fiber             fiber.Ctx
 	locator           *service.Locator
 	isBoosted         bool
 	currentBrowserUrl string
@@ -30,65 +27,63 @@ type RequestContext struct {
 	hxTriggerName     string
 	hxTriggerId       string
 	kv                map[string]interface{}
-	parsedQuery       url.Values
 }
 
-func GetRequestContext(r *http.Request) *RequestContext {
-	val := r.Context().Value(requestContextKey)
+// requestContextLocalsKey is the key used to store the RequestContext in Fiber's Locals.
+var requestContextLocalsKey = "htmgo.request.context"
+
+func GetRequestContext(c fiber.Ctx) *RequestContext {
+	val := c.Locals(requestContextLocalsKey)
 	if val == nil {
 		return nil
 	}
 	return val.(*RequestContext)
 }
 
-func (c *RequestContext) SetCookie(cookie *http.Cookie) {
-	http.SetCookie(c.Response, cookie)
+func (c *RequestContext) SetCookie(cookie *fiber.Cookie) {
+	c.Fiber.Cookie(cookie)
 }
 
 func (c *RequestContext) Redirect(path string, code int) {
 	if code == 0 {
-		code = http.StatusTemporaryRedirect
+		code = fiber.StatusTemporaryRedirect
 	}
 	if code < 300 || code > 399 {
-		code = http.StatusTemporaryRedirect
+		code = fiber.StatusTemporaryRedirect
 	}
-	c.Response.Header().Set("Location", path)
-	c.Response.WriteHeader(code)
+	c.Fiber.Redirect().Status(code).To(path)
 }
 
 func (c *RequestContext) IsHttpPost() bool {
-	return c.Request.Method == http.MethodPost
+	return c.Fiber.Method() == fiber.MethodPost
 }
 
 func (c *RequestContext) IsHttpGet() bool {
-	return c.Request.Method == http.MethodGet
+	return c.Fiber.Method() == fiber.MethodGet
 }
 
 func (c *RequestContext) IsHttpPut() bool {
-	return c.Request.Method == http.MethodPut
+	return c.Fiber.Method() == fiber.MethodPut
 }
 
 func (c *RequestContext) IsHttpDelete() bool {
-	return c.Request.Method == http.MethodDelete
+	return c.Fiber.Method() == fiber.MethodDelete
 }
 
 func (c *RequestContext) FormValue(key string) string {
-	return c.Request.FormValue(key)
+	return c.Fiber.FormValue(key)
 }
 
 func (c *RequestContext) Header(key string) string {
-	return c.Request.Header.Get(key)
+	return c.Fiber.Get(key)
 }
 
 func (c *RequestContext) UrlParam(key string) string {
-	return chi.URLParam(c.Request, key)
+	return c.Fiber.Params(key)
 }
 
 func (c *RequestContext) QueryParam(key string) string {
-	if c.parsedQuery == nil {
-		c.parsedQuery = c.Request.URL.Query()
-	}
-	return c.parsedQuery.Get(key)
+	return c.Fiber.Query(key)
 }
 
 func (c *RequestContext) IsBoosted() bool {
@@ -150,65 +145,37 @@ type AppOpts struct {
 
 type App struct {
 	Opts   AppOpts
-	Router *chi.Mux
+	Router *fiber.App
 }
 
 // Start starts the htmgo server
 func Start(opts AppOpts) {
-	router := chi.NewRouter()
+	fiberApp := fiber.New()
 	instance := App{
 		Opts:   opts,
-		Router: router,
+		Router: fiberApp,
 	}
 	instance.start()
 }
 
-// requestContextKeyType is an unexported type used as a context key to avoid collisions.
-type requestContextKeyType struct{}
-
-var requestContextKey = requestContextKeyType{}
-
-// Deprecated: RequestContextKey is the legacy string context key. Use GetRequestContext instead.
-const RequestContextKey = "htmgo.request.context"
-
 func populateHxFields(cc *RequestContext) {
-	cc.isBoosted = cc.Request.Header.Get(hx.BoostedHeader) == "true"
-	cc.currentBrowserUrl = cc.Request.Header.Get(hx.CurrentUrlHeader)
-	cc.hxPromptResponse = cc.Request.Header.Get(hx.PromptResponseHeader)
-	cc.isHxRequest = cc.Request.Header.Get(hx.RequestHeader) == "true"
-	cc.hxTargetId = cc.Request.Header.Get(hx.TargetIdHeader)
-	cc.hxTriggerName = cc.Request.Header.Get(hx.TriggerNameHeader)
-	cc.hxTriggerId = cc.Request.Header.Get(hx.TriggerIdHeader)
-}
-
-func (app *App) UseWithContext(h func(w http.ResponseWriter, r *http.Request, context map[string]any)) {
-	app.Router.Use(func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cc := GetRequestContext(r)
-			if cc == nil {
-				handler.ServeHTTP(w, r)
-				return
-			}
-			if cc.kv == nil {
-				cc.kv = make(map[string]interface{})
-			}
-			h(w, r, cc.kv)
-			handler.ServeHTTP(w, r)
-		})
-	})
+	cc.isBoosted = cc.Fiber.Get(hx.BoostedHeader) == "true"
+	cc.currentBrowserUrl = cc.Fiber.Get(hx.CurrentUrlHeader)
+	cc.hxPromptResponse = cc.Fiber.Get(hx.PromptResponseHeader)
+	cc.isHxRequest = cc.Fiber.Get(hx.RequestHeader) == "true"
+	cc.hxTargetId = cc.Fiber.Get(hx.TargetIdHeader)
+	cc.hxTriggerName = cc.Fiber.Get(hx.TriggerNameHeader)
+	cc.hxTriggerId = cc.Fiber.Get(hx.TriggerIdHeader)
 }
 
 func (app *App) Use(h func(ctx *RequestContext)) {
-	app.Router.Use(func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cc := GetRequestContext(r)
-			if cc == nil {
-				handler.ServeHTTP(w, r)
-				return
-			}
-			h(cc)
-			handler.ServeHTTP(w, r)
-		})
+	app.Router.Use(func(c fiber.Ctx) error {
+		cc := GetRequestContext(c)
+		if cc == nil {
+			return c.Next()
+		}
+		h(cc)
+		return c.Next()
 	})
 }
 
@@ -235,28 +202,21 @@ func GetLogLevel() slog.Level {
 // one-year max-age; all other static requests get a one-hour max-age.
 // Headers are only applied to successful responses (2xx/304) so that transient
 // 404s or errors are not cached by browsers or CDNs.
-func StaticCacheMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cacheHeader := "public, max-age=3600"
-		if r.URL.RawQuery != "" {
-			cacheHeader = "public, max-age=31536000, immutable"
-		}
-		sw := &cacheControlWriter{ResponseWriter: w, cacheHeader: cacheHeader}
-		next.ServeHTTP(sw, r)
-	})
-}
-
-// cacheControlWriter injects Cache-Control only for successful responses.
-type cacheControlWriter struct {
-	http.ResponseWriter
-	cacheHeader string
-}
-
-func (cw *cacheControlWriter) WriteHeader(code int) {
-	if code == http.StatusOK || code == http.StatusNotModified {
-		cw.ResponseWriter.Header().Set("Cache-Control", cw.cacheHeader)
+func StaticCacheMiddleware(c fiber.Ctx) error {
+	cacheHeader := "public, max-age=3600"
+	if len(c.Request().URI().QueryString()) > 0 {
+		cacheHeader = "public, max-age=31536000, immutable"
 	}
-	cw.ResponseWriter.WriteHeader(code)
+
+	// Call next handler first, then set cache header based on status code.
+	err := c.Next()
+
+	status := c.Response().StatusCode()
+	if status == fiber.StatusOK || status == fiber.StatusNotModified {
+		c.Set("Cache-Control", cacheHeader)
+	}
+
+	return err
 }
 
 func (app *App) start() {
@@ -270,26 +230,20 @@ func (app *App) start() {
 		publicPrefix = "/public"
 	}
 
-	app.Router.Use(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Skip RequestContext creation for static file requests.
-			if strings.HasPrefix(r.URL.Path, publicPrefix+"/") || r.URL.Path == publicPrefix {
-				h.ServeHTTP(w, r)
-				return
-			}
+	app.Router.Use(func(c fiber.Ctx) error {
+		// Skip RequestContext creation for static file requests.
+		path := c.Path()
+		if strings.HasPrefix(path, publicPrefix+"/") || path == publicPrefix {
+			return c.Next()
+		}
 
-			cc := &RequestContext{
-				locator:  app.Opts.ServiceLocator,
-				Request:  r,
-				Response: w,
-			}
-			populateHxFields(cc)
-			ctx := context.WithValue(r.Context(), requestContextKey, cc)
-			// Also store with legacy string key for backward compat with generated code
-			// and external consumers that use h.RequestContextKey directly.
-			ctx = context.WithValue(ctx, RequestContextKey, cc)
-			h.ServeHTTP(w, r.WithContext(ctx))
-		})
+		cc := &RequestContext{
+			locator: app.Opts.ServiceLocator,
+			Fiber:   c,
+		}
+		populateHxFields(cc)
+		c.Locals(requestContextLocalsKey, cc)
+		return c.Next()
 	})
 
 	if app.Opts.Register != nil {
@@ -319,7 +273,7 @@ func (app *App) start() {
 
 	slog.Info(fmt.Sprintf("Server started at localhost%s", port))
 
-	if err := http.ListenAndServe(port, app.Router); err != nil {
+	if err := app.Router.Listen(port); err != nil {
 		// If we are in watch mode, just try to kill any processes holding that port
 		// and try again
 		if IsDevelopment() && IsWatchMode() {
@@ -335,7 +289,7 @@ func (app *App) start() {
 			time.Sleep(time.Millisecond * 50)
 
 			// Try to start server again
-			if err := http.ListenAndServe(port, app.Router); err != nil {
+			if err := app.Router.Listen(port); err != nil {
 				slog.Error("Failed to restart server", "error", err)
 				panic(err)
 			}
@@ -345,53 +299,52 @@ func (app *App) start() {
 	}
 }
 
-func writeHtml(w http.ResponseWriter, element Ren) error {
+func writeHtml(c fiber.Ctx, element Ren) error {
 	if element == nil {
 		return nil
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, err := fmt.Fprint(w, Render(element, WithDocType()))
-	return err
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(Render(element, WithDocType()))
 }
 
-func HtmlView(w http.ResponseWriter, page *Page) error {
+func HtmlView(c fiber.Ctx, page *Page) error {
 	// if the page is nil, do nothing, this can happen if custom response is written, such as a 302 redirect
 	if page == nil {
 		return nil
 	}
-	return writeHtml(w, page.Root)
+	return writeHtml(c, page.Root)
 }
 
-func PartialViewWithHeaders(w http.ResponseWriter, headers *Headers, partial *Partial) error {
+func PartialViewWithHeaders(c fiber.Ctx, headers *Headers, partial *Partial) error {
 	if partial == nil {
 		return nil
 	}
 
 	if partial.Headers != nil {
 		for s, a := range *partial.Headers {
-			w.Header().Set(s, a)
+			c.Set(s, a)
 		}
 	}
 
 	if headers != nil {
 		for s, a := range *headers {
-			w.Header().Set(s, a)
+			c.Set(s, a)
 		}
 	}
 
-	return writeHtml(w, partial.Root)
+	return writeHtml(c, partial.Root)
 }
 
-func PartialView(w http.ResponseWriter, partial *Partial) error {
+func PartialView(c fiber.Ctx, partial *Partial) error {
 	if partial == nil {
 		return nil
 	}
 
 	if partial.Headers != nil {
 		for s, a := range *partial.Headers {
-			w.Header().Set(s, a)
+			c.Set(s, a)
 		}
 	}
 
-	return writeHtml(w, partial.Root)
+	return writeHtml(c, partial.Root)
 }
