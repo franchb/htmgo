@@ -109,7 +109,7 @@ func DocPage(ctx *h.RequestContext, children ...h.Ren) *h.Page {
 	title := "htmgo"
 	for _, section := range sections {
 		for _, page := range section.Pages {
-			if page.Path == ctx.Request.URL.Path {
+			if page.Path == ctx.Fiber.Path() {
 				title = fmt.Sprintf("Docs - %s", page.Title)
 				break
 			}

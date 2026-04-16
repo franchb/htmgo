@@ -19,7 +19,7 @@ type RootPageProps struct {
 func ConfigurableRootPage(ctx *h.RequestContext, props RootPageProps) *h.Page {
 	title := "htmgo"
 	description := "build simple and scalable systems with go + htmx"
-	canonical := ctx.Request.URL.String()
+	canonical := ctx.Fiber.OriginalURL()
 
 	if props.Canonical != "" {
 		canonical = props.Canonical
@@ -50,7 +50,7 @@ func ConfigurableRootPage(ctx *h.RequestContext, props RootPageProps) *h.Page {
 				h.Meta("author", "htmgo"),
 				h.Meta("description", description),
 				h.Meta("og:title", title),
-				h.Meta("og:url", ctx.Request.URL.String()),
+				h.Meta("og:url", ctx.Fiber.OriginalURL()),
 				h.Link("canonical", canonical),
 				h.Link("https://cdn.jsdelivr.net/npm/@docsearch/css@3", "stylesheet"),
 				h.Meta("og:description", description),

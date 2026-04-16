@@ -62,7 +62,7 @@ func Pages(ctx *h.RequestContext) *h.Page {
 			`),
 			ui.GoCodeSnippet(PagesSnippet),
 			h.Text(`
-				htmgo uses std http with chi router as its web server, *h.RequestContext is a thin wrapper around *http.Request. 
+				htmgo uses Fiber v3 as its web server, *h.RequestContext is a thin wrapper around fiber.Ctx.
 				A page must return *h.Page, and accept *h.RequestContext as a parameter
 			`),
 			autoRegistration(),
@@ -81,8 +81,8 @@ func autoRegistration() *h.Element {
 		h.Class("flex flex-col gap-2"),
 		SubTitle("Auto Registration"),
 		Text(`
-		htmgo uses file based routing. This means that we will automatically generate and register your routes with chi based on the files you have in the 'pages' directory.
-		For example, if you have a directory structure like so below, it will get registered into chi router as follows:
+		htmgo uses file based routing. This means that we will automatically generate and register your routes with Fiber based on the files you have in the 'pages' directory.
+		For example, if you have a directory structure like so below, it will get registered into Fiber router as follows:
 
 		index.go -> /index
 		users.go -> /users

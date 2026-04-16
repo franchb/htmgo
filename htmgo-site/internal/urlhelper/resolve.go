@@ -1,23 +1,24 @@
 package urlhelper
 
 import (
-	"github.com/franchb/htmgo/framework/h"
 	"net/url"
+
+	"github.com/franchb/htmgo/framework/h"
 )
 
 func ToAbsoluteUrl(ctx *h.RequestContext, path string) string {
 	// Define the relative path you want to add
 	relativePath := path
 
-	// Parse the current request URL
-	currentURL := ctx.Request.URL
+	// Parse the current request URL from Fiber context
+	currentURL, err := url.Parse(ctx.Fiber.OriginalURL())
+	if err != nil {
+		currentURL = &url.URL{Path: "/"}
+	}
 
 	// Set scheme and host from the request to create an absolute URL
-	scheme := "http"
-	if ctx.Request.TLS != nil {
-		scheme = "https"
-	}
-	currentURL.Host = ctx.Request.Host
+	scheme := ctx.Fiber.Protocol()
+	currentURL.Host = ctx.Fiber.Hostname()
 	currentURL.Scheme = scheme
 
 	// Combine the base URL with the relative path
