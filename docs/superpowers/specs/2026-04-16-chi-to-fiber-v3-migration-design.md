@@ -255,6 +255,62 @@ func PartialViewWithHeaders(c fiber.Ctx, headers *Headers, partial *Partial) err
 
 All view helper functions take `fiber.Ctx` instead of `http.ResponseWriter`.
 
+### header.go — CurrentPath
+
+```go
+// Old — reads from ctx.Request.Header
+func CurrentPath(ctx *RequestContext) string {
+    current := ctx.Request.Header.Get(hx.CurrentUrlHeader)
+    parsed, err := url.Parse(current)
+    if err != nil {
+        return ""
+    }
+    return parsed.Path
+}
+
+// New — reads from ctx.Fiber.Get()
+func CurrentPath(ctx *RequestContext) string {
+    current := ctx.Fiber.Get(hx.CurrentUrlHeader)
+    parsed, err := url.Parse(current)
+    if err != nil {
+        return ""
+    }
+    return parsed.Path
+}
+```
+
+Note: `CurrentPath` could also use `ctx.currentBrowserUrl` (which is populated from the same header in `populateHxFields`), but keeping the direct header read matches the current behavior.
+
+### qs.go — GetQueryParam
+
+```go
+// Old — reads from ctx.Request.URL
+func GetQueryParam(ctx *RequestContext, key string) string {
+    value, ok := ctx.Request.URL.Query()[key]
+    // ... fallback to currentBrowserUrl ...
+}
+
+// New — reads from ctx.Fiber
+func GetQueryParam(ctx *RequestContext, key string) string {
+    // Primary: query params from the Fiber request URL
+    value := ctx.Fiber.Query(key)
+    if value != "" {
+        return value
+    }
+    // Fallback: parse from the current browser URL (htmx XHR vs browser URL)
+    current := ctx.currentBrowserUrl
+    if current != "" {
+        u, err := url.Parse(current)
+        if err == nil {
+            return u.Query().Get(key)
+        }
+    }
+    return ""
+}
+```
+
+The Fiber version simplifies the primary path since `c.Query(key)` returns "" for missing params. The browser-URL fallback stays the same.
+
 ---
 
 ## 3. Code Generator (AST Gen)
@@ -388,7 +444,7 @@ The handler function in `extensions/websocket/internal/wsutil/handler.go` change
 
 ### go.mod changes
 
-- `extensions/websocket/go.mod`: add `github.com/gofiber/fiber/v3 v3.10.0` and `github.com/gofiber/contrib/websocket/v3` (latest compatible with fiber v3.10.0)
+- `extensions/websocket/go.mod`: add `github.com/gofiber/fiber/v3 v3.10.0` and `github.com/gofiber/contrib/v3/websocket` (latest compatible with fiber v3.10.0)
 - Remove `github.com/go-chi/chi/v5` (currently indirect, will be removed when framework drops it)
 
 ---
@@ -512,8 +568,13 @@ func sseHandler(c fiber.Ctx) error {
 
     c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
         for {
-            fmt.Fprintf(w, "data: %s\n\n", Version)
-            w.Flush()
+            _, err := fmt.Fprintf(w, "data: %s\n\n", Version)
+            if err != nil {
+                break
+            }
+            if err := w.Flush(); err != nil {
+                break
+            }
             time.Sleep(500 * time.Millisecond)
         }
     })
@@ -573,6 +634,8 @@ func (app *App) AddLiveReloadHandler(path string) {
 
 **Framework core (must change):**
 - `framework/h/app.go` — RequestContext, App, Start, middleware, view helpers
+- `framework/h/header.go` — `CurrentPath` reads `ctx.Request.Header`; change to `ctx.Fiber.Get()`
+- `framework/h/qs.go` — `GetQueryParam` reads `ctx.Request.URL`; change to `ctx.Fiber.Query()`
 - `framework/h/livereload.go` — SSE handler
 - `framework/go.mod` — dependency swap
 
@@ -600,7 +663,7 @@ func (app *App) AddLiveReloadHandler(path string) {
 - `examples/minimal-htmgo/main.go`
 
 **Unchanged:**
-- `framework/h/render.go`, `tag.go`, `lifecycle.go`, `cache.go`, `page.go`, `partial.go`
+- `framework/h/render.go`, `tag.go`, `lifecycle.go`, `cache.go`, `page.go`, `partial.go` (no `ctx.Request`/`ctx.Response` references)
 - `framework/hx/` — htmx constants
 - `framework/service/` — DI
 - `framework/config/` — config
