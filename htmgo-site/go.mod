@@ -6,8 +6,8 @@ toolchain go1.26.0
 
 require (
 	github.com/alecthomas/chroma/v2 v2.23.1
-	github.com/franchb/htmgo/framework v0.0.0-20260412072145-964b788aa6e0
-	github.com/franchb/htmgo/tools/html-to-htmgo v0.0.0-20260412072145-964b788aa6e0
+	github.com/franchb/htmgo/framework v0.0.0-20260416123109-28119a474a28
+	github.com/franchb/htmgo/tools/html-to-htmgo v0.0.0-20260416123109-28119a474a28
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/google/uuid v1.6.0
 	github.com/yuin/goldmark v1.8.2
