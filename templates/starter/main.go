@@ -28,7 +28,7 @@ func main() {
 			_ = sub
 
 			// change this in htmgo.yml (public_asset_path)
-			app.Router.Use(cfg.PublicAssetPath, h.StaticCacheMiddleware())
+			app.Router.Use(cfg.PublicAssetPath, h.StaticCacheMiddleware)
 			app.Router.Get(fmt.Sprintf("%s/*", cfg.PublicAssetPath), static.New("./assets/dist"))
 
 			__htmgo.Register(app.Router)
