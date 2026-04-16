@@ -67,6 +67,7 @@ func WriteSessionCookie(ctx *h.RequestContext, session CreatedSession) {
 		Name:     "session_id",
 		Value:    session.Id,
 		HTTPOnly: true,
+		Secure:   true,
 		SameSite: fiber.CookieSameSiteStrictMode,
 		Expires:  session.Expiration,
 		Path:     "/",

@@ -18,5 +18,7 @@ func main() {
 		return RenderPartial(c, CurrentTime)
 	})
 
-	app.Listen(":3000")
+	if err := app.Listen(":3000"); err != nil {
+		panic(err)
+	}
 }

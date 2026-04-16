@@ -44,14 +44,14 @@ func (c *RequestContext) SetCookie(cookie *fiber.Cookie) {
 	c.Fiber.Cookie(cookie)
 }
 
-func (c *RequestContext) Redirect(path string, code int) {
+func (c *RequestContext) Redirect(path string, code int) error {
 	if code == 0 {
 		code = fiber.StatusTemporaryRedirect
 	}
 	if code < 300 || code > 399 {
 		code = fiber.StatusTemporaryRedirect
 	}
-	c.Fiber.Redirect().Status(code).To(path)
+	return c.Fiber.Redirect().Status(code).To(path)
 }
 
 func (c *RequestContext) IsHttpPost() bool {

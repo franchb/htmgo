@@ -58,9 +58,14 @@ func (q *Qs) ToString() string {
 // The URL from the *RequestContext would normally be the url from an XHR request through htmx,
 // which is not the current browser url a visitor may be on.
 func GetQueryParam(ctx *RequestContext, key string) string {
-	value := ctx.Fiber.Query(key)
-	if value != "" {
-		return value
+	if ctx == nil {
+		return ""
+	}
+	if ctx.Fiber != nil {
+		value := ctx.Fiber.Query(key)
+		if value != "" {
+			return value
+		}
 	}
 	current := ctx.currentBrowserUrl
 	if current != "" {

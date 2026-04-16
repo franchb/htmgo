@@ -3,9 +3,10 @@ package partials
 import (
 	"chat/chat"
 	"chat/components"
-	"fmt"
-	"github.com/franchb/htmgo/framework/h"
+	"net/http"
 	"time"
+
+	"github.com/franchb/htmgo/framework/h"
 )
 
 func CreateOrJoinRoom(ctx *h.RequestContext) *h.Partial {
@@ -30,13 +31,18 @@ func CreateOrJoinRoom(ctx *h.RequestContext) *h.Partial {
 	}
 
 	var redirect = func(path string) *h.Partial {
-		expires := time.Now().Add(24 * 30 * time.Hour).UTC().Format(time.RFC1123)
-		cookieStr := fmt.Sprintf("session_id=%s; Path=/; Expires=%s", user.SessionID, expires)
+		cookie := &http.Cookie{
+			Name:     "session_id",
+			Value:    user.SessionID,
+			Path:     "/",
+			Expires:  time.Now().Add(30 * 24 * time.Hour).UTC(),
+			HttpOnly: true,
+		}
 
 		return h.RedirectPartialWithHeaders(
 			path,
 			h.NewHeaders(
-				"Set-Cookie", cookieStr,
+				"Set-Cookie", cookie.String(),
 			),
 		)
 	}

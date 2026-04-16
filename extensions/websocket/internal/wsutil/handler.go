@@ -177,15 +177,24 @@ func runWebSocket(conn net.Conn, manager *SocketManager, sessionId, roomId strin
 			if err != nil {
 				return
 			}
-			if op != ws.OpText {
+			switch op {
+			case ws.OpClose:
 				return
+			case ws.OpPing:
+				_ = wsutil.WriteServerMessage(conn, ws.OpPong, msg)
+				continue
+			case ws.OpPong:
+				continue
+			case ws.OpText:
+				m := make(map[string]any)
+				if err := json.Unmarshal(msg, &m); err != nil {
+					return
+				}
+				manager.OnMessage(sessionId, m)
+			default:
+				// Ignore binary and other opcodes.
+				continue
 			}
-			m := make(map[string]any)
-			err = json.Unmarshal(msg, &m)
-			if err != nil {
-				return
-			}
-			manager.OnMessage(sessionId, m)
 		}
 	}()
 
