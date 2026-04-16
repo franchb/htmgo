@@ -4,11 +4,13 @@ go 1.26
 
 toolchain go1.26.0
 
-require github.com/franchb/htmgo/framework v0.0.0-20260416123109-28119a474a28
+require (
+	github.com/franchb/htmgo/framework v0.0.0-20260416123109-28119a474a28
+	github.com/gofiber/fiber/v3 v3.1.0
+)
 
 require (
 	github.com/andybalholm/brotli v1.2.0 // indirect
-	github.com/gofiber/fiber/v3 v3.1.0 // indirect
 	github.com/gofiber/schema v1.7.0 // indirect
 	github.com/gofiber/utils/v2 v2.0.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
