@@ -3,8 +3,8 @@ package partials
 import (
 	"chat/chat"
 	"chat/components"
+	"fmt"
 	"github.com/franchb/htmgo/framework/h"
-	"net/http"
 	"time"
 )
 
@@ -12,8 +12,8 @@ func CreateOrJoinRoom(ctx *h.RequestContext) *h.Partial {
 	locator := ctx.ServiceLocator()
 	service := chat.NewService(locator)
 
-	chatRoomId := ctx.Request.FormValue("join-chat-room")
-	username := ctx.Request.FormValue("username")
+	chatRoomId := ctx.FormValue("join-chat-room")
+	username := ctx.FormValue("username")
 
 	if username == "" {
 		return h.SwapPartial(ctx, components.FormError("Username is required"))
@@ -30,17 +30,13 @@ func CreateOrJoinRoom(ctx *h.RequestContext) *h.Partial {
 	}
 
 	var redirect = func(path string) *h.Partial {
-		cookie := &http.Cookie{
-			Name:    "session_id",
-			Value:   user.SessionID,
-			Path:    "/",
-			Expires: time.Now().Add(24 * 30 * time.Hour),
-		}
+		expires := time.Now().Add(24 * 30 * time.Hour).UTC().Format(time.RFC1123)
+		cookieStr := fmt.Sprintf("session_id=%s; Path=/; Expires=%s", user.SessionID, expires)
 
 		return h.RedirectPartialWithHeaders(
 			path,
 			h.NewHeaders(
-				"Set-Cookie", cookie.String(),
+				"Set-Cookie", cookieStr,
 			),
 		)
 	}
@@ -54,7 +50,7 @@ func CreateOrJoinRoom(ctx *h.RequestContext) *h.Partial {
 		}
 	}
 
-	chatRoomName := ctx.Request.FormValue("new-chat-room")
+	chatRoomName := ctx.FormValue("new-chat-room")
 
 	if len(chatRoomName) > 20 {
 		return h.SwapPartial(ctx, components.FormError("Chat room name is too long"))

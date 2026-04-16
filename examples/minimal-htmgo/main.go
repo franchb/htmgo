@@ -1,23 +1,22 @@
 package main
 
 import (
-	"github.com/go-chi/chi/v5"
-	"net/http"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/static"
 )
 
 func main() {
-	router := chi.NewRouter()
+	app := fiber.New()
 
-	fileServer := http.StripPrefix("/public", http.FileServer(http.Dir("./public")))
-	router.Handle("/public/*", fileServer)
+	app.Get("/public/*", static.New("./public"))
 
-	router.Get("/", func(writer http.ResponseWriter, request *http.Request) {
-		RenderPage(request, writer, Index)
+	app.Get("/", func(c fiber.Ctx) error {
+		return RenderPage(c, Index)
 	})
 
-	router.Get("/current-time", func(writer http.ResponseWriter, request *http.Request) {
-		RenderPartial(request, writer, CurrentTime)
+	app.Get("/current-time", func(c fiber.Ctx) error {
+		return RenderPartial(c, CurrentTime)
 	})
 
-	http.ListenAndServe(":3000", router)
+	app.Listen(":3000")
 }

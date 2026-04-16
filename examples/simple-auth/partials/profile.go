@@ -28,7 +28,7 @@ func UpdateProfile(ctx *h.RequestContext) *h.Partial {
 
 	if err != nil {
 		slog.Error("failed to update user profile", slog.String("error", err.Error()))
-		ctx.Response.WriteHeader(400)
+		ctx.Fiber.Status(400)
 		return ui.SwapFormError(ctx, "something went wrong")
 	}
 

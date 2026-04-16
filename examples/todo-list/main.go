@@ -3,11 +3,12 @@ package main
 import (
 	"embed"
 	"io/fs"
-	"net/http"
+
+	"github.com/gofiber/fiber/v3/middleware/static"
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/franchb/htmgo/framework/h"
 	"github.com/franchb/htmgo/framework/service"
-	_ "github.com/mattn/go-sqlite3"
 
 	"todolist/__htmgo"
 	"todolist/ent"
@@ -35,7 +36,10 @@ func main() {
 				panic(err)
 			}
 
-			app.Router.Handle("/public/*", h.StaticCacheMiddleware(http.StripPrefix("/public", http.FileServerFS(sub))))
+			app.Router.Use("/public", h.StaticCacheMiddleware)
+			app.Router.Get("/public/*", static.New("", static.Config{
+				FS: sub,
+			}))
 
 			__htmgo.Register(app.Router)
 		},

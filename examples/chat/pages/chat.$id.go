@@ -5,14 +5,13 @@ import (
 	"chat/internal/db"
 	"chat/partials"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"github.com/franchb/htmgo/framework/h"
 	"github.com/franchb/htmgo/framework/js"
 	"time"
 )
 
 func ChatRoom(ctx *h.RequestContext) *h.Page {
-	roomId := chi.URLParam(ctx.Request, "id")
+	roomId := ctx.UrlParam("id")
 	return h.NewPage(
 		RootPage(
 			h.Div(
@@ -65,14 +64,14 @@ func ChatRoom(ctx *h.RequestContext) *h.Page {
 }
 
 var CachedRoomHeader = h.CachedPerKeyT(time.Hour, func(ctx *h.RequestContext) (string, h.GetElementFunc) {
-	roomId := chi.URLParam(ctx.Request, "id")
+	roomId := ctx.UrlParam("id")
 	return roomId, func() *h.Element {
 		return roomNameHeader(ctx)
 	}
 })
 
 func roomNameHeader(ctx *h.RequestContext) *h.Element {
-	roomId := chi.URLParam(ctx.Request, "id")
+	roomId := ctx.UrlParam("id")
 	service := chat.NewService(ctx.ServiceLocator())
 	room, err := service.GetRoom(roomId)
 	if err != nil {

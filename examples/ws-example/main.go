@@ -1,13 +1,16 @@
 package main
 
 import (
+	"io/fs"
+
+	"github.com/gofiber/fiber/v3/middleware/static"
+
 	"github.com/franchb/htmgo/extensions/websocket"
 	ws2 "github.com/franchb/htmgo/extensions/websocket/opts"
 	"github.com/franchb/htmgo/extensions/websocket/session"
 	"github.com/franchb/htmgo/framework/h"
 	"github.com/franchb/htmgo/framework/service"
-	"io/fs"
-	"net/http"
+
 	"ws-example/__htmgo"
 )
 
@@ -39,9 +42,9 @@ func main() {
 				panic(err)
 			}
 
-			http.FileServerFS(sub)
-
-			app.Router.Handle("/public/*", http.StripPrefix("/public", http.FileServerFS(sub)))
+			app.Router.Get("/public/*", static.New("", static.Config{
+				FS: sub,
+			}))
 			__htmgo.Register(app.Router)
 		},
 	})
