@@ -22,14 +22,14 @@ func RegisterUser(ctx *h.RequestContext) *h.Partial {
 	)
 
 	if err != nil {
-		ctx.Response.WriteHeader(400)
+		ctx.Fiber.Status(400)
 		return ui.SwapFormError(ctx, err.Error())
 	}
 
 	session, err := user.CreateSession(ctx, id)
 
 	if err != nil {
-		ctx.Response.WriteHeader(500)
+		ctx.Fiber.Status(500)
 		return ui.SwapFormError(ctx, "something went wrong")
 	}
 
@@ -54,7 +54,7 @@ func LoginUser(ctx *h.RequestContext) *h.Partial {
 	)
 
 	if err != nil {
-		ctx.Response.WriteHeader(400)
+		ctx.Fiber.Status(400)
 		return ui.SwapFormError(ctx, err.Error())
 	}
 

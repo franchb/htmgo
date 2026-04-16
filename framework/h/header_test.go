@@ -1,12 +1,14 @@
 package h
 
 import (
-	"github.com/franchb/htmgo/framework/hx"
-	"net/http"
 	"testing"
 
+	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/valyala/fasthttp"
+
+	"github.com/franchb/htmgo/framework/hx"
 )
 
 func TestReplaceUrlHeader(t *testing.T) {
@@ -39,9 +41,13 @@ func TestCombineHeaders(t *testing.T) {
 }
 
 func TestCurrentPath(t *testing.T) {
-	req, _ := http.NewRequest("GET", "https://example.com", nil)
-	req.Header.Set(hx.CurrentUrlHeader, "https://example.com/current-path")
-	ctx := &RequestContext{Request: req}
+	app := fiber.New()
+	fctx := &fasthttp.RequestCtx{}
+	fctx.Request.Header.Set(hx.CurrentUrlHeader, "https://example.com/current-path")
+	c := app.AcquireCtx(fctx)
+	defer app.ReleaseCtx(c)
+
+	ctx := &RequestContext{Fiber: c}
 	path := CurrentPath(ctx)
 	assert.Equal(t, "/current-path", path)
 }

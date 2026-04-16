@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"strings"
+
+	"github.com/gofiber/fiber/v3"
 )
 
 type URL struct {
@@ -37,8 +38,7 @@ func serialize(sitemap *URLSet) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func Generate(router *chi.Mux) ([]byte, error) {
-	routes := router.Routes()
+func Generate(router *fiber.App) ([]byte, error) {
 	urls := []URL{
 		{
 			Loc:        "/",
@@ -62,21 +62,29 @@ func Generate(router *chi.Mux) ([]byte, error) {
 		},
 	}
 
-	for _, route := range routes {
-		if strings.HasPrefix(route.Pattern, "/docs/") {
-			urls = append(urls, URL{
-				Loc:        route.Pattern,
-				Priority:   1.0,
-				ChangeFreq: "weekly",
-			})
-		}
+	seen := make(map[string]bool)
+	for _, routes := range router.Stack() {
+		for _, route := range routes {
+			if seen[route.Path] {
+				continue
+			}
+			seen[route.Path] = true
 
-		if strings.HasPrefix(route.Pattern, "/examples/") {
-			urls = append(urls, URL{
-				Loc:        route.Pattern,
-				Priority:   0.7,
-				ChangeFreq: "weekly",
-			})
+			if strings.HasPrefix(route.Path, "/docs/") {
+				urls = append(urls, URL{
+					Loc:        route.Path,
+					Priority:   1.0,
+					ChangeFreq: "weekly",
+				})
+			}
+
+			if strings.HasPrefix(route.Path, "/examples/") {
+				urls = append(urls, URL{
+					Loc:        route.Path,
+					Priority:   0.7,
+					ChangeFreq: "weekly",
+				})
+			}
 		}
 	}
 

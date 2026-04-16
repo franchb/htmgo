@@ -1,111 +1,103 @@
 package sse
 
 import (
+	"bufio"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/service"
 	"log/slog"
-	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gofiber/fiber/v3"
+
+	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/service"
 )
 
-func Handle() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Handle() fiber.Handler {
+	return func(c fiber.Ctx) error {
 		// Set the necessary headers
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("Connection", "keep-alive")
-		w.Header().Set("Access-Control-Allow-Origin", "*") // Optional for CORS
+		c.Set("Content-Type", "text/event-stream")
+		c.Set("Cache-Control", "no-cache")
+		c.Set("Connection", "keep-alive")
 
-		cc := h.GetRequestContext(r)
+		cc := h.GetRequestContext(c)
 		locator := cc.ServiceLocator()
 		manager := service.Get[SocketManager](locator)
 
-		sessionCookie, _ := r.Cookie("session_id")
-		sessionId := ""
+		sessionId := c.Cookies("session_id")
+		roomId := c.Params("id")
 
-		if sessionCookie != nil {
-			sessionId = sessionCookie.Value
-		}
+		return c.SendStreamWriter(func(w *bufio.Writer) {
+			/*
+				Large buffer in case the client disconnects while we are writing
+				we don't want to block the writer
+			*/
+			done := make(chan bool, 1000)
+			writer := make(WriterChan, 1000)
 
-		ctx := r.Context()
+			wg := sync.WaitGroup{}
+			wg.Add(1)
 
-		/*
-			Large buffer in case the client disconnects while we are writing
-			we don't want to block the writer
-		*/
-		done := make(chan bool, 1000)
-		writer := make(WriterChan, 1000)
+			/*
+			 * This goroutine is responsible for writing messages to the client
+			 */
+			go func() {
+				defer wg.Done()
+				defer manager.Disconnect(sessionId)
 
-		wg := sync.WaitGroup{}
-		wg.Add(1)
+				defer func() {
+					for len(writer) > 0 {
+						<-writer
+					}
+					for len(done) > 0 {
+						<-done
+					}
+				}()
 
-		/*
-		 * This goroutine is responsible for writing messages to the client
-		 */
-		go func() {
-			defer wg.Done()
-			defer manager.Disconnect(sessionId)
+				ticker := time.NewTicker(5 * time.Second)
+				defer ticker.Stop()
 
-			defer func() {
-				for len(writer) > 0 {
-					<-writer
-				}
-				for len(done) > 0 {
-					<-done
-				}
-			}()
-
-			ticker := time.NewTicker(5 * time.Second)
-			defer ticker.Stop()
-
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-done:
-					fmt.Printf("closing connection: \n")
-					return
-				case <-ticker.C:
-					manager.Ping(sessionId)
-				case message := <-writer:
-					_, err := fmt.Fprintf(w, message)
-					if err != nil {
-						done <- true
-					} else {
-						flusher, ok := w.(http.Flusher)
-						if ok {
-							flusher.Flush()
+				for {
+					select {
+					case <-done:
+						fmt.Printf("closing connection: \n")
+						return
+					case <-ticker.C:
+						manager.Ping(sessionId)
+					case message := <-writer:
+						_, err := fmt.Fprint(w, message)
+						if err != nil {
+							done <- true
+						} else {
+							if flushErr := w.Flush(); flushErr != nil {
+								done <- true
+							}
 						}
 					}
 				}
-			}
-		}()
+			}()
 
-		/**
-		 * This goroutine is responsible for adding the client to the room
-		 */
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if sessionId == "" {
-				manager.writeCloseRaw(writer, "no session")
-				return
-			}
+			/**
+			 * This goroutine is responsible for adding the client to the room
+			 */
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if sessionId == "" {
+					manager.writeCloseRaw(writer, "no session")
+					return
+				}
 
-			roomId := chi.URLParam(r, "id")
+				if roomId == "" {
+					slog.Error("invalid room", slog.String("room_id", roomId))
+					manager.writeCloseRaw(writer, "invalid room")
+					return
+				}
 
-			if roomId == "" {
-				slog.Error("invalid room", slog.String("room_id", roomId))
-				manager.writeCloseRaw(writer, "invalid room")
-				return
-			}
+				manager.Add(roomId, sessionId, writer, done)
+			}()
 
-			manager.Add(roomId, sessionId, writer, done)
-		}()
-
-		wg.Wait()
+			wg.Wait()
+		})
 	}
 }

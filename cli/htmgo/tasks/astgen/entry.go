@@ -35,8 +35,7 @@ type Partial struct {
 }
 
 const GeneratedDirName = "__htmgo"
-const HttpModuleName = "net/http"
-const ChiModuleName = "github.com/go-chi/chi/v5"
+const FiberModuleName = "github.com/gofiber/fiber/v3"
 const ModuleName = "github.com/franchb/htmgo/framework/h"
 
 var PackageName = fmt.Sprintf("package %s", GeneratedDirName)
@@ -236,15 +235,14 @@ func buildGetPartialFromContext(builder *CodeBuilder, partials []Partial) {
 
 	var routerHandlerMethod = func(path string, caller string) string {
 		return fmt.Sprintf(`
-			router.Handle("%s", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		     cc := h.GetRequestContext(r)
-         partial := %s(cc)
-					if partial == nil {
-						w.WriteHeader(404)
-						return
-					}
-					h.PartialView(w, partial)
-			}))`, path, caller)
+			router.All("%s", func(c fiber.Ctx) error {
+				cc := h.GetRequestContext(c)
+				partial := %s(cc)
+				if partial == nil {
+					return c.SendStatus(404)
+				}
+				return h.PartialView(c, partial)
+			})`, path, caller)
 	}
 
 	handlerMethods := make([]string, 0)
@@ -256,7 +254,7 @@ func buildGetPartialFromContext(builder *CodeBuilder, partials []Partial) {
 	}
 
 	registerFunction := fmt.Sprintf(`
-		func RegisterPartials(router *chi.Mux) {
+		func RegisterPartials(router *fiber.App) {
 				%s
 		}
 	`, strings.Join(handlerMethods, "\n"))
@@ -293,11 +291,10 @@ func writePartialsFile(partials []Partial) {
 	builder := NewCodeBuilder(nil)
 	builder.AppendLine(GeneratedFileLine)
 	builder.AppendLine(PackageName)
-	builder.AddImport(ChiModuleName)
+	builder.AddImport(FiberModuleName)
 
 	if len(partials) > 0 {
 		builder.AddImport(ModuleName)
-		builder.AddImport(HttpModuleName)
 	}
 
 	moduleName := GetModuleName()
@@ -322,16 +319,6 @@ func formatRoute(path string) string {
 	path = strings.ReplaceAll(path, ".", "/")
 	path = strings.ReplaceAll(path, "\\", "/")
 
-	parts := strings.Split(path, "/")
-
-	for i, part := range parts {
-		if strings.HasPrefix(part, ":") {
-			parts[i] = fmt.Sprintf("{%s}", part[1:])
-		}
-	}
-
-	path = strings.Join(parts, "/")
-
 	if path == "" {
 		return "/"
 	}
@@ -348,8 +335,7 @@ func writePagesFile(pages []Page) {
 	builder := NewCodeBuilder(nil)
 	builder.AppendLine(GeneratedFileLine)
 	builder.AppendLine(PackageName)
-	builder.AddImport(HttpModuleName)
-	builder.AddImport(ChiModuleName)
+	builder.AddImport(FiberModuleName)
 
 	if len(pages) > 0 {
 		builder.AddImport(ModuleName)
@@ -373,9 +359,9 @@ func writePagesFile(pages []Page) {
 
 		body += fmt.Sprintf(
 			`
-			router.Get("%s", func(writer http.ResponseWriter, request *http.Request) {
-				cc := h.GetRequestContext(request)
-				h.HtmlView(writer, %s(cc))
+			router.Get("%s", func(c fiber.Ctx) error {
+				cc := h.GetRequestContext(c)
+				return h.HtmlView(c, %s(cc))
 			})
 			`, formatRoute(page.Path), call,
 		)
@@ -384,7 +370,7 @@ func writePagesFile(pages []Page) {
 	f := Function{
 		Name: fName,
 		Parameters: []NameType{
-			{Name: "router", Type: "*chi.Mux"},
+			{Name: "router", Type: "*fiber.App"},
 		},
 		Body: body,
 	}
@@ -532,11 +518,11 @@ func GenAst(flags ...process.RunFlag) error {
 				"%s"
 			)
 
-			func Register(r *chi.Mux) {
+			func Register(r *fiber.App) {
 				RegisterPartials(r)
 				RegisterPages(r)
 			}
-		`, ChiModuleName)
+		`, FiberModuleName)
 	})
 
 	return nil

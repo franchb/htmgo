@@ -1,10 +1,11 @@
 package h
 
 import (
-	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/url"
 	"testing"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func assertHas(t *testing.T, qs *Qs, key string, value string) {
@@ -52,8 +53,14 @@ func TestSetQsOnUrlWithDelete(t *testing.T) {
 
 func TestGetQueryParam(t *testing.T) {
 	t.Parallel()
-	req, _ := http.NewRequest("GET", "http://localhost/?foo=bar&baz=qux", nil)
-	ctx := &RequestContext{Request: req}
+
+	app := fiber.New()
+	fctx := &fasthttp.RequestCtx{}
+	fctx.Request.SetRequestURI("http://localhost/?foo=bar&baz=qux")
+	c := app.AcquireCtx(fctx)
+	defer app.ReleaseCtx(c)
+
+	ctx := &RequestContext{Fiber: c}
 
 	result := GetQueryParam(ctx, "foo")
 	assert.Equal(t, "bar", result)
@@ -70,7 +77,12 @@ func TestGetQueryParam(t *testing.T) {
 	assert.Equal(t, "value", result)
 
 	// url params should override browser url
-	req.URL, _ = url.Parse("http://localhost/?foo=override")
-	result = GetQueryParam(ctx, "foo")
+	fctx2 := &fasthttp.RequestCtx{}
+	fctx2.Request.SetRequestURI("http://localhost/?foo=override")
+	c2 := app.AcquireCtx(fctx2)
+	defer app.ReleaseCtx(c2)
+
+	ctx2 := &RequestContext{Fiber: c2, currentBrowserUrl: "http://localhost/?current=value"}
+	result = GetQueryParam(ctx2, "foo")
 	assert.Equal(t, "override", result)
 }

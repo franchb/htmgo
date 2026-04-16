@@ -27,5 +27,5 @@ func EnableExtension(app *h.App, opts opts.ExtensionOpts) {
 		return manager
 	})
 	ws.StartListener(app.Opts.ServiceLocator)
-	app.Router.Handle(opts.WsPath, wsutil.WsHttpHandler(&opts))
+	app.Router.Get(opts.WsPath, wsutil.WsHandler(&opts))
 }

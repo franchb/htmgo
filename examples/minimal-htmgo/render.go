@@ -1,26 +1,25 @@
 package main
 
 import (
+	"github.com/gofiber/fiber/v3"
+
 	"github.com/franchb/htmgo/framework/h"
-	"net/http"
 )
 
 func RenderToString(element *h.Element) string {
 	return h.Render(element)
 }
 
-func RenderPage(req *http.Request, w http.ResponseWriter, page func(ctx *h.RequestContext) *h.Page) {
+func RenderPage(c fiber.Ctx, page func(ctx *h.RequestContext) *h.Page) error {
 	ctx := h.RequestContext{
-		Request:  req,
-		Response: w,
+		Fiber: c,
 	}
-	h.HtmlView(w, page(&ctx))
+	return h.HtmlView(c, page(&ctx))
 }
 
-func RenderPartial(req *http.Request, w http.ResponseWriter, partial func(ctx *h.RequestContext) *h.Partial) {
+func RenderPartial(c fiber.Ctx, partial func(ctx *h.RequestContext) *h.Partial) error {
 	ctx := h.RequestContext{
-		Request:  req,
-		Response: w,
+		Fiber: c,
 	}
-	h.PartialView(w, partial(&ctx))
+	return h.PartialView(c, partial(&ctx))
 }

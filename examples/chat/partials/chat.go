@@ -11,13 +11,13 @@ func SendMessage(ctx *h.RequestContext) *h.Partial {
 	locator := ctx.ServiceLocator()
 	socketManager := service.Get[sse.SocketManager](locator)
 
-	sessionCookie, err := ctx.Request.Cookie("session_id")
+	sessionId := ctx.Fiber.Cookies("session_id")
 
-	if err != nil {
+	if sessionId == "" {
 		return h.SwapPartial(ctx, components.FormError("Session not found"))
 	}
 
-	message := ctx.Request.FormValue("message")
+	message := ctx.FormValue("message")
 
 	if message == "" {
 		return h.SwapPartial(ctx, components.FormError("Message is required"))
@@ -27,7 +27,7 @@ func SendMessage(ctx *h.RequestContext) *h.Partial {
 		return h.SwapPartial(ctx, components.FormError("Message is too long"))
 	}
 
-	socketManager.OnMessage(sessionCookie.Value, map[string]any{
+	socketManager.OnMessage(sessionId, map[string]any{
 		"message": message,
 	})
 

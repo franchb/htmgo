@@ -4,11 +4,14 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
+	"time"
+
+	"github.com/gofiber/fiber/v3"
+
 	"github.com/franchb/htmgo/framework/h"
 	"github.com/franchb/htmgo/framework/service"
-	"net/http"
 	"simpleauth/internal/db"
-	"time"
 )
 
 type CreatedSession struct {
@@ -47,12 +50,12 @@ func CreateSession(ctx *h.RequestContext, userId int64) (CreatedSession, error) 
 }
 
 func GetUserFromSession(ctx *h.RequestContext) (db.User, error) {
-	cookie, err := ctx.Request.Cookie("session_id")
-	if err != nil {
-		return db.User{}, err
+	sessionId := ctx.Fiber.Cookies("session_id")
+	if sessionId == "" {
+		return db.User{}, errors.New("no session cookie")
 	}
 	queries := service.Get[db.Queries](ctx.ServiceLocator())
-	user, err := queries.GetUserByToken(context.Background(), cookie.Value)
+	user, err := queries.GetUserByToken(context.Background(), sessionId)
 	if err != nil {
 		return db.User{}, err
 	}
@@ -60,11 +63,12 @@ func GetUserFromSession(ctx *h.RequestContext) (db.User, error) {
 }
 
 func WriteSessionCookie(ctx *h.RequestContext, session CreatedSession) {
-	cookie := http.Cookie{
+	cookie := fiber.Cookie{
 		Name:     "session_id",
 		Value:    session.Id,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: fiber.CookieSameSiteStrictMode,
 		Expires:  session.Expiration,
 		Path:     "/",
 	}

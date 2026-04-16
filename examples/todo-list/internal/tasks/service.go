@@ -24,7 +24,7 @@ type CreateRequest struct {
 
 func NewService(ctx *h.RequestContext) Service {
 	return Service{
-		ipAddress: util.GetClientIp(ctx.Request),
+		ipAddress: util.GetClientIp(ctx),
 		db:        service.Get[ent.Client](ctx.ServiceLocator()),
 	}
 }

@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"io/fs"
-	"net/http"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/static"
 
 	"github.com/franchb/htmgo/framework/h"
 	"github.com/franchb/htmgo/framework/service"
@@ -24,12 +26,14 @@ func main() {
 				panic(err)
 			}
 
-			app.Router.Handle("/item", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				id := r.URL.Query().Get("id")
-				w.Header().Set("Location", fmt.Sprintf("/?item=%s", id))
-				w.WriteHeader(302)
+			app.Router.Get("/item", func(c fiber.Ctx) error {
+				id := c.Query("id")
+				return c.Redirect().Status(302).To(fmt.Sprintf("/?item=%s", id))
+			})
+			app.Router.Use("/public", h.StaticCacheMiddleware)
+			app.Router.Get("/public/*", static.New("", static.Config{
+				FS: sub,
 			}))
-			app.Router.Handle("/public/*", h.StaticCacheMiddleware(http.StripPrefix("/public", http.FileServerFS(sub))))
 			__htmgo.Register(app.Router)
 		},
 	})

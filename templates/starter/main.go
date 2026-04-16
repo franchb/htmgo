@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
+
+	"github.com/gofiber/fiber/v3/middleware/static"
 	"github.com/franchb/htmgo/framework/config"
 	"github.com/franchb/htmgo/framework/h"
 	"github.com/franchb/htmgo/framework/service"
-	"io/fs"
-	"net/http"
 	"starter-template/__htmgo"
 )
 
@@ -24,11 +25,11 @@ func main() {
 				panic(err)
 			}
 
-			http.FileServerFS(sub)
+			_ = sub
 
 			// change this in htmgo.yml (public_asset_path)
-			app.Router.Handle(fmt.Sprintf("%s/*", cfg.PublicAssetPath),
-				http.StripPrefix(cfg.PublicAssetPath, http.FileServerFS(sub)))
+			app.Router.Use(cfg.PublicAssetPath, h.StaticCacheMiddleware)
+			app.Router.Get(fmt.Sprintf("%s/*", cfg.PublicAssetPath), static.New("./assets/dist"))
 
 			__htmgo.Register(app.Router)
 		},

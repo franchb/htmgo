@@ -56,7 +56,7 @@ func Validate(ctx *h.RequestContext) *h.Partial {
 	name := ctx.FormValue("name")
 
 	if name == "htmgo" {
-		ctx.Response.WriteHeader(400)
+		ctx.Fiber.Status(400)
 		return h.SwapPartial(
 			ctx,
 			h.Div(

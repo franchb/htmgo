@@ -3,7 +3,9 @@ package main
 import (
 	"io/fs"
 	"log"
-	"net/http"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/static"
 
 	"github.com/franchb/htmgo/framework/h"
 	"github.com/franchb/htmgo/framework/service"
@@ -29,13 +31,12 @@ func main() {
 		Register: func(app *h.App) {
 
 			app.Use(func(ctx *h.RequestContext) {
-				r := ctx.Request
 				// Log the details of the incoming request
-				log.Printf("Method: %s, URL: %s, RemoteAddr: %s", r.Method, r.URL.String(), urlhelper.GetClientIp(r))
+				log.Printf("Method: %s, URL: %s, RemoteAddr: %s", ctx.Fiber.Method(), ctx.Fiber.OriginalURL(), urlhelper.GetClientIp(ctx.Fiber))
 			})
 
-			app.UseWithContext(func(w http.ResponseWriter, r *http.Request, context map[string]any) {
-				context["embeddedMarkdown"] = markdownAssets
+			app.Use(func(ctx *h.RequestContext) {
+				ctx.Set("embeddedMarkdown", markdownAssets)
 			})
 
 			sub, err := fs.Sub(staticAssets, "assets/dist")
@@ -44,17 +45,18 @@ func main() {
 				panic(err)
 			}
 
-			app.Router.Handle("/sitemap.xml", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			app.Router.Get("/sitemap.xml", func(c fiber.Ctx) error {
 				s, err := sitemap.Generate(app.Router)
 				if err != nil {
-					http.Error(w, "failed to generate sitemap", http.StatusInternalServerError)
-					return
+					return c.Status(fiber.StatusInternalServerError).SendString("failed to generate sitemap")
 				}
-				w.Header().Set("Content-Type", "application/xml")
-				w.Write(s)
-			}))
+				c.Set("Content-Type", "application/xml")
+				return c.Send(s)
+			})
 
-			app.Router.Handle("/public/*", h.StaticCacheMiddleware(http.StripPrefix("/public", http.FileServerFS(sub))))
+			app.Router.Get("/public/*", h.StaticCacheMiddleware, static.New("", static.Config{
+				FS: sub,
+			}))
 
 			__htmgo.Register(app.Router)
 		},
