@@ -29,10 +29,19 @@ jobs:
         run: |
           cd cli/htmgo && go install .
 
-      # Step 4: Generate template using htmgo
+      # Step 4: Generate template from the local checkout.
+      # We copy templates/starter instead of running `htmgo template` (which
+      # clones master from GitHub and would miss changes on this branch).
       - name: Generate myapp template
         run: |
-          htmgo template myapp
+          cp -r templates/starter myapp
+          cd myapp
+          sed -i 's/module starter-template/module myapp/' go.mod
+          sed -i 's|../../framework|../framework|' go.mod
+          find . -name '*.go' -exec sed -i 's/starter-template/myapp/g' {} +
+          git init
+          go mod tidy
+          htmgo generate
 
       # Step 5: Build the app
       - name: Build myapp
