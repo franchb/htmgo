@@ -21,10 +21,10 @@ type RequestContext struct {
 	locator           *service.Locator
 	isBoosted         bool
 	currentBrowserUrl string
-	hxPromptResponse  string
 	isHxRequest       bool
 	hxTargetId        string
-	hxTriggerName     string
+	hxSource          string
+	hxRequestType     string
 	hxTriggerId       string
 	kv                map[string]interface{}
 }
@@ -94,16 +94,27 @@ func (c *RequestContext) IsHxRequest() bool {
 	return c.isHxRequest
 }
 
-func (c *RequestContext) HxPromptResponse() string {
-	return c.hxPromptResponse
-}
-
 func (c *RequestContext) HxTargetId() string {
 	return c.hxTargetId
 }
 
-func (c *RequestContext) HxTriggerName() string {
-	return c.hxTriggerName
+// HxSource returns the raw HX-Source header: "tag#id" (e.g. "button#save"), empty if none.
+func (c *RequestContext) HxSource() string {
+	return c.hxSource
+}
+
+// HxSourceID returns the id portion of HX-Source, empty if no id.
+func (c *RequestContext) HxSourceID() string {
+	_, id, ok := strings.Cut(c.hxSource, "#")
+	if !ok {
+		return ""
+	}
+	return id
+}
+
+// HxRequestType returns "full" or "partial" for htmx 4 requests, empty otherwise.
+func (c *RequestContext) HxRequestType() string {
+	return c.hxRequestType
 }
 
 func (c *RequestContext) HxTriggerId() string {
@@ -161,10 +172,10 @@ func Start(opts AppOpts) {
 func populateHxFields(cc *RequestContext) {
 	cc.isBoosted = cc.Fiber.Get(hx.BoostedHeader) == "true"
 	cc.currentBrowserUrl = cc.Fiber.Get(hx.CurrentUrlHeader)
-	cc.hxPromptResponse = cc.Fiber.Get(hx.PromptResponseHeader)
 	cc.isHxRequest = cc.Fiber.Get(hx.RequestHeader) == "true"
 	cc.hxTargetId = cc.Fiber.Get(hx.TargetIdHeader)
-	cc.hxTriggerName = cc.Fiber.Get(hx.TriggerNameHeader)
+	cc.hxSource = cc.Fiber.Get(hx.SourceHeader)
+	cc.hxRequestType = cc.Fiber.Get(hx.RequestTypeHeader)
 	cc.hxTriggerId = cc.Fiber.Get(hx.TriggerIdHeader)
 }
 
