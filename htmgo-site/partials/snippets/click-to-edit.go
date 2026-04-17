@@ -146,7 +146,8 @@ func TableRow(record *Record, editing bool) *h.Element {
 		h.If(
 			editing,
 			// this is important to make sure the inputs are included in the form submission
-			h.HxInclude("input"),
+			// hx-include:inherited because the verb (hx-post) lives on the child Button, not Tr
+			h.HxIncludeInherited("input"),
 		),
 		h.Id(recordId),
 		Cell("name", record.Name),
