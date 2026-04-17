@@ -1,0 +1,119 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+const registered: Record<string, any> = {};
+vi.mock("htmx.org", () => ({
+  default: {
+    registerExtension: (n: string, e: any) => (registered[n] = e),
+    config: {} as any,
+  },
+}));
+
+function makeApi(attrs: Record<string, string>) {
+  return {
+    getClosestAttributeValue: (_elt: any, name: string) => attrs[name] ?? null,
+    findThisElement: (elt: any) => elt,
+    querySelectorExt: (_elt: any, sel: string) => {
+      const el = document.querySelector(sel);
+      return el;
+    },
+  };
+}
+
+describe("response-targets extension", () => {
+  let ext: any;
+  beforeEach(async () => {
+    await import("../response-targets");
+    ext = registered["response-targets"];
+    document.body.innerHTML = "";
+  });
+
+  it("registers with init and htmx_before_swap", () => {
+    expect(ext).toBeDefined();
+    expect(typeof ext.init).toBe("function");
+    expect(typeof ext.htmx_before_swap).toBe("function");
+  });
+
+  it("init sets defaults in htmx.config without clobbering existing values", async () => {
+    const cfg = (await import("htmx.org")).default.config as any;
+    cfg.responseTargetUnsetsError = undefined;
+    cfg.responseTargetSetsError = undefined;
+    cfg.responseTargetPrefersExisting = undefined;
+    cfg.responseTargetPrefersRetargetHeader = undefined;
+    ext.init(makeApi({}));
+    expect(cfg.responseTargetUnsetsError).toBe(true);
+    expect(cfg.responseTargetSetsError).toBe(false);
+    expect(cfg.responseTargetPrefersExisting).toBe(false);
+    expect(cfg.responseTargetPrefersRetargetHeader).toBe(true);
+  });
+
+  it("retargets to hx-target-404 when status is 404", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    ext.init(makeApi({ "hx-target-404": "#err" }));
+    const detail: any = {
+      ctx: { response: { status: 404 }, elt: srcElt },
+      requestConfig: { elt: srcElt },
+      shouldSwap: false,
+    };
+    ext.htmx_before_swap(srcElt, detail);
+    expect(detail.shouldSwap).toBe(true);
+    expect((detail.target as HTMLElement)?.id).toBe("err");
+  });
+
+  it("falls back to hx-target-4xx when hx-target-404 is absent", () => {
+    document.body.innerHTML = `<div id="err4"></div>`;
+    const srcElt = document.createElement("button");
+    ext.init(makeApi({ "hx-target-4xx": "#err4" }));
+    const detail: any = {
+      ctx: { response: { status: 404 }, elt: srcElt },
+      requestConfig: { elt: srcElt },
+      shouldSwap: false,
+    };
+    ext.htmx_before_swap(srcElt, detail);
+    expect(detail.shouldSwap).toBe(true);
+    expect((detail.target as HTMLElement)?.id).toBe("err4");
+  });
+
+  it("falls back to hx-target-error for 4xx/5xx", () => {
+    document.body.innerHTML = `<div id="errany"></div>`;
+    const srcElt = document.createElement("button");
+    ext.init(makeApi({ "hx-target-error": "#errany" }));
+    const detail: any = {
+      ctx: { response: { status: 500 }, elt: srcElt },
+      requestConfig: { elt: srcElt },
+      shouldSwap: false,
+    };
+    ext.htmx_before_swap(srcElt, detail);
+    expect(detail.shouldSwap).toBe(true);
+    expect((detail.target as HTMLElement)?.id).toBe("errany");
+  });
+
+  it("does nothing when status is 200", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    ext.init(makeApi({ "hx-target-error": "#err" }));
+    const detail: any = {
+      ctx: { response: { status: 200 }, elt: srcElt },
+      requestConfig: { elt: srcElt },
+      shouldSwap: false,
+    };
+    ext.htmx_before_swap(srcElt, detail);
+    // Unchanged
+    expect(detail.shouldSwap).toBe(false);
+  });
+
+  it("hx-target-404='this' retargets to the request element", () => {
+    const srcElt = document.createElement("button");
+    srcElt.id = "btn";
+    document.body.appendChild(srcElt);
+    ext.init(makeApi({ "hx-target-404": "this" }));
+    const detail: any = {
+      ctx: { response: { status: 404 }, elt: srcElt },
+      requestConfig: { elt: srcElt },
+      shouldSwap: false,
+    };
+    ext.htmx_before_swap(srcElt, detail);
+    expect(detail.shouldSwap).toBe(true);
+    expect(detail.target).toBe(srcElt);
+  });
+});

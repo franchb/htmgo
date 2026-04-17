@@ -1,9 +1,7 @@
 import htmx from "htmx.org";
 const config: any = htmx.config;
 
-/** @type {import("../htmx").HtmxInternalApi} */
 let api: any;
-
 const attrPrefix = "hx-target-";
 
 // IE11 doesn't support string.startsWith
@@ -48,8 +46,8 @@ function getRespCodeTarget(elt: Element, respCodeNumber: number) {
     attrPossibilities.push("error");
   }
 
-  for (let i = 0; i < attrPossibilities.length; i++) {
-    const attr = attrPrefix + attrPossibilities[i];
+  for (const p of attrPossibilities) {
+    const attr = attrPrefix + p;
     const attrValue = api.getClosestAttributeValue(elt, attr);
     if (attrValue) {
       if (attrValue === "this") {
@@ -63,20 +61,18 @@ function getRespCodeTarget(elt: Element, respCodeNumber: number) {
   return null;
 }
 
-/** @param {Event} evt */
-function handleErrorFlag(evt: CustomEvent) {
-  if (evt.detail.isError) {
+function handleErrorFlag(detail: any) {
+  if (detail.isError) {
     if (config.responseTargetUnsetsError) {
-      evt.detail.isError = false;
+      detail.isError = false;
     }
   } else if (config.responseTargetSetsError) {
-    evt.detail.isError = true;
+    detail.isError = true;
   }
 }
 
-htmx.defineExtension("response-targets", {
-  // @ts-ignore
-  init: (apiRef) => {
+htmx.registerExtension("response-targets", {
+  init(apiRef: any) {
     api = apiRef;
 
     if (config.responseTargetUnsetsError === undefined) {
@@ -93,44 +89,35 @@ htmx.defineExtension("response-targets", {
     }
   },
 
-  // @ts-ignore
-  onEvent: (name, evt) => {
-    if (!(evt instanceof CustomEvent)) {
-      return false;
+  htmx_before_swap(_elt: HTMLElement, detail: any) {
+    const ctx = detail?.ctx;
+    const status = ctx?.response?.status ?? 0;
+    if (status === 0 || status === 200) return;
+
+    if (detail.target) {
+      if (config.responseTargetPrefersExisting) {
+        detail.shouldSwap = true;
+        handleErrorFlag(detail);
+        return;
+      }
+      const headers = ctx?.response?.headers;
+      const retarget =
+        typeof headers?.get === "function" ? headers.get("HX-Retarget") : null;
+      if (config.responseTargetPrefersRetargetHeader && retarget) {
+        detail.shouldSwap = true;
+        handleErrorFlag(detail);
+        return;
+      }
     }
-    if (
-      name === "htmx:beforeSwap" &&
-      evt.detail.xhr &&
-      evt.detail.xhr.status !== 200
-    ) {
-      if (evt.detail.target) {
-        if (config.responseTargetPrefersExisting) {
-          evt.detail.shouldSwap = true;
-          handleErrorFlag(evt);
-          return true;
-        }
-        if (
-          config.responseTargetPrefersRetargetHeader &&
-          evt.detail.xhr.getAllResponseHeaders().match(/HX-Retarget:/i)
-        ) {
-          evt.detail.shouldSwap = true;
-          handleErrorFlag(evt);
-          return true;
-        }
-      }
-      if (!evt.detail.requestConfig) {
-        return true;
-      }
-      const target = getRespCodeTarget(
-        evt.detail.requestConfig.elt,
-        evt.detail.xhr.status,
-      );
-      if (target) {
-        handleErrorFlag(evt);
-        evt.detail.shouldSwap = true;
-        evt.detail.target = target;
-      }
-      return true;
+
+    const reqElt = detail.requestConfig?.elt ?? ctx?.elt;
+    if (!reqElt) return;
+
+    const target = getRespCodeTarget(reqElt, status);
+    if (target) {
+      handleErrorFlag(detail);
+      detail.shouldSwap = true;
+      detail.target = target;
     }
   },
 });
