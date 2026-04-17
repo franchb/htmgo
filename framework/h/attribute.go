@@ -347,3 +347,18 @@ func TabIndex(value int) *AttributeR {
 func GenId(len int) string {
 	return util.RandSeq(len)
 }
+
+// Inheritance-aware helpers (htmx 4 explicit inheritance).
+// Emits `<attr>:inherited="..."` which propagates to descendants.
+
+func HxTargetInherited(selector string) Ren    { return Attribute("hx-target:inherited", selector) }
+func HxIncludeInherited(selector string) Ren   { return Attribute("hx-include:inherited", selector) }
+func HxSwapInherited(swap string) Ren          { return Attribute("hx-swap:inherited", swap) }
+func HxBoostInherited(value string) Ren        { return Attribute("hx-boost:inherited", value) }
+func HxConfirmInherited(message string) Ren    { return Attribute("hx-confirm:inherited", message) }
+func HxHeadersInherited(json string) Ren       { return Attribute("hx-headers:inherited", json) }
+func HxIndicatorInherited(selector string) Ren { return Attribute("hx-indicator:inherited", selector) }
+func HxSyncInherited(spec string) Ren          { return Attribute("hx-sync:inherited", spec) }
+func HxConfigInherited(json string) Ren        { return Attribute("hx-config:inherited", json) }
+func HxEncodingInherited(enc string) Ren       { return Attribute("hx-encoding:inherited", enc) }
+func HxValidateInherited(value string) Ren     { return Attribute("hx-validate:inherited", value) }

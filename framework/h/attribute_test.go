@@ -141,3 +141,33 @@ func TestBoost(t *testing.T) {
 	assert.Equal(t, "hx-boost", attr.(*AttributeR).Name)
 	assert.Equal(t, "true", attr.(*AttributeR).Value)
 }
+
+func TestHxInheritedAttributes(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name  string
+		attr  Ren
+		key   string
+		value string
+	}{
+		{"HxTargetInherited", HxTargetInherited("#out"), "hx-target:inherited", "#out"},
+		{"HxIncludeInherited", HxIncludeInherited("closest form"), "hx-include:inherited", "closest form"},
+		{"HxSwapInherited", HxSwapInherited("outerHTML"), "hx-swap:inherited", "outerHTML"},
+		{"HxBoostInherited", HxBoostInherited("true"), "hx-boost:inherited", "true"},
+		{"HxConfirmInherited", HxConfirmInherited("Sure?"), "hx-confirm:inherited", "Sure?"},
+		{"HxHeadersInherited", HxHeadersInherited(`{"X-Token":"abc"}`), "hx-headers:inherited", `{"X-Token":"abc"}`},
+		{"HxIndicatorInherited", HxIndicatorInherited("#spinner"), "hx-indicator:inherited", "#spinner"},
+		{"HxSyncInherited", HxSyncInherited("this:drop"), "hx-sync:inherited", "this:drop"},
+		{"HxConfigInherited", HxConfigInherited(`{"timeout":5000}`), "hx-config:inherited", `{"timeout":5000}`},
+		{"HxEncodingInherited", HxEncodingInherited("multipart/form-data"), "hx-encoding:inherited", "multipart/form-data"},
+		{"HxValidateInherited", HxValidateInherited("true"), "hx-validate:inherited", "true"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ar, ok := tc.attr.(*AttributeR)
+			assert.True(t, ok, "expected *AttributeR from %s", tc.name)
+			assert.Equal(t, tc.key, ar.Name)
+			assert.Equal(t, tc.value, ar.Value)
+		})
+	}
+}
