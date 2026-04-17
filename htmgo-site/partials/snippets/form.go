@@ -10,7 +10,6 @@ import (
 func FormExample(ctx *h.RequestContext) *h.Partial {
 	return h.NewPartial(
 		h.Form(
-			h.TriggerChildren(),
 			h.PostPartial(SubmitForm),
 			h.Class("flex flex-col gap-2 max-w-[300px] mx-auto"),
 			h.LabelFor("name", "Your Name"),

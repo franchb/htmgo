@@ -67,9 +67,6 @@ func StorySidebar(ctx *h.RequestContext) *h.Partial {
 
 	body := h.Aside(
 		h.Id("story-sidebar"),
-		h.JoinExtensions(
-			h.TriggerChildren(),
-		),
 		h.Class("sticky top-0 h-screen p-1 bg-gray-100 overflow-y-auto max-w-80 min-w-80"),
 		h.Div(
 			h.Class("flex flex-col gap-1"),

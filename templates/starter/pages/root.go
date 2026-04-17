@@ -13,9 +13,6 @@ func RootPage(children ...h.Ren) *h.Page {
 
 	return h.NewPage(
 		h.Html(
-			h.HxExtensions(
-				h.BaseExtensions(),
-			),
 			h.Head(
 				h.Title(
 					h.Text(title),

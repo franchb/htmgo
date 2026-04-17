@@ -12,7 +12,6 @@ func FormWithBlurValidation(ctx *h.RequestContext) *h.Partial {
 	)
 	return h.NewPartial(
 		h.Form(
-			h.TriggerChildren(),
 			h.Id("my-form"),
 			// hx-swap: none is required so the traditional swap doesn't happen, only oob swap
 			h.NoSwap(),
