@@ -1,44 +1,33 @@
 import htmx from "htmx.org";
-import {hasExtension} from "./extension";
 
 let lastVersion = "";
 
-htmx.defineExtension("livereload", {
-    init: function () {
-
-        let enabled = hasExtension("livereload")
-
-        if(!enabled) {
-            return
-        }
-
-        console.info('livereload extension initialized.');
-        // Create a new EventSource object and point it to your SSE endpoint
-        const eventSource = new EventSource('/dev/livereload');
-        // Listen for messages from the server
-        eventSource.onmessage = function(event) {
-            const message = event.data
-            // Log the message data received from the server
-            if(lastVersion === "") {
-                lastVersion = message;
-            }
-            if(lastVersion !== message) {
-                lastVersion = message;
-                reload()
-            }
-        };
-        // Handle errors (e.g., when the connection is closed)
-        eventSource.onerror = function(error) {
-            console.error('EventSource error:', error);
-        };
-
-    },
-    // @ts-ignore
-    onEvent: function (name, evt) {
-
-    },
-});
-
-function reload() {
-    window.location.reload()
+function livereloadURL(): string | null {
+  const meta = document.querySelector('meta[name="htmgo-livereload"]');
+  if (!meta) return null;
+  return (meta.getAttribute("content") || "").trim() || "/dev/livereload";
 }
+
+htmx.registerExtension("livereload", {
+  init(_api: unknown) {
+    const url = livereloadURL();
+    if (!url) return;
+
+    console.info("livereload extension initialized:", url);
+    const eventSource = new EventSource(url);
+    eventSource.onmessage = (event: MessageEvent) => {
+      const message = event.data;
+      if (lastVersion === "") {
+        lastVersion = message;
+        return;
+      }
+      if (lastVersion !== message) {
+        lastVersion = message;
+        window.location.reload();
+      }
+    };
+    eventSource.onerror = (error: Event) => {
+      console.error("EventSource error:", error);
+    };
+  },
+});
