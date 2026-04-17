@@ -318,12 +318,34 @@ func writeHtml(c fiber.Ctx, element Ren) error {
 	return c.SendString(Render(element, WithDocType()))
 }
 
+// livereloadMetaTag is injected into <head> when running in development mode.
+// The livereload JS extension gates on this meta tag's presence.
+const livereloadMetaTag = `<meta name="htmgo-livereload" content="/dev/livereload">`
+
+// injectLivereloadMeta inserts the htmgo-livereload meta tag immediately after
+// the opening <head> tag in the rendered HTML.  It is a no-op when the page
+// does not contain a <head> element.
+func injectLivereloadMeta(html string) string {
+	const needle = "<head>"
+	idx := strings.Index(html, needle)
+	if idx == -1 {
+		return html
+	}
+	pos := idx + len(needle)
+	return html[:pos] + livereloadMetaTag + html[pos:]
+}
+
 func HtmlView(c fiber.Ctx, page *Page) error {
 	// if the page is nil, do nothing, this can happen if custom response is written, such as a 302 redirect
 	if page == nil {
 		return nil
 	}
-	return writeHtml(c, page.Root)
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	rendered := Render(page.Root, WithDocType())
+	if IsDevelopment() {
+		rendered = injectLivereloadMeta(rendered)
+	}
+	return c.SendString(rendered)
 }
 
 func PartialViewWithHeaders(c fiber.Ctx, headers *Headers, partial *Partial) error {
