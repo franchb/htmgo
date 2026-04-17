@@ -83,3 +83,42 @@ func TestHeaderConstants_htmx4(t *testing.T) {
 		assert.Equal(t, c.want, string(c.got))
 	}
 }
+
+func TestAttributeConstants_htmx4(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		got  Attribute
+		want string
+	}{
+		{GetAttr, "hx-get"},
+		{PostAttr, "hx-post"},
+		{PutAttr, "hx-put"},
+		{PatchAttr, "hx-patch"},
+		{DeleteAttr, "hx-delete"},
+		{PushUrlAttr, "hx-push-url"},
+		{ReplaceUrlAttr, "hx-replace-url"},
+		{SelectAttr, "hx-select"},
+		{SelectOobAttr, "hx-select-oob"},
+		{SwapAttr, "hx-swap"},
+		{SwapOobAttr, "hx-swap-oob"},
+		{TargetAttr, "hx-target"},
+		{TriggerAttr, "hx-trigger"},
+		{ValsAttr, "hx-vals"},
+		{BoostAttr, "hx-boost"},
+		{ConfirmAttr, "hx-confirm"},
+		{IgnoreAttr, "hx-ignore"},   // htmx 4: was hx-disable in htmx 2
+		{DisableAttr, "hx-disable"}, // htmx 4: was hx-disabled-elt in htmx 2
+		{EncodingAttr, "hx-encoding"},
+		{HeadersAttr, "hx-headers"},
+		{IncludeAttr, "hx-include"},
+		{IndicatorAttr, "hx-indicator"},
+		{PreserveAttr, "hx-preserve"},
+		{SyncAttr, "hx-sync"},
+		{ValidateAttr, "hx-validate"},
+		{ConfigAttr, "hx-config"},
+		{StatusAttr, "hx-status"},
+	}
+	for _, c := range cases {
+		assert.Equal(t, c.want, string(c.got))
+	}
+}
