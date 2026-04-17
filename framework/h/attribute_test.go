@@ -92,18 +92,6 @@ func TestD(t *testing.T) {
 	assert.Equal(t, "M10 10 H 90 V 90 H 10 Z", attr.(*AttributeR).Value)
 }
 
-func TestHxExtension(t *testing.T) {
-	attr := HxExtension("trigger-children")
-	assert.Equal(t, "hx-ext", attr.Name)
-	assert.Equal(t, "trigger-children", attr.Value)
-}
-
-func TestHxExtensions(t *testing.T) {
-	attr := HxExtensions("foo", "bar")
-	assert.Equal(t, "hx-ext", attr.(*AttributeR).Name)
-	assert.Equal(t, "foo,bar", attr.(*AttributeR).Value)
-}
-
 func TestHxTrigger(t *testing.T) {
 	trigger := hx.NewTrigger(hx.OnClick()) // This assumes hx.NewTrigger is a correct call
 	attr := HxTrigger(hx.OnClick())
@@ -117,11 +105,6 @@ func TestHxTriggerClick(t *testing.T) {
 	assert.Equal(t, "click", attr.Value)
 }
 
-func TestTriggerChildren(t *testing.T) {
-	attr := TriggerChildren()
-	assert.Equal(t, "hx-ext", attr.Name)
-	assert.Equal(t, "trigger-children", attr.Value)
-}
 
 func TestHxInclude(t *testing.T) {
 	attr := HxInclude(".include-selector")

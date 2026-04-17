@@ -119,12 +119,6 @@ func HxIndicator(tag string) *AttributeR {
 	return Attribute(hx.IndicatorAttr, tag)
 }
 
-// TriggerChildren Adds the hx-extension="trigger-children" to an element
-// See https://htmgo.dev/docs#htmx-extensions-trigger-children
-func TriggerChildren() *AttributeR {
-	return HxExtension("trigger-children")
-}
-
 // HxTriggerString Adds a hx-trigger to an element based on a string of triggers
 func HxTriggerString(triggers ...string) *AttributeR {
 	trigger := hx.NewStringTrigger(strings.Join(triggers, ", "))
@@ -139,16 +133,6 @@ func HxTrigger(opts ...hx.TriggerEvent) *AttributeR {
 // HxTriggerClick Adds a hx-trigger="click" to an element
 func HxTriggerClick(opts ...hx.Modifier) *AttributeR {
 	return HxTrigger(hx.OnClick(opts...))
-}
-
-// HxExtension Adds a hx-ext to an element
-func HxExtension(value string) *AttributeR {
-	return Attribute(hx.ExtAttr, value)
-}
-
-// HxExtensions Adds multiple hx-ext to an element, separated by commas
-func HxExtensions(value ...string) Ren {
-	return Attribute(hx.ExtAttr, strings.Join(value, ","))
 }
 
 func JoinExtensions(attrs ...*AttributeR) Ren {
