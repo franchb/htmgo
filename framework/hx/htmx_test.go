@@ -54,3 +54,32 @@ func TestEventConstants_htmx4(t *testing.T) {
 		assert.Equal(t, tc.want, string(tc.event))
 	}
 }
+
+func TestHeaderConstants_htmx4(t *testing.T) {
+	t.Parallel()
+	type headerCase struct {
+		got  Header
+		want string
+	}
+	cases := []headerCase{
+		{BoostedHeader, "HX-Boosted"},
+		{RequestHeader, "HX-Request"},
+		{TargetIdHeader, "HX-Target"},
+		{TriggerIdHeader, "HX-Trigger"},
+		{LocationHeader, "HX-Location"},
+		{PushUrlHeader, "HX-Push-Url"},
+		{RedirectHeader, "HX-Redirect"},
+		{RefreshHeader, "HX-Refresh"},
+		{ReplaceUrlHeader, "HX-Replace-Url"},
+		{CurrentUrlHeader, "HX-Current-Url"},
+		{ReswapHeader, "HX-Reswap"},
+		{RetargetHeader, "HX-Retarget"},
+		{ReselectHeader, "HX-Reselect"},
+		{TriggerHeader, "HX-Trigger"},
+		{SourceHeader, "HX-Source"},
+		{RequestTypeHeader, "HX-Request-Type"},
+	}
+	for _, c := range cases {
+		assert.Equal(t, c.want, string(c.got))
+	}
+}

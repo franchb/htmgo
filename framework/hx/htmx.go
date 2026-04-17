@@ -43,24 +43,22 @@ const (
 )
 
 const (
-	BoostedHeader            Header = "HX-Boosted"
-	PromptResponseHeader     Header = "HX-Prompt"
-	RequestHeader            Header = "HX-Request"
-	TargetIdHeader           Header = "HX-Target"
-	TriggerNameHeader        Header = "HX-Trigger-Name"
-	TriggerIdHeader          Header = "HX-Trigger"
-	LocationHeader           Header = "HX-Location"
-	PushUrlHeader            Header = "HX-Push-Url"
-	RedirectHeader           Header = "HX-Redirect"
-	RefreshHeader            Header = "HX-Refresh"
-	ReplaceUrlHeader         Header = "HX-Replace-Url"
-	CurrentUrlHeader         Header = "HX-Current-Url"
-	ReswapHeader             Header = "HX-Reswap"
-	RetargetHeader           Header = "HX-Retarget"
-	ReselectHeader           Header = "HX-Reselect"
-	TriggerHeader            Header = "HX-Trigger"
-	TriggerAfterSettleHeader Header = "HX-Trigger-After-Settle"
-	TriggerAfterSwapHeader   Header = "HX-Trigger-After-Swap"
+	BoostedHeader     Header = "HX-Boosted"
+	RequestHeader     Header = "HX-Request"
+	TargetIdHeader    Header = "HX-Target"    // htmx 4 format: tag#id
+	TriggerIdHeader   Header = "HX-Trigger"   // htmx 4 format: tag#id
+	LocationHeader    Header = "HX-Location"
+	PushUrlHeader     Header = "HX-Push-Url"
+	RedirectHeader    Header = "HX-Redirect"
+	RefreshHeader     Header = "HX-Refresh"
+	ReplaceUrlHeader  Header = "HX-Replace-Url"
+	CurrentUrlHeader  Header = "HX-Current-Url"
+	ReswapHeader      Header = "HX-Reswap"
+	RetargetHeader    Header = "HX-Retarget"
+	ReselectHeader    Header = "HX-Reselect"
+	TriggerHeader     Header = "HX-Trigger"
+	SourceHeader      Header = "HX-Source"       // new in htmx 4; tag#id format
+	RequestTypeHeader Header = "HX-Request-Type" // new in htmx 4; "full" or "partial"
 )
 
 const (
