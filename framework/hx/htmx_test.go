@@ -122,3 +122,10 @@ func TestAttributeConstants_htmx4(t *testing.T) {
 		assert.Equal(t, c.want, string(c.got))
 	}
 }
+
+func TestToHtmxTriggerName_htmx4(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "after:swap", ToHtmxTriggerName("htmx:after:swap"))
+	assert.Equal(t, "click", ToHtmxTriggerName("onclick"))
+	assert.Equal(t, "custom-event", ToHtmxTriggerName("custom-event"))
+}
