@@ -1,23 +1,18 @@
 import htmx from "htmx.org";
 
-htmx.defineExtension("mutation-error", {
-  // @ts-ignore
-  onEvent: (name, evt) => {
-    if (!(evt instanceof CustomEvent)) {
-      return false;
-    }
-    if (name === "htmx:afterRequest") {
-      if (!evt.detail || !evt.detail.xhr) {
-        return;
-      }
-      const status = evt.detail.xhr.status;
-      if (status >= 400) {
-        document.querySelectorAll("*").forEach((element) => {
-          if (element.hasAttribute("hx-on::on-mutation-error")) {
-            htmx.trigger(element, "htmx:on-mutation-error", { status });
-          }
-        });
-      }
+const mutationMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+htmx.registerExtension("mutation-error", {
+  init(_api: unknown) {},
+
+  htmx_after_request(elt: HTMLElement, detail: any) {
+    const ctx = detail?.ctx;
+    if (!ctx || !ctx.request) return;
+    const method = (ctx.request.method || "").toUpperCase();
+    if (!mutationMethods.has(method)) return;
+    const status = ctx.response?.status ?? 0;
+    if (status === 0 || status >= 400) {
+      htmx.trigger(elt, "htmx:onMutationError", { status, elt });
     }
   },
 });
