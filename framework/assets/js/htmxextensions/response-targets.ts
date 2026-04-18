@@ -103,7 +103,7 @@ htmx.registerExtension("response-targets", {
     if (!reqElt) return;
 
     const target = getRespCodeTarget(reqElt, status);
-    if (target) {
+    if (target && target !== mainTask.target) {
       const from = mainTask.target ?? null;
       mainTask.target = target;
       api.triggerHtmxEvent(reqElt, "htmgo:response:retargeted", {

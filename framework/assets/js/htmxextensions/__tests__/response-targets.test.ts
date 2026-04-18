@@ -203,6 +203,20 @@ describe("response-targets extension", () => {
     expect(triggered.find((e) => e.name === "htmgo:response:retargeted")).toBeUndefined();
   });
 
+  it("does not fire htmgo:response:retargeted when resolved target equals existing target", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    document.body.appendChild(srcElt);
+    const { api, triggered } = makeApi({ "hx-target-404": "#err" });
+    ext.init(api);
+    const existing = document.getElementById("err")!;
+    const { detail, mainTask } = makeDetail(srcElt, 404, existing);
+    ext.htmx_before_swap(srcElt, detail);
+
+    expect(mainTask.target).toBe(existing);
+    expect(triggered.find((e) => e.name === "htmgo:response:retargeted")).toBeUndefined();
+  });
+
   it("does not fire htmgo:response:retargeted on 2xx status", () => {
     document.body.innerHTML = `<div id="err"></div>`;
     const srcElt = document.createElement("button");
