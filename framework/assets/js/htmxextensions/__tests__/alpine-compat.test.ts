@@ -332,4 +332,33 @@ describe("alpine-compat extension", () => {
       expect(a.hasAttribute("data-alpine-state")).toBe(true);
     });
   });
+
+  describe("API-surface contract", () => {
+    it("references every documented Alpine + htmx internal API symbol", async () => {
+      // This is a source-level assertion. If Alpine or htmx renames an API,
+      // the extension must be updated and this test updated deliberately.
+      const fs = await import("node:fs/promises");
+      const path = await import("node:path");
+      const url = await import("node:url");
+      const here = path.dirname(url.fileURLToPath(import.meta.url));
+      const srcPath = path.join(here, "..", "alpine-compat.ts");
+      const src = await fs.readFile(srcPath, "utf8");
+
+      const alpineSymbols = [
+        "closestDataStack",
+        "cloneNode",
+        "deferMutations",
+        "destroyTree",
+        "flushAndStopDeferringMutations",
+      ];
+      for (const sym of alpineSymbols) {
+        expect(src, `Alpine.${sym} must remain referenced`).toMatch(sym);
+      }
+
+      const htmxApiSymbols = ["isSoftMatch", "morph"];
+      for (const sym of htmxApiSymbols) {
+        expect(src, `api.${sym} must remain referenced`).toMatch(sym);
+      }
+    });
+  });
 });
