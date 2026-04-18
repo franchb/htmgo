@@ -270,3 +270,195 @@ func PostLogin(ctx *h.RequestContext) *h.Partial {
 - `h.PushUrlHeader(url string)` — sets `HX-Push-Url`.
 - `h.CombineHeaders(headers ...*Headers)` — merges multiple `*Headers` into one.
 - `h.NewHeaders(key, val, key, val, ...)` — general-purpose; key/value pairs must be even-length.
+
+## 5. htmx integration (`hx/` package + `h.Hx*` helpers)
+
+### The `hx/` package — constants only
+
+`framework/hx/` is a pure constants package: attribute names, header names, event names (htmx 4 colon form), swap types. Import when you need a string value:
+
+```go
+import "github.com/franchb/htmgo/framework/hx"
+
+h.Attribute("hx-swap:inherited", string(hx.SwapTypeInnerHtml))
+```
+
+**Attribute name constants** (`framework/hx/htmx.go`):
+`GetAttr`, `PostAttr`, `PutAttr`, `PatchAttr`, `DeleteAttr`, `TargetAttr`, `TriggerAttr`, `SwapAttr`, `SwapOobAttr`, `SelectAttr`, `SelectOobAttr`, `IncludeAttr`, `IndicatorAttr`, `ConfirmAttr`, `BoostAttr`, `PushUrlAttr`, `ReplaceUrlAttr`, `ValsAttr`, `ValidateAttr`, `HeadersAttr`, `EncodingAttr`, `PreserveAttr`, `SyncAttr`, `DisableAttr` (disable form elements during in-flight; htmx 4 semantics — **repurposed** from htmx 2 where it stopped htmx processing), `IgnoreAttr` (stop htmx processing within the element subtree; htmx 4 migration of htmx 2 `hx-disable`), `ConfigAttr` (replaces `hx-request`), `StatusAttr` (per-status swap/target control).
+
+**Event name constants** (htmx 4 colon form):
+`AfterSwapEvent = "htmx:after:swap"`, `BeforeSwapEvent = "htmx:before:swap"`, `AfterRequestEvent = "htmx:after:request"`, `BeforeRequestEvent = "htmx:before:request"`, `AfterOnLoadEvent = "htmx:after:init"`, `BeforeOnLoadEvent = "htmx:before:init"`, `ConfigRequestEvent = "htmx:config:request"`, `ErrorEvent = "htmx:error"`, `AfterSettleEvent = "htmx:after:settle"`, `AbortEvent = "htmx:abort"`.
+
+**Swap type constants:** `SwapTypeInnerHtml`, `SwapTypeOuterHtml`, `SwapTypeBeforeBegin`, `SwapTypeAfterBegin`, `SwapTypeBeforeEnd`, `SwapTypeAfterEnd`, `SwapTypeTextContent`, `SwapTypeDelete`, `SwapTypeNone`, `SwapTypeTrue`.
+
+**Header name constants:** `RequestHeader = "HX-Request"`, `RedirectHeader = "HX-Redirect"`, `RetargetHeader = "HX-Retarget"`, `ReswapHeader = "HX-Reswap"`, `ReselectHeader = "HX-Reselect"`, `TriggerHeader = "HX-Trigger"`, `PushUrlHeader = "HX-Push-Url"`, `ReplaceUrlHeader = "HX-Replace-Url"`, `LocationHeader = "HX-Location"`, `SourceHeader = "HX-Source"` (htmx 4), `RequestTypeHeader = "HX-Request-Type"` (htmx 4 — `"full"` or `"partial"`), `CurrentUrlHeader = "HX-Current-Url"`, `RefreshHeader = "HX-Refresh"`.
+
+### Setting htmx attributes directly
+
+There are **no** `h.HxGet`, `h.HxPost`, `h.HxPut`, `h.HxPatch`, `h.HxDelete`, or `h.HxSwap` standalone builder functions. Use one of these patterns:
+
+**Option A — raw `Attribute` with `hx.*Attr` constants:**
+
+```go
+h.Attribute(hx.GetAttr, "/search")   // hx-get="/search"
+h.Attribute(hx.PostAttr, "/users")    // hx-post="/users"
+h.Attribute(hx.SwapAttr, hx.SwapTypeInnerHtml)  // hx-swap="innerHTML"
+```
+
+**Option B — `h.Get` / `h.Post` composite helpers** (set both `hx-*` and `hx-trigger` in one call):
+
+```go
+// Get(path, trigger...) → sets hx-get + hx-trigger
+h.Button(h.Get("/search", "click"), h.Text("Search"))
+
+// Post(url, trigger...) → sets hx-post + hx-trigger
+h.Form(h.Post("/users/create", "submit"), ...)
+
+// Partial-path variants (type-safe; avoid hard-coding URLs)
+h.Button(h.GetPartial(SearchResults, "click"), h.Text("Search"))
+h.Button(h.PostOnClick("/items/delete"), h.Text("Delete"))
+```
+
+**Other `h.*` attribute helpers that DO exist:**
+
+```go
+h.HxTarget("#results")                // hx-target="#results"
+h.HxInclude("form[name=filter]")      // hx-include="..."
+h.HxConfirm("Really delete?")         // hx-confirm="..."
+h.HxIndicator("#spinner")             // hx-indicator="..."
+```
+
+### Explicit inheritance — htmx 4 BREAKING CHANGE
+
+In htmx 2, `hx-target` on an ancestor cascaded to descendants automatically. **htmx 4 removed implicit inheritance.** If you set `hx-target` on a wrapper element and expect its children to use that target, you MUST use the `:inherited` form.
+
+`h.Hx*Inherited` helpers:
+- `h.HxTargetInherited("#x")` → `hx-target:inherited="#x"`
+- `h.HxIncludeInherited(sel)`
+- `h.HxSwapInherited(strategy)`
+- `h.HxBoostInherited(value)`
+- `h.HxConfirmInherited(msg)`
+- `h.HxHeadersInherited(jsonStr)`
+- `h.HxIndicatorInherited(sel)`
+- `h.HxSyncInherited(spec)`
+- `h.HxEncodingInherited(enc)`
+- `h.HxValidateInherited(value)`
+
+*`hx-config` does NOT support inheritance; configure htmx globally via `htmx.config` or a `<meta name="htmx-config">`.*
+
+**Wrong (htmx 2 thinking):**
+
+```go
+h.Div(
+    h.HxTarget("#results"),  // does NOT cascade in htmx 4
+    h.Button(h.Get("/a", "click"), h.Text("A")),
+    h.Button(h.Get("/b", "click"), h.Text("B")),
+)
+```
+
+**Right (htmx 4):**
+
+```go
+h.Div(
+    h.HxTargetInherited("#results"),  // cascades to descendants
+    h.Button(h.Get("/a", "click"), h.Text("A")),
+    h.Button(h.Get("/b", "click"), h.Text("B")),
+)
+```
+
+### Triggers
+
+**Simple raw-string form** (`HxTriggerString` joins multiple strings with `", "`):
+
+```go
+h.HxTriggerString("keyup changed delay:300ms", "search")
+// renders: hx-trigger="keyup changed delay:300ms, search"
+```
+
+**Structured form** using `hx.TriggerEvent` values built by `hx.OnEvent` / `hx.OnClick` / `hx.OnChange` / `hx.OnLoad`:
+
+```go
+h.HxTrigger(
+    hx.OnClick(hx.OnceModifier{}),
+    hx.OnEvent("keyup", hx.StringModifier("keyCode==27"), hx.StringModifier("from:body")),
+)
+```
+
+`h.HxTrigger` takes `...hx.TriggerEvent` and calls `hx.NewTrigger(opts...)` internally — each `TriggerEvent` is a plain struct with an event name and modifier list.
+
+**`hx.NewTrigger`** signature: `NewTrigger(opts ...TriggerEvent) *Trigger` — collects multiple events into a `Trigger` whose `ToString()` produces the full `hx-trigger` string. You rarely call this directly; prefer `h.HxTrigger(...)`.
+
+**Available modifiers** (`framework/hx/modifiers.go`):
+- `hx.OnceModifier{}` — appends `"once"`
+- `hx.Delay(n int)` — appends `"delay:<n>s"` (seconds)
+- `hx.Throttle(n int)` — appends `"throttle:<n>s"` (seconds)
+- `hx.StringModifier("...")` — raw modifier string (use for anything not covered above, e.g. filter expressions, `from:`, `target:`)
+
+`Once()`, `KeyEquals()`, `From()`, and `DelayMs()` **do not exist**; use `hx.OnceModifier{}`, `hx.StringModifier("[keyCode==27]")`, `hx.StringModifier("from:body")`, and `hx.Delay(n)` respectively.
+
+**Convenience click shortcut:**
+
+```go
+h.HxTriggerClick(hx.OnceModifier{})   // hx-trigger="click once"
+// HxTriggerClick(opts ...hx.Modifier) is sugar for HxTrigger(hx.OnClick(opts...))
+```
+
+**Predefined trigger constants** in `framework/hx/triggers.go`:
+
+```go
+hx.TriggerClick          // "onclick"
+hx.TriggerClickOnce      // "onclick once"
+hx.TriggerKeyUpEnter     // "keyup[keyCode==13]"
+hx.TriggerBlur           // "blur"
+hx.TriggerEvery1s        // "every:1s"
+hx.TriggerEvery5s        // "every:5s"
+// ...and more
+```
+
+### Response headers
+
+Set headers on a partial response via `h.NewPartialWithHeaders` + the `h.NewHeaders` variadic helper (see §4 for full details):
+
+```go
+h.NewPartialWithHeaders(
+    h.NewHeaders(
+        hx.TriggerHeader, "showToast",     // fires a client event
+        hx.RetargetHeader, "#status",      // changes swap target
+        hx.ReswapHeader, "afterend",       // changes swap style
+    ),
+    h.Div(h.Text("Saved")),
+)
+```
+
+Common header uses:
+- `hx.RedirectHeader` — full-page redirect (htmx handles)
+- `hx.LocationHeader` — SPA-style navigation with pushState (JSON payload)
+- `hx.PushUrlHeader` / `hx.ReplaceUrlHeader` — update browser URL without reload
+- `hx.RefreshHeader` — force a full page refresh
+- `hx.TriggerHeader` — dispatch a client-side event
+- `hx.RetargetHeader` — change the swap target server-side
+- `hx.ReswapHeader` — change the swap style server-side
+- `hx.ReselectHeader` — change which element is selected from the response
+
+### Worked example — search box with debounce
+
+```go
+func SearchBox() *h.Element {
+    return h.Div(
+        h.Input(
+            h.Type("search"),
+            h.Name("q"),
+            h.Placeholder("Search..."),
+            h.Attribute(hx.PostAttr, "/search"),
+            h.HxTriggerString("keyup changed delay:300ms", "search"),
+            h.HxTarget("#search-results"),
+            h.Attribute(hx.SwapAttr, hx.SwapTypeInnerHtml),
+        ),
+        h.Div(h.Id("search-results")),
+    )
+}
+```
+
+### See also
+
+For general htmx patterns (attribute semantics, event lifecycle, OOB swaps, SSE/WS), the `htmx-guidance` skill covers the htmx side in depth. This skill focuses on the Go builder layer; the two are complementary.
