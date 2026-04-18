@@ -1,6 +1,6 @@
 # Upstream htmx issue draft — `htmx:response:error` convenience event
 
-**Target repo:** `bigskysoftware/htmx`. Verify the correct htmx 4 development branch before posting.
+**Target repo:** `bigskysoftware/htmx`. File against the htmx 4 development branch (`v4-dev` at time of drafting — verify in the repo README / CONTRIBUTING before posting).
 
 **Posted by:** @franchb (human account). Not to be filed by automated tooling.
 
@@ -20,7 +20,22 @@ htmx 2 fired `htmx:responseError` on HTTP error statuses, giving consumers a sin
 
 htmx 4.0.0-beta2 core emits **zero** events for HTTP error status codes. The only `htmx:error` event (triggered from the request pipeline's `catch` block) fires on JavaScript exceptions, not on responses with status ≥ 400.
 
-Verified by enumerating every `#trigger` call site in `src/htmx.js` on beta2. Event surface in order: `htmx:config:request`, `htmx:confirm`, `htmx:before:request`, `htmx:before:response`, `htmx:after:request`, `htmx:error` (JS exceptions only), `htmx:finally:request`, `htmx:before:process`, `htmx:after:process`, `htmx:before:cleanup`, `htmx:after:cleanup`, `htmx:before:swap`, `htmx:after:swap`, `htmx:before:settle`, `htmx:after:settle`, history + viewTransition + morph events. No HTTP-error-status event anywhere.
+Verified by enumerating every `#trigger` call site in `src/htmx.js` on beta2. Event surface in order:
+
+- `htmx:config:request`
+- `htmx:confirm`
+- `htmx:before:request`
+- `htmx:before:response`
+- `htmx:after:request`
+- `htmx:error` (JS exceptions only)
+- `htmx:finally:request`
+- `htmx:before:process` / `htmx:after:process`
+- `htmx:before:cleanup` / `htmx:after:cleanup`
+- `htmx:before:swap` / `htmx:after:swap`
+- `htmx:before:settle` / `htmx:after:settle`
+- history, viewTransition, morph events
+
+No HTTP-error-status event anywhere.
 
 Default `noSwap` is `[204, 304]`, so htmx 4 swaps 4xx/5xx bodies by default — no opt-in needed for display; the missing piece is the observability hook.
 
@@ -28,7 +43,7 @@ Default `noSwap` is `[204, 304]`, so htmx 4 swaps 4xx/5xx bodies by default — 
 
 Every consumer wanting per-request HTTP-error handling must now subscribe to `htmx:before:response` or `htmx:after:request` and manually check `ctx.response.status >= 400`. Third-party extensions built for htmx 2 — `response-targets`, loading indicators, error-toast libraries — lose their migration path.
 
-Concrete example: porting `response-targets` to htmx 4 for the htmgo framework required dropping its `responseTargetSetsError` / `responseTargetUnsetsError` config knobs entirely, because the `isError` flag they mutated no longer exists and no event fires in its place. See [htmgo spec doc](#) for the full analysis.
+Concrete example: porting `response-targets` to htmx 4 for the [htmgo](https://github.com/franchb/htmgo) framework required dropping its `responseTargetSetsError` / `responseTargetUnsetsError` config knobs entirely, because the `isError` flag they mutated no longer exists and no event fires in its place. Full analysis: [htmgo spec doc](https://github.com/franchb/htmgo/blob/htmx4-migration/docs/superpowers/specs/2026-04-18-response-targets-error-flag-design.md).
 
 ### Proposal
 
