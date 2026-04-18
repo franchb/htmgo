@@ -104,7 +104,14 @@ htmx.registerExtension("response-targets", {
 
     const target = getRespCodeTarget(reqElt, status);
     if (target) {
+      const from = mainTask.target ?? null;
       mainTask.target = target;
+      api.triggerHtmxEvent(ctx.sourceElement, "htmgo:response:retargeted", {
+        status,
+        from,
+        to: target,
+        ctx,
+      });
     }
   },
 });
