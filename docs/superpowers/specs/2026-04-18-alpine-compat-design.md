@@ -41,7 +41,7 @@ Explicitly out of scope for this change (can be additive later):
 Hand-port the upstream `hx-alpine-compat.js` IIFE (see upstream source in `node_modules/htmx.org/dist/ext/hx-alpine-compat.js` at version `4.0.0-beta2`) to match the style of existing fork extensions. Specifically:
 
 - `import htmx from "htmx.org"` (matches `response-targets.ts`, `pathdeps.ts`, etc.).
-- `htmx.registerExtension("alpine-compat", { ... })` with all five hooks from upstream preserved:
+- `htmx.registerExtension("alpine-compat", { ... })` with all seven hooks from upstream preserved:
   - `init(api)` — captures `api` ref; patches `api.isSoftMatch` to ignore ID mismatch when both nodes have Alpine reactive ID bindings (`_x_bindings.id` / `[:id]` / `[x-bind:id]`).
   - `htmx_before_swap(elt, detail)` — if `window.Alpine.deferMutations` exists, increments `deferCount` and calls `Alpine.deferMutations()` on the first swap of a batch.
   - `htmx_before_morph_node(elt, detail)` — copies `_x_dataStack` from `oldNode` to `newNode` via `Alpine.closestDataStack(oldNode)`; runs `Alpine.cloneNode(oldNode, newNode)` if `oldNode.isConnected`; morphs the teleport target when both nodes have `_x_teleport`.
@@ -153,8 +153,8 @@ Imports `github.com/franchb/htmgo/framework/h`. Each builder wraps `h.Attribute(
 - `Teleport(selector string) h.Ren`
 
 **No-arg directives:**
-- `Cloak() h.Ren` — emits `x-cloak=""`
-- `Ignore() h.Ren` — emits `x-ignore=""`
+- `Cloak() h.Ren` — emits bare `x-cloak` (htmgo's renderer omits `=""` for empty attribute values; Alpine accepts the boolean-attribute form identically)
+- `Ignore() h.Ren` — emits bare `x-ignore`
 
 **`x-bind:*` family:**
 - `Bind(attr, expr string) h.Ren` — generic; emits `x-bind:{attr}="{expr}"`
@@ -191,7 +191,7 @@ Imports `github.com/franchb/htmgo/framework/h`. Each builder wraps `h.Attribute(
 - `ModelDebounce(expr, duration string) h.Ren` — emits `x-model.debounce.{duration}`, e.g. `ModelDebounce("q", "500ms")` → `x-model.debounce.500ms="q"`
 
 **`x-transition` (kept minimal):**
-- `Transition() h.Ren` — bare `x-transition=""`
+- `Transition() h.Ren` — bare `x-transition` (same renderer-empty-value behavior as `Cloak`/`Ignore` above)
 - Richer transition shapes (`x-transition:enter`, `:enter-start`, `:enter-end`, `.opacity`, `.duration.500ms`, etc.) are left to raw `h.Attribute("x-transition:enter", ...)` callsites for now. If patterns repeat in real use, revisit.
 
 ### Tests — `alpine_test.go`
