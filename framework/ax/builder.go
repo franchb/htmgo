@@ -1,6 +1,10 @@
 package ax
 
-import "github.com/franchb/htmgo/framework/h"
+import (
+	"strings"
+
+	"github.com/franchb/htmgo/framework/h"
+)
 
 // Simple single-arg directives. Each wraps h.Attribute and returns h.Ren.
 
@@ -45,3 +49,28 @@ func BindValue(expr string) h.Ren    { return Bind("value", expr) }
 func BindDisabled(expr string) h.Ren { return Bind("disabled", expr) }
 func BindChecked(expr string) h.Ren  { return Bind("checked", expr) }
 func BindId(expr string) h.Ren       { return Bind("id", expr) }
+
+// x-on:* family. On is the generic form; event-shortcut helpers forward to it.
+
+func On(event, handler string, modifiers ...string) h.Ren {
+	attr := OnAttr + ":" + event
+	if len(modifiers) > 0 {
+		attr += "." + strings.Join(modifiers, ".")
+	}
+	return h.Attribute(attr, handler)
+}
+
+func OnClick(handler string, mods ...string) h.Ren   { return On("click", handler, mods...) }
+func OnSubmit(handler string, mods ...string) h.Ren  { return On("submit", handler, mods...) }
+func OnInput(handler string, mods ...string) h.Ren   { return On("input", handler, mods...) }
+func OnChange(handler string, mods ...string) h.Ren  { return On("change", handler, mods...) }
+func OnFocus(handler string, mods ...string) h.Ren   { return On("focus", handler, mods...) }
+func OnBlur(handler string, mods ...string) h.Ren    { return On("blur", handler, mods...) }
+func OnKeydown(handler string, mods ...string) h.Ren { return On("keydown", handler, mods...) }
+func OnKeyup(handler string, mods ...string) h.Ren   { return On("keyup", handler, mods...) }
+
+// Combo shortcuts for the three most common modifier patterns in practice.
+
+func OnClickOutside(handler string) h.Ren  { return On("click", handler, "outside") }
+func OnKeydownEscape(handler string) h.Ren { return On("keydown", handler, "escape") }
+func OnKeydownEnter(handler string) h.Ren  { return On("keydown", handler, "enter") }

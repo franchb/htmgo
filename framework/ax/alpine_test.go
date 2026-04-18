@@ -107,3 +107,37 @@ func TestBindFamily(t *testing.T) {
 		})
 	}
 }
+
+func TestOnFamily(t *testing.T) {
+	t.Parallel()
+	type c struct {
+		name     string
+		attr     h.Ren
+		contains string
+	}
+	cases := []c{
+		{"On no modifiers", On("click", "count++"), `x-on:click="count++"`},
+		{"On one modifier", On("click", "submit()", "prevent"), `x-on:click.prevent="submit()"`},
+		{"On many modifiers", On("keydown", "close()", "escape", "prevent"), `x-on:keydown.escape.prevent="close()"`},
+		{"OnClick plain", OnClick("count++"), `x-on:click="count++"`},
+		{"OnClick with mod", OnClick("submit()", "prevent"), `x-on:click.prevent="submit()"`},
+		{"OnSubmit", OnSubmit("save()"), `x-on:submit="save()"`},
+		{"OnInput", OnInput("sync()"), `x-on:input="sync()"`},
+		{"OnChange", OnChange("refresh()"), `x-on:change="refresh()"`},
+		{"OnFocus", OnFocus("mark()"), `x-on:focus="mark()"`},
+		{"OnBlur", OnBlur("unmark()"), `x-on:blur="unmark()"`},
+		{"OnKeydown", OnKeydown("handle()"), `x-on:keydown="handle()"`},
+		{"OnKeyup", OnKeyup("handle()"), `x-on:keyup="handle()"`},
+		{"OnKeydown with modifiers", OnKeydown("handle()", "meta", "k", "prevent"), `x-on:keydown.meta.k.prevent="handle()"`},
+		{"OnClickOutside", OnClickOutside("open = false"), `x-on:click.outside="open = false"`},
+		{"OnKeydownEscape", OnKeydownEscape("open = false"), `x-on:keydown.escape="open = false"`},
+		{"OnKeydownEnter", OnKeydownEnter("submit()"), `x-on:keydown.enter="submit()"`},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Contains(t, renderAttr(tc.attr), tc.contains)
+		})
+	}
+}
