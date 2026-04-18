@@ -34,6 +34,7 @@ are still fully breaking; treat this as a major bump despite the v1 tag.
 - **`hx-delete` on a form button no longer includes form data.** Add `hx-include="closest form"` where needed.
 - **All JS extensions rewritten for htmx 4's `registerExtension` API.** Event-detail access changed from `detail.xhr` to `detail.ctx`. The following extensions ship in the bundle: `htmgo`, `debug`, `livereload`, `mutation-error`, `path-deps`, `trigger-children`, `response-targets`, `sse`, `ws`, `ws-event-handler`.
 - **`livereload` extension now gates on `<meta name="htmgo-livereload">`** (emitted automatically by the framework in dev mode).
+- **`response-targets` extension no longer reads or initializes `htmx.config.responseTargetSetsError` / `responseTargetUnsetsError`.** These htmx 2 config keys have no htmx 4 equivalent — htmx 4 removed the `isError` flag and the `htmx:responseError` event. If you relied on them, subscribe to `htmx:before:response` and inspect `ctx.response.status` directly.
 
 ### Added
 
@@ -43,6 +44,7 @@ are still fully breaking; treat this as a major bump despite the v1 tag.
 - 10 `Hx*Inherited` attribute helpers for explicit-inheritance emission.
 - `vitest` test suite for JS extensions (`framework/assets/js/htmxextensions/__tests__/`).
 - `<meta name="htmgo-livereload">` injected into page `<head>` in dev mode so the livereload extension can detect dev server presence.
+- `htmgo:response:retargeted` event fired by the `response-targets` extension on the source element when a 4xx/5xx response triggers a retarget. Detail: `{status, from, to, ctx}`. Gives consumers a canonical hook without reintroducing htmx-2 error-flag semantics.
 
 ### Migration recipe
 
