@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **`alpine-compat` htmx extension bundled into `htmgo.js`.** Auto-preserves Alpine.js state across htmx morph swaps and re-initializes Alpine on swapped content. Auto-gates on `window.Alpine` presence; extension no-ops when Alpine is not loaded (zero runtime cost, ~3KB gz bundle cost). Tested against Alpine v3.15.11.
+- **`framework/ax/` Go package.** Constants and Ren-returning builder helpers for Alpine.js directives, mirroring the shape of `framework/hx/`. Covers `Data`, `Show`, `Init`, `Text`, `Html`, `Model` (plus `.number`/`.lazy`/`.trim`/`.fill`/`.boolean`/`.debounce` variants), `Bind` + 7 shortcuts (`BindClass`, `BindStyle`, `BindHref`, `BindValue`, `BindDisabled`, `BindChecked`, `BindId`), `On` + 8 event shortcuts + 3 combos (`OnClickOutside`, `OnKeydownEscape`, `OnKeydownEnter`), `Cloak`, `Ignore`, `Ref`, `Teleport`, `Effect`, `If`, `For`, `Id`, `Modelable`, `Transition`.
+- **New doc page:** `/docs/htmx-extensions/alpine-compat` — covers loading Alpine, FOUC prevention, `ax` package usage, and Alpine/htmx swap interaction.
+
 ## [1.2.0-beta.1] - 2026-04-17
 
 Released under the v1.x series (not v2) because the framework module path is
