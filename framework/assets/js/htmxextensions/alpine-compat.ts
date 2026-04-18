@@ -24,9 +24,20 @@ htmx.registerExtension("alpine-compat", {
     // When both nodes carry Alpine-managed ID bindings (`_x_bindings.id` on the
     // old node and a `:id` / `x-bind:id` attr on the new node), ignore the id
     // mismatch and match on tagName only. Otherwise defer to the original.
+    //
+    // NOTE: We use explicit hasAttribute checks instead of a CSS attribute
+    // selector because jsdom (and some real-browser CSS parsers) fail to match
+    // `[x-bind\:id]` — the colon in the attribute name is not reliably escapable
+    // inside a CSS selector string.  The shorthand `[\:id]` works fine for `:id`
+    // but `[x-bind\:id]`, `[x-bind\3A id]`, and `[x-bind\3A\ id]` all return
+    // false in jsdom even when the attribute is present.  hasAttribute has no
+    // such limitation, making this approach more portable across environments.
     const originalIsSoftMatch = api.isSoftMatch;
     api.isSoftMatch = function (oldNode: any, newNode: any) {
-      if (oldNode?._x_bindings?.id && newNode?.matches?.("[\\:id], [x-bind\\:id]")) {
+      if (
+        oldNode?._x_bindings?.id &&
+        (newNode?.hasAttribute?.(":id") || newNode?.hasAttribute?.("x-bind:id"))
+      ) {
         return oldNode instanceof Element && oldNode.tagName === newNode.tagName;
       }
       return originalIsSoftMatch(oldNode, newNode);

@@ -52,12 +52,13 @@ describe("alpine-compat extension", () => {
 
     it("delegates to original isSoftMatch when nodes lack Alpine ID bindings", () => {
       const api = makeApi();
+      const original = api.isSoftMatch;
       ext.init(api);
       const oldNode = document.createElement("div");
       const newNode = document.createElement("div");
       api.isSoftMatch(oldNode, newNode);
-      // Original was called once (through the wrapped version)
-      // Verified by the fact it returns true for matching tagName.
+      // The wrapped isSoftMatch must have called through to the original.
+      expect(original).toHaveBeenCalled();
       expect(api.isSoftMatch(oldNode, newNode)).toBe(true);
     });
 
@@ -69,6 +70,20 @@ describe("alpine-compat extension", () => {
       oldNode.id = "dyn-1";
       const newNode = document.createElement("div") as any;
       newNode.setAttribute(":id", "something-else");
+      newNode.id = "dyn-2";
+      // Even though ids differ, the wrapped isSoftMatch must return true.
+      expect(api.isSoftMatch(oldNode, newNode)).toBe(true);
+    });
+
+    it("treats nodes with Alpine x-bind:id longhand as soft-matching when tag names agree", () => {
+      const api = makeApi();
+      ext.init(api);
+      const oldNode = document.createElement("div") as any;
+      oldNode._x_bindings = { id: "dyn-1" };
+      oldNode.id = "dyn-1";
+      const newNode = document.createElement("div") as any;
+      // Use the full x-bind:id longhand form instead of the :id shorthand.
+      newNode.setAttribute("x-bind:id", "something-else");
       newNode.id = "dyn-2";
       // Even though ids differ, the wrapped isSoftMatch must return true.
       expect(api.isSoftMatch(oldNode, newNode)).toBe(true);
