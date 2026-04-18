@@ -35,24 +35,21 @@ describe("response-targets extension", () => {
 
   it("init sets defaults in htmx.config without clobbering existing values", async () => {
     const cfg = (await import("htmx.org")).default.config as any;
-    cfg.responseTargetUnsetsError = undefined;
-    cfg.responseTargetSetsError = undefined;
+    delete cfg.responseTargetUnsetsError;
+    delete cfg.responseTargetSetsError;
     cfg.responseTargetPrefersExisting = undefined;
     cfg.responseTargetPrefersRetargetHeader = undefined;
     ext.init(makeApi({}));
-    expect(cfg.responseTargetUnsetsError).toBe(true);
-    expect(cfg.responseTargetSetsError).toBe(false);
+    // Regression guard: the htmx-2 isError knobs must NOT be initialized.
+    expect("responseTargetUnsetsError" in cfg).toBe(false);
+    expect("responseTargetSetsError" in cfg).toBe(false);
     expect(cfg.responseTargetPrefersExisting).toBe(false);
     expect(cfg.responseTargetPrefersRetargetHeader).toBe(true);
 
-    // Pre-set non-default values must be preserved on a subsequent init.
-    cfg.responseTargetUnsetsError = false;
-    cfg.responseTargetSetsError = true;
+    // Pre-set non-default values on the surviving knobs must be preserved on re-init.
     cfg.responseTargetPrefersExisting = true;
     cfg.responseTargetPrefersRetargetHeader = false;
     ext.init(makeApi({}));
-    expect(cfg.responseTargetUnsetsError).toBe(false);
-    expect(cfg.responseTargetSetsError).toBe(true);
     expect(cfg.responseTargetPrefersExisting).toBe(true);
     expect(cfg.responseTargetPrefersRetargetHeader).toBe(false);
   });
