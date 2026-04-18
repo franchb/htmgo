@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [2.0.0-beta.1] - 2026-04-17
+## [1.2.0-beta.1] - 2026-04-17
+
+Released under the v1.x series (not v2) because the framework module path is
+`github.com/franchb/htmgo/framework` — Go's semantic import versioning requires a
+`/v2` suffix for v2+ tags, which we are not changing in this release. The changes
+are still fully breaking; treat this as a major bump despite the v1 tag.
 
 ### Breaking
 
