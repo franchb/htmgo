@@ -81,34 +81,50 @@ htmx.registerExtension("trigger-children", {
     // Register once; use a sentinel to avoid double-registration across re-init.
     const marker = "__htmgo_trigger_children_installed__" as const;
     if (!(document as any)[marker]) {
-      // "htmx:*" wildcard is not standard — left as harmless future-compat hint.
-      document.addEventListener("htmx:*", handler as any);
-      // Explicit enumeration is the reliable mechanism for current browsers.
+      // Explicit enumeration of htmx 4 events (verified against
+      // htmx.org/dist/htmx.js + ext/hx-sse.js + ext/hx-ws.js 4.0.0-beta2).
       for (const name of [
-        "htmx:before:init",
-        "htmx:after:init",
-        "htmx:before:request",
-        "htmx:after:request",
-        "htmx:before:swap",
-        "htmx:after:swap",
-        "htmx:config:request",
-        "htmx:config:response",
-        "htmx:before:cleanup",
-        "htmx:before:history:update",
-        "htmx:before:history:restore",
+        "htmx:abort",
+        "htmx:after:cleanup",
         "htmx:after:history:push",
         "htmx:after:history:replace",
+        "htmx:after:history:update",
+        "htmx:after:init",
+        "htmx:after:process",
+        "htmx:after:request",
+        "htmx:after:settle",
+        "htmx:after:swap",
+        "htmx:after:viewTransition",
+        "htmx:before:cleanup",
+        "htmx:before:history:restore",
+        "htmx:before:history:update",
+        "htmx:before:init",
+        "htmx:before:process",
+        "htmx:before:request",
+        "htmx:before:response",
+        "htmx:before:settle",
+        "htmx:before:swap",
         "htmx:before:viewTransition",
-        "htmx:error",
-        "htmx:abort",
+        "htmx:config:request",
         "htmx:confirm",
+        "htmx:error",
+        "htmx:finally:request",
+        "htmx:load",
         "htmx:prompt",
-        "htmx:sseOpen",
-        "htmx:sseConnecting",
-        "htmx:sseClose",
-        "htmx:sseError",
-        "htmx:sseBeforeMessage",
-        "htmx:sseAfterMessage",
+        // SSE extension (hx-sse.js)
+        "htmx:after:sse:connection",
+        "htmx:after:sse:message",
+        "htmx:before:sse:connection",
+        "htmx:before:sse:message",
+        "htmx:sse:close",
+        "htmx:sse:error",
+        // WS extension (hx-ws.js)
+        "htmx:after:ws:connection",
+        "htmx:after:ws:message",
+        "htmx:before:ws:connection",
+        "htmx:before:ws:message",
+        "htmx:ws:close",
+        "htmx:ws:error",
       ]) {
         document.addEventListener(name, handler);
       }

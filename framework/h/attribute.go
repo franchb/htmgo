@@ -135,10 +135,6 @@ func HxTriggerClick(opts ...hx.Modifier) *AttributeR {
 	return HxTrigger(hx.OnClick(opts...))
 }
 
-func JoinExtensions(attrs ...*AttributeR) Ren {
-	return JoinAttributes(", ", attrs...)
-}
-
 // JoinAttributes joins multiple attributes into a single attribute string based on a separator
 // Example: JoinAttributes(", ", Attribute("hx-extension", "one"), Attribute("hx-extension", "two")) = hx-extension="one,two"
 func JoinAttributes(sep string, attrs ...*AttributeR) *AttributeR {
@@ -359,6 +355,5 @@ func HxConfirmInherited(message string) Ren    { return Attribute("hx-confirm:in
 func HxHeadersInherited(json string) Ren       { return Attribute("hx-headers:inherited", json) }
 func HxIndicatorInherited(selector string) Ren { return Attribute("hx-indicator:inherited", selector) }
 func HxSyncInherited(spec string) Ren          { return Attribute("hx-sync:inherited", spec) }
-func HxConfigInherited(json string) Ren        { return Attribute("hx-config:inherited", json) }
 func HxEncodingInherited(enc string) Ren       { return Attribute("hx-encoding:inherited", enc) }
 func HxValidateInherited(value string) Ren     { return Attribute("hx-validate:inherited", value) }

@@ -1,53 +1,65 @@
 import htmx from "htmx.org";
 import { removeAssociatedScripts } from "./htmgo";
 
-let api: any = null;
-const processed = new Set<string>();
+const connections = new WeakMap<Element, EventSource>();
+const processedUrls = new Map<string, Element>();
 
 htmx.registerExtension("sse", {
-  init(apiRef: any) {
-    api = apiRef;
-  },
+  init(_api: unknown) {},
 
   htmx_before_cleanup(elt: HTMLElement, _detail: unknown) {
-    if (elt) removeAssociatedScripts(elt);
+    if (!elt) return;
+    removeAssociatedScripts(elt);
+    const es = connections.get(elt);
+    if (es) {
+      es.close();
+      connections.delete(elt);
+      const url = elt.getAttribute("sse-connect");
+      if (url && processedUrls.get(url) === elt) processedUrls.delete(url);
+    }
   },
 
   htmx_before_process(_elt: HTMLElement, _detail: unknown) {
     const elements = document.querySelectorAll("[sse-connect]");
     for (const element of Array.from(elements)) {
       const url = element.getAttribute("sse-connect");
-      if (url && !processed.has(url)) {
-        connectEventSource(element, url);
-        processed.add(url);
+      if (url && !processedUrls.has(url)) {
+        const es = connectEventSource(element, url);
+        if (es) {
+          connections.set(element, es);
+          processedUrls.set(url, element);
+        }
       }
     }
   },
 });
 
-function connectEventSource(ele: Element, url: string) {
-  if (!url) return;
+function connectEventSource(ele: Element, url: string): EventSource | undefined {
+  if (!url) return undefined;
   console.info("Connecting to EventSource", url);
   const eventSource = new EventSource(url);
 
   eventSource.addEventListener("close", (event) => {
-    htmx.trigger(ele, "htmx:sseClose", { event });
+    htmx.trigger(ele, "htmx:sse:close", { event });
   });
 
-  eventSource.onopen = (event) => htmx.trigger(ele, "htmx:sseOpen", { event });
+  eventSource.onopen = (event) =>
+    htmx.trigger(ele, "htmx:after:sse:connection", { event });
 
   eventSource.onerror = (event) => {
-    htmx.trigger(ele, "htmx:sseError", { event });
+    htmx.trigger(ele, "htmx:sse:error", { event });
     if (eventSource.readyState === EventSource.CLOSED) {
-      htmx.trigger(ele, "htmx:sseClose", { event });
+      htmx.trigger(ele, "htmx:sse:close", { event });
     }
   };
 
   eventSource.onmessage = (event) => {
-    htmx.trigger(ele, "htmx:sseBeforeMessage", { event });
+    htmx.trigger(ele, "htmx:before:sse:message", { event });
     applyOobSwap(ele, event.data);
-    htmx.trigger(ele, "htmx:sseAfterMessage", { event });
+    htmx.trigger(ele, "htmx:after:sse:message", { event });
   };
+
+  return eventSource;
 }
 
 /**

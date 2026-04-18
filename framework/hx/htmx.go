@@ -22,8 +22,8 @@ const (
 	ValsAttr       Attribute = "hx-vals"
 	BoostAttr      Attribute = "hx-boost"
 	ConfirmAttr    Attribute = "hx-confirm"
-	IgnoreAttr     Attribute = "hx-ignore"  // htmx 4: stops htmx processing (was hx-disable in htmx 2)
-	DisableAttr    Attribute = "hx-disable" // htmx 4: disable elements during request (was hx-disabled-elt in htmx 2)
+	IgnoreAttr     Attribute = "hx-ignore"  // htmx 4: stops htmx processing within the element subtree (existed in htmx 2 with same semantics)
+	DisableAttr    Attribute = "hx-disable" // htmx 4: disable form elements during in-flight request (REPURPOSED — in htmx 2, hx-disable disabled htmx processing; that role moved to hx-ignore-only and the v2 hx-disabled-elt semantic moved to v4 hx-disable)
 	EncodingAttr   Attribute = "hx-encoding"
 	HeadersAttr    Attribute = "hx-headers"
 	IncludeAttr    Attribute = "hx-include"
@@ -55,38 +55,38 @@ const (
 )
 
 const (
-	// Htmx Events (htmx 4 colon-form)
+	// Htmx Events (htmx 4 colon-form, verified against htmx.org/dist/htmx.js 4.0.0-beta2)
 	AbortEvent                Event = "htmx:abort"
 	AfterOnLoadEvent          Event = "htmx:after:init"
-	AfterProcessNodeEvent     Event = "htmx:after:init"
+	AfterProcessNodeEvent     Event = "htmx:after:process"
 	AfterRequestEvent         Event = "htmx:after:request"
-	AfterSettleEvent          Event = "htmx:after:swap"
+	AfterSettleEvent          Event = "htmx:after:settle"
 	AfterSwapEvent            Event = "htmx:after:swap"
 	BeforeCleanupElementEvent Event = "htmx:before:cleanup"
 	BeforeOnLoadEvent         Event = "htmx:before:init"
 	BeforeProcessNodeEvent    Event = "htmx:before:process"
 	BeforeRequestEvent        Event = "htmx:before:request"
-	BeforeSendEvent           Event = "htmx:before:request"
+	BeforeSendEvent           Event = "htmx:before:request" // alias for BeforeRequestEvent (htmx 4 consolidated beforeSend into beforeRequest)
 	BeforeSwapEvent           Event = "htmx:before:swap"
 	ConfigRequestEvent        Event = "htmx:config:request"
 	BeforeHistorySaveEvent    Event = "htmx:before:history:update"
 	HistoryRestoreEvent       Event = "htmx:before:history:restore"
-	HistoryCacheMissEvent     Event = "htmx:before:history:restore"
+	HistoryCacheMissEvent     Event = "htmx:before:history:restore" // Deprecated: htmx 4 removed localStorage history caching; this constant is retained as an alias for HistoryRestoreEvent and will be removed in a future release.
 	PushedIntoHistoryEvent    Event = "htmx:after:history:push"
 	ErrorEvent                Event = "htmx:error"
 	ConfirmEvent              Event = "htmx:confirm"
 	OnMutationErrorEvent      Event = "htmx:onMutationError" // htmgo-fork custom event; kept as-is (emitted by mutation-error extension)
 	PromptEvent               Event = "htmx:prompt"
 
-	// SSE (extracted to hx-sse.js in alpha8 — names verified against upstream)
-	SseConnectedEvent     Event = "htmx:sseOpen"
-	SseConnectingEvent    Event = "htmx:sseConnecting"
-	SseClosedEvent        Event = "htmx:sseClose"
-	SseErrorEvent         Event = "htmx:sseError"
-	SseBeforeMessageEvent Event = "htmx:sseBeforeMessage"
-	SseAfterMessageEvent  Event = "htmx:sseAfterMessage"
-	SSEErrorEvent         Event = "htmx:sseError" // alias for historical SSEErrorEvent callsites
-	SSEOpenEvent          Event = "htmx:sseOpen"
+	// SSE (extracted to hx-sse.js in alpha8 — verified against htmx.org/dist/ext/hx-sse.js 4.0.0-beta2)
+	SseConnectedEvent     Event = "htmx:after:sse:connection"
+	SseConnectingEvent    Event = "htmx:before:sse:connection"
+	SseClosedEvent        Event = "htmx:sse:close"
+	SseErrorEvent         Event = "htmx:sse:error"
+	SseBeforeMessageEvent Event = "htmx:before:sse:message"
+	SseAfterMessageEvent  Event = "htmx:after:sse:message"
+	SSEErrorEvent         Event = "htmx:sse:error"          // alias for historical SSEErrorEvent callsites
+	SSEOpenEvent          Event = "htmx:after:sse:connection" // alias for historical SSEOpenEvent callsites
 
 	// Misc Events (non-htmx)
 	RevealedEvent   Event = "revealed"

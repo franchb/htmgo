@@ -23,10 +23,13 @@ htmx.registerExtension("ws", {
   },
 });
 
+const MAX_RECONNECT_ATTEMPTS = 10;
+
 function exponentialBackoff(attempt: number, baseDelay = 100, maxDelay = 10000) {
-  // Exponential backoff: baseDelay * (2 ^ attempt) with jitter
-  const jitter = Math.random();
-  return Math.min(baseDelay * Math.pow(2, attempt) * jitter, maxDelay);
+  // Exponential backoff with half-jitter: base * 2^attempt * (0.5 + rand/2)
+  // ensures a jitter floor of 0.5 so the first retry can never hot-loop.
+  const base = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
+  return base * (0.5 + Math.random() * 0.5);
 }
 
 function connectWs(ele: Element, url: string, attempt = 0): WebSocket | null {
@@ -41,6 +44,11 @@ function connectWs(ele: Element, url: string, attempt = 0): WebSocket | null {
 
   socket.addEventListener("close", (event) => {
     htmx.trigger(ele, "htmx:wsClose", { event });
+    // Don't reconnect on clean close, when the element has been detached,
+    // or once we've exhausted our retry budget.
+    if (event.wasClean || !ele.isConnected || attempt >= MAX_RECONNECT_ATTEMPTS) {
+      return;
+    }
     const delay = exponentialBackoff(attempt);
     setTimeout(() => connectWs(ele, url, attempt + 1), delay);
   });

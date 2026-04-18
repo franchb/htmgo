@@ -29,13 +29,13 @@ function getRespCodeTarget(elt: Element, respCodeNumber: number) {
   const attrPossibilities = [
     respCode,
 
-    respCode.substr(0, 2) + "*",
-    respCode.substr(0, 2) + "x",
+    respCode.slice(0, 2) + "*",
+    respCode.slice(0, 2) + "x",
 
-    respCode.substr(0, 1) + "*",
-    respCode.substr(0, 1) + "x",
-    respCode.substr(0, 1) + "**",
-    respCode.substr(0, 1) + "xx",
+    respCode.slice(0, 1) + "*",
+    respCode.slice(0, 1) + "x",
+    respCode.slice(0, 1) + "**",
+    respCode.slice(0, 1) + "xx",
 
     "*",
     "x",

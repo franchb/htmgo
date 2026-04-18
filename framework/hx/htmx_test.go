@@ -31,9 +31,9 @@ func TestEventConstants_htmx4(t *testing.T) {
 	cases := []eventCase{
 		{AbortEvent, "htmx:abort"},
 		{AfterOnLoadEvent, "htmx:after:init"},
-		{AfterProcessNodeEvent, "htmx:after:init"},
+		{AfterProcessNodeEvent, "htmx:after:process"},
 		{AfterRequestEvent, "htmx:after:request"},
-		{AfterSettleEvent, "htmx:after:swap"},
+		{AfterSettleEvent, "htmx:after:settle"},
 		{AfterSwapEvent, "htmx:after:swap"},
 		{BeforeCleanupElementEvent, "htmx:before:cleanup"},
 		{BeforeOnLoadEvent, "htmx:before:init"},

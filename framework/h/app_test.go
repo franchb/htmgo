@@ -1,6 +1,7 @@
 package h
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -70,9 +71,9 @@ func TestHtmlView_InjectsLivereloadMetaInDev(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-	buf := make([]byte, 4096)
-	n, _ := resp.Body.Read(buf)
-	body := string(buf[:n])
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	body := string(bodyBytes)
 	assert.Contains(t, body, `<meta name="htmgo-livereload"`)
 }
 
@@ -97,9 +98,9 @@ func TestHtmlView_NoMetaInProd(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-	buf := make([]byte, 4096)
-	n, _ := resp.Body.Read(buf)
-	body := string(buf[:n])
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	body := string(bodyBytes)
 	assert.NotContains(t, body, "htmgo-livereload")
 }
 

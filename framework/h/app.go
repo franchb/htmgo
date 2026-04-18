@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -322,17 +323,19 @@ func writeHtml(c fiber.Ctx, element Ren) error {
 // The livereload JS extension gates on this meta tag's presence.
 const livereloadMetaTag = `<meta name="htmgo-livereload" content="/dev/livereload">`
 
+// headOpenRe matches the opening <head> tag, with or without attributes
+// (e.g. <head>, <head lang="en">, <HEAD class="x">).
+var headOpenRe = regexp.MustCompile(`(?i)<head\b[^>]*>`)
+
 // injectLivereloadMeta inserts the htmgo-livereload meta tag immediately after
 // the opening <head> tag in the rendered HTML.  It is a no-op when the page
 // does not contain a <head> element.
 func injectLivereloadMeta(html string) string {
-	const needle = "<head>"
-	idx := strings.Index(html, needle)
-	if idx == -1 {
+	loc := headOpenRe.FindStringIndex(html)
+	if loc == nil {
 		return html
 	}
-	pos := idx + len(needle)
-	return html[:pos] + livereloadMetaTag + html[pos:]
+	return html[:loc[1]] + livereloadMetaTag + html[loc[1]:]
 }
 
 func HtmlView(c fiber.Ctx, page *Page) error {

@@ -158,7 +158,6 @@ func TestHxInheritedAttributes(t *testing.T) {
 		{"HxHeadersInherited", HxHeadersInherited(`{"X-Token":"abc"}`), "hx-headers:inherited", `{"X-Token":"abc"}`},
 		{"HxIndicatorInherited", HxIndicatorInherited("#spinner"), "hx-indicator:inherited", "#spinner"},
 		{"HxSyncInherited", HxSyncInherited("this:drop"), "hx-sync:inherited", "this:drop"},
-		{"HxConfigInherited", HxConfigInherited(`{"timeout":5000}`), "hx-config:inherited", `{"timeout":5000}`},
 		{"HxEncodingInherited", HxEncodingInherited("multipart/form-data"), "hx-encoding:inherited", "multipart/form-data"},
 		{"HxValidateInherited", HxValidateInherited("true"), "hx-validate:inherited", "true"},
 	}
