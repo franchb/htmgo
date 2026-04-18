@@ -173,4 +173,73 @@ describe("alpine-compat extension", () => {
       expect(deferMutations).not.toHaveBeenCalled();
     });
   });
+
+  describe("htmx_before_morph_node hook", () => {
+    let ext: any;
+    let closestDataStack: ReturnType<typeof vi.fn>;
+    let cloneNode: ReturnType<typeof vi.fn>;
+    let morph: ReturnType<typeof vi.fn>;
+
+    beforeEach(async () => {
+      vi.resetModules();
+      await import("../alpine-compat");
+      ext = registered["alpine-compat"];
+      closestDataStack = vi.fn(() => [{ count: 7 }]);
+      cloneNode = vi.fn();
+      morph = vi.fn();
+      (window as any).Alpine = { closestDataStack, cloneNode };
+      ext.init({ isSoftMatch: (_a: any, _b: any) => true, morph });
+    });
+
+    it("copies _x_dataStack from oldNode to newNode", () => {
+      const oldNode: any = document.createElement("div");
+      document.body.appendChild(oldNode); // isConnected = true
+      const newNode: any = document.createElement("div");
+      ext.htmx_before_morph_node(document.body, { oldNode, newNode });
+      expect(newNode._x_dataStack).toEqual([{ count: 7 }]);
+      expect(closestDataStack).toHaveBeenCalledWith(oldNode);
+    });
+
+    it("calls Alpine.cloneNode when oldNode is connected", () => {
+      const oldNode: any = document.createElement("div");
+      document.body.appendChild(oldNode);
+      const newNode: any = document.createElement("div");
+      ext.htmx_before_morph_node(document.body, { oldNode, newNode });
+      expect(cloneNode).toHaveBeenCalledWith(oldNode, newNode);
+    });
+
+    it("skips Alpine.cloneNode when oldNode is disconnected (template child)", () => {
+      const oldNode: any = document.createElement("div");
+      // Not appended — isConnected is false
+      const newNode: any = document.createElement("div");
+      ext.htmx_before_morph_node(document.body, { oldNode, newNode });
+      expect(cloneNode).not.toHaveBeenCalled();
+    });
+
+    it("morphs teleport target when both nodes carry _x_teleport", () => {
+      const oldNode: any = document.createElement("div");
+      document.body.appendChild(oldNode);
+      const oldTeleport = document.createElement("div");
+      const newTeleport = document.createElement("div");
+      oldNode._x_teleport = oldTeleport;
+      const newNode: any = document.createElement("div");
+      newNode._x_teleport = newTeleport;
+      ext.htmx_before_morph_node(document.body, { oldNode, newNode });
+      expect(morph).toHaveBeenCalledTimes(1);
+      const [target, fragment, third] = morph.mock.calls[0];
+      expect(target).toBe(oldTeleport);
+      expect(fragment).toBeInstanceOf(DocumentFragment);
+      expect(fragment.firstChild).toBe(newTeleport);
+      expect(third).toBe(false);
+    });
+
+    it("no-ops when window.Alpine lacks closestDataStack/cloneNode", () => {
+      (window as any).Alpine = {};
+      const oldNode: any = document.createElement("div");
+      document.body.appendChild(oldNode);
+      const newNode: any = document.createElement("div");
+      ext.htmx_before_morph_node(document.body, { oldNode, newNode });
+      expect(newNode._x_dataStack).toBeUndefined();
+    });
+  });
 });

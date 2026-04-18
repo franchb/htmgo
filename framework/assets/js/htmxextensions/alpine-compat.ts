@@ -62,8 +62,26 @@ htmx.registerExtension("alpine-compat", {
     // for (let task of detail.tasks) { if (innerMorph/outerMorph) { ... } }
   },
 
-  htmx_before_morph_node(_elt: any, _detail: any) {
-    // filled in Task 4
+  htmx_before_morph_node(_elt: any, detail: any) {
+    const alpine = (window as any).Alpine;
+    if (!alpine?.closestDataStack || !alpine?.cloneNode) return;
+
+    const { oldNode, newNode } = detail;
+    if (!oldNode || !newNode) return;
+
+    newNode._x_dataStack = alpine.closestDataStack(oldNode);
+
+    // Skip cloneNode for template children — reactive content on a disconnected
+    // node throws inside Alpine's evaluator.
+    if (!oldNode.isConnected) return;
+    alpine.cloneNode(oldNode, newNode);
+
+    // If both carry a teleport target, morph the teleport destinations too.
+    if (oldNode._x_teleport && newNode._x_teleport) {
+      const fragment = document.createDocumentFragment();
+      fragment.append(newNode._x_teleport);
+      api.morph(oldNode._x_teleport, fragment, false);
+    }
   },
 
   htmx_history_cache_before_save(_elt: any, _detail: any) {
