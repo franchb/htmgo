@@ -61,26 +61,10 @@ function getRespCodeTarget(elt: Element, respCodeNumber: number) {
   return null;
 }
 
-function handleErrorFlag(detail: any) {
-  if (detail.isError) {
-    if (config.responseTargetUnsetsError) {
-      detail.isError = false;
-    }
-  } else if (config.responseTargetSetsError) {
-    detail.isError = true;
-  }
-}
-
 htmx.registerExtension("response-targets", {
   init(apiRef: any) {
     api = apiRef;
 
-    if (config.responseTargetUnsetsError === undefined) {
-      config.responseTargetUnsetsError = true;
-    }
-    if (config.responseTargetSetsError === undefined) {
-      config.responseTargetSetsError = false;
-    }
     if (config.responseTargetPrefersExisting === undefined) {
       config.responseTargetPrefersExisting = false;
     }
@@ -105,14 +89,12 @@ htmx.registerExtension("response-targets", {
 
     if (mainTask.target) {
       if (config.responseTargetPrefersExisting) {
-        handleErrorFlag(ctx);
         return;
       }
       const headers = ctx?.response?.headers;
       const retarget =
         typeof headers?.get === "function" ? headers.get("HX-Retarget") : null;
       if (config.responseTargetPrefersRetargetHeader && retarget) {
-        handleErrorFlag(ctx);
         return;
       }
     }
@@ -122,7 +104,6 @@ htmx.registerExtension("response-targets", {
 
     const target = getRespCodeTarget(reqElt, status);
     if (target) {
-      handleErrorFlag(ctx);
       mainTask.target = target;
     }
   },
