@@ -44,6 +44,17 @@ describe("response-targets extension", () => {
     expect(cfg.responseTargetSetsError).toBe(false);
     expect(cfg.responseTargetPrefersExisting).toBe(false);
     expect(cfg.responseTargetPrefersRetargetHeader).toBe(true);
+
+    // Pre-set non-default values must be preserved on a subsequent init.
+    cfg.responseTargetUnsetsError = false;
+    cfg.responseTargetSetsError = true;
+    cfg.responseTargetPrefersExisting = true;
+    cfg.responseTargetPrefersRetargetHeader = false;
+    ext.init(makeApi({}));
+    expect(cfg.responseTargetUnsetsError).toBe(false);
+    expect(cfg.responseTargetSetsError).toBe(true);
+    expect(cfg.responseTargetPrefersExisting).toBe(true);
+    expect(cfg.responseTargetPrefersRetargetHeader).toBe(false);
   });
 
   function makeDetail(srcElt: HTMLElement, status: number, initialTarget: HTMLElement | null = null) {

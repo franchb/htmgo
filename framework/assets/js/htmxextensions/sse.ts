@@ -37,6 +37,7 @@ htmx.registerExtension("sse", {
 function connectEventSource(ele: Element, url: string): EventSource | undefined {
   if (!url) return undefined;
   console.info("Connecting to EventSource", url);
+  htmx.trigger(ele, "htmx:before:sse:connection", { url });
   const eventSource = new EventSource(url);
 
   eventSource.addEventListener("close", (event) => {
@@ -50,6 +51,8 @@ function connectEventSource(ele: Element, url: string): EventSource | undefined 
     htmx.trigger(ele, "htmx:sse:error", { event });
     if (eventSource.readyState === EventSource.CLOSED) {
       htmx.trigger(ele, "htmx:sse:close", { event });
+      connections.delete(ele);
+      if (processedUrls.get(url) === ele) processedUrls.delete(url);
     }
   };
 

@@ -39,6 +39,7 @@ function connectWs(ele: Element, url: string, attempt = 0): WebSocket | null {
     url = (isSecure ? "wss://" : "ws://") + window.location.host + url;
   }
   console.info("connecting to ws", url);
+  htmx.trigger(ele, "htmx:before:ws:connection", { url });
   const socket = new WebSocket(url);
   ws = socket;
 
