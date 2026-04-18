@@ -111,3 +111,162 @@ func Card(title, body string, active bool) *h.Element {
 ```
 
 **Key mental model:** a page is a tree of `Ren` nodes. You don't emit HTML strings directly; you compose Go functions that each return a `Ren`, then hand the root to `h.NewPage` or `h.NewPartial` (next section).
+
+## 3. Pages vs Partials
+
+htmgo handlers return one of two response types:
+
+**`*h.Page`** — a full HTML document. Created with `h.NewPage(root Ren)`. Used for normal navigation / first-load responses.
+
+**`*h.Partial`** — an HTML fragment for htmx swaps. Created with `h.NewPartial(root *Element)` or `h.NewPartialWithHeaders(headers *Headers, root *Element)` when you need to set response headers (`HX-Retarget`, `HX-Trigger`, etc.). Note the argument order: headers first, root second.
+
+### Route handler signatures
+
+```go
+// Page handler
+func IndexPage(ctx *h.RequestContext) *h.Page {
+    return h.NewPage(
+        h.Div(h.Text("Hello")),
+    )
+}
+
+// Partial handler
+func GetSearch(ctx *h.RequestContext) *h.Partial {
+    q := ctx.QueryParam("q")
+    return h.NewPartial(
+        h.Div(h.TextF("results for: %s", q)),
+    )
+}
+```
+
+### Auto-routing
+
+htmgo scans `pages/` and `partials/` and generates `__htmgo/pages-generated.go` + `__htmgo/partials-generated.go` that register all routes. Mapping:
+
+- `pages/index.go` → `/`
+- `pages/users/index.go` → `/users`
+- `pages/users/profile.go` → `/users/profile`
+- `pages/blog/[slug].go` → `/blog/:slug` (URL param captured; access via `ctx.UrlParam("slug")`)
+
+Generated files are **rebuilt on every `htmgo build`, `htmgo watch`, and `htmgo generate`.** Never edit them by hand; your changes will be wiped. Add them to `.gitignore`.
+
+Exclude files from auto-routing in `htmgo.yml`:
+
+```yaml
+automatic_page_routing_ignore:
+  - "**/_shared.go"
+automatic_partial_routing_ignore:
+  - "**/internal/*.go"
+```
+
+### Partial function-name conventions (HTTP method)
+
+Partial filenames map to routes; the **function name prefix** determines the HTTP method:
+
+```go
+// partials/users/create.go → route: /users/create
+
+func GetCreate(ctx *h.RequestContext) *h.Partial { ... }   // GET
+func PostCreate(ctx *h.RequestContext) *h.Partial { ... }  // POST
+func PutCreate(ctx *h.RequestContext) *h.Partial { ... }   // PUT
+func PatchCreate(ctx *h.RequestContext) *h.Partial { ... } // PATCH
+func DeleteCreate(ctx *h.RequestContext) *h.Partial { ... }// DELETE
+```
+
+Multiple methods can live in the same file.
+
+### Full-page vs fragment decision
+
+- If htmx is making the request (`ctx.IsHxRequest()` returns true), the response typically comes from a **partial** so only the target element is swapped.
+- If the browser navigates directly (e.g. user types the URL or does a full refresh), you return a **page**.
+- For routes that serve both cases (common for list pages), the handler can branch on `ctx.IsHxRequest()` or you can define the page + partial at the same path.
+
+### Worked example
+
+A button that posts to a partial and swaps the response:
+
+```go
+// pages/counter.go
+func CounterPage(ctx *h.RequestContext) *h.Page {
+    return h.NewPage(
+        h.Div(
+            h.Id("counter"),
+            h.Text("count: 0"),
+        ),
+        h.Button(
+            h.HxPost("/counter/increment"),
+            h.HxTarget("#counter"),
+            h.HxSwap(hx.SwapTypeOuterHtml),
+            h.Text("+"),
+        ),
+    )
+}
+
+// partials/counter/increment.go
+func PostIncrement(ctx *h.RequestContext) *h.Partial {
+    // In real code, read current count from state / session.
+    n := 42
+    return h.NewPartial(
+        h.Div(
+            h.Id("counter"),
+            h.TextF("count: %d", n),
+        ),
+    )
+}
+```
+
+## 4. RequestContext
+
+Route handlers receive a `*h.RequestContext` that wraps Fiber's `fiber.Ctx` with htmx-aware helpers.
+
+**Form / query / URL:**
+- `ctx.FormValue(key string) string` — POST form field (multipart or url-encoded).
+- `ctx.QueryParam(key string) string` — `?foo=bar` → `"bar"`.
+- `ctx.UrlParam(key string) string` — pattern param from `/users/:id`.
+
+**htmx-specific:**
+- `ctx.IsHxRequest() bool` — true if the `HX-Request: true` header is present.
+- `ctx.HxSource() string` — raw `HX-Source` header (e.g. `button#submit-btn`).
+- `ctx.HxSourceID() string` — just the id portion (e.g. `submit-btn`).
+- `ctx.HxRequestType() string` — `"full"` or `"partial"` (htmx 4 addition).
+
+**Navigation:**
+- `ctx.Redirect(url string, code int) error` — redirect; pass an HTTP status code (e.g. `fiber.StatusTemporaryRedirect`). For htmx-friendly client-side redirects from a partial, set the `HX-Redirect` response header instead (see headers example below).
+
+**Escape hatch:**
+- `ctx.Fiber` — the raw `fiber.Ctx`. Use for anything not pre-wrapped: cookies (`ctx.Fiber.Cookies(...)`), custom headers, SSE setup, etc.
+
+**Looking up the RequestContext inside Fiber middleware:**
+
+```go
+func authMiddleware(c fiber.Ctx) error {
+    ctx := h.GetRequestContext(c)
+    if ctx.FormValue("token") == "" {
+        return c.SendStatus(401)
+    }
+    return c.Next()
+}
+```
+
+**Setting response headers from a handler** — use `h.NewHeaders` (variadic key/value pairs) to build a `*h.Headers`, then pass it as the first argument to `h.NewPartialWithHeaders`:
+
+```go
+func PostLogin(ctx *h.RequestContext) *h.Partial {
+    if !validCreds(ctx) {
+        return h.NewPartialWithHeaders(
+            h.NewHeaders(hx.RetargetHeader, "#login-error"),
+            h.Div(h.Class("error"), h.Text("Invalid credentials")),
+        )
+    }
+    return h.NewPartialWithHeaders(
+        h.NewHeaders(hx.RedirectHeader, "/dashboard"),
+        h.Div(h.Text("Welcome!")),
+    )
+}
+```
+
+**Convenience header constructors** (all return `*h.Headers`):
+- `h.ReplaceUrlHeader(url string)` — sets `HX-Replace-Url`.
+- `h.PushUrlHeader(url string)` — sets `HX-Push-Url`.
+- `h.CombineHeaders(headers ...*Headers)` — merges multiple `*Headers` into one.
+- `h.NewHeaders(key, val, key, val, ...)` — general-purpose; key/value pairs must be even-length.
