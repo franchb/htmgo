@@ -99,4 +99,78 @@ describe("alpine-compat extension", () => {
       expect(api.isSoftMatch(oldNode, newNode)).toBe(false);
     });
   });
+
+  describe("defer/flush flow", () => {
+    let ext: any;
+    let deferMutations: ReturnType<typeof vi.fn>;
+    let flush: ReturnType<typeof vi.fn>;
+
+    beforeEach(async () => {
+      vi.resetModules();
+      // Re-import the extension to reset module-level deferCount + api.
+      await import("../alpine-compat");
+      ext = registered["alpine-compat"];
+      deferMutations = vi.fn();
+      flush = vi.fn();
+      (window as any).Alpine = {
+        deferMutations,
+        flushAndStopDeferringMutations: flush,
+        closestDataStack: vi.fn(() => [{}]),
+        cloneNode: vi.fn(),
+      };
+      ext.init({ isSoftMatch: (_a: any, _b: any) => true, morph: vi.fn() });
+    });
+
+    it("htmx_before_swap calls Alpine.deferMutations on the first call of a batch", () => {
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      expect(deferMutations).toHaveBeenCalledTimes(1);
+    });
+
+    it("subsequent htmx_before_swap calls within the same batch do not re-defer", () => {
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      expect(deferMutations).toHaveBeenCalledTimes(1);
+    });
+
+    it("htmx_after_swap flushes only when deferCount reaches zero", () => {
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      // deferCount is now 2
+      ext.htmx_after_swap(document.body, { ctx: {} });
+      expect(flush).not.toHaveBeenCalled();
+      ext.htmx_after_swap(document.body, { ctx: {} });
+      expect(flush).toHaveBeenCalledTimes(1);
+    });
+
+    it("htmx_after_swap marks ctx._alpineFlushed = true", () => {
+      const ctx: any = {};
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      ext.htmx_after_swap(document.body, { ctx });
+      expect(ctx._alpineFlushed).toBe(true);
+    });
+
+    it("htmx_finally_request flushes if htmx_after_swap did not", () => {
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      // No htmx_after_swap — simulate a short-circuited swap.
+      ext.htmx_finally_request(document.body, { ctx: {} });
+      expect(flush).toHaveBeenCalledTimes(1);
+    });
+
+    it("htmx_finally_request does NOT flush when ctx._alpineFlushed is already set", () => {
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      const ctx: any = {};
+      ext.htmx_after_swap(document.body, { ctx });
+      expect(flush).toHaveBeenCalledTimes(1);
+      flush.mockClear();
+      ext.htmx_finally_request(document.body, { ctx });
+      expect(flush).not.toHaveBeenCalled();
+    });
+
+    it("htmx_before_swap is a no-op when window.Alpine is missing required APIs", () => {
+      (window as any).Alpine = {}; // no deferMutations / closestDataStack / cloneNode
+      ext.htmx_before_swap(document.body, { tasks: [] });
+      expect(deferMutations).not.toHaveBeenCalled();
+    });
+  });
 });

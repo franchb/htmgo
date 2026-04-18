@@ -44,8 +44,22 @@ htmx.registerExtension("alpine-compat", {
     };
   },
 
-  htmx_before_swap(_elt: any, _detail: any) {
-    // filled in Task 3
+  htmx_before_swap(_elt: any, detail: any) {
+    const alpine = (window as any).Alpine;
+    if (!alpine?.closestDataStack || !alpine?.cloneNode || !alpine?.deferMutations) {
+      return;
+    }
+    if (deferCount === 0) {
+      alpine.deferMutations();
+    }
+    deferCount++;
+
+    // Note: upstream iterates `detail.tasks` looking for innerMorph / outerMorph
+    // entries and resolves string targets to DOM nodes, but the loop body is a
+    // no-op in the upstream source (it just sets a local `target` that is never
+    // used). Preserved as a comment so future readers know why the loop is
+    // absent here.
+    // for (let task of detail.tasks) { if (innerMorph/outerMorph) { ... } }
   },
 
   htmx_before_morph_node(_elt: any, _detail: any) {
@@ -60,11 +74,12 @@ htmx.registerExtension("alpine-compat", {
     // filled in Task 5
   },
 
-  htmx_after_swap(_elt: any, _detail: any) {
-    // filled in Task 3
+  htmx_after_swap(_elt: any, detail: any) {
+    if (detail?.ctx) detail.ctx._alpineFlushed = true;
+    maybeFlush();
   },
 
-  htmx_finally_request(_elt: any, _detail: any) {
-    // filled in Task 3
+  htmx_finally_request(_elt: any, detail: any) {
+    if (!detail?.ctx?._alpineFlushed) maybeFlush();
   },
 });
