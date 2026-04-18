@@ -22,6 +22,7 @@ func Overview(ctx *h.RequestContext) *h.Page {
 			`),
 			Link("Trigger Children", "/docs/htmx-extensions/trigger-children"),
 			Link("Mutation Error", "/docs/htmx-extensions/mutation-error"),
+			Link("Alpine Compat", "/docs/htmx-extensions/alpine-compat"),
 			Link("Path Deps", "https://github.com/bigskysoftware/htmx-extensions/blob/main/src/path-deps/README.md"),
 			h.P(
 				h.Class("mt-3"),

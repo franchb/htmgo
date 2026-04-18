@@ -22,7 +22,7 @@ func MutationError(ctx *h.RequestContext) *h.Page {
 			NextStep(
 				"mt-4",
 				PrevBlock("Trigger Children", DocPath("/htmx-extensions/trigger-children")),
-				NextBlock("Tailwind Intellisense", DocPath("/misc/tailwind-intellisense")),
+				NextBlock("Alpine Compat", DocPath("/htmx-extensions/alpine-compat")),
 			),
 		),
 	)
