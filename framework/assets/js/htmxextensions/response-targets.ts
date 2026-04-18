@@ -106,7 +106,7 @@ htmx.registerExtension("response-targets", {
     if (target) {
       const from = mainTask.target ?? null;
       mainTask.target = target;
-      api.triggerHtmxEvent(ctx.sourceElement, "htmgo:response:retargeted", {
+      api.triggerHtmxEvent(reqElt, "htmgo:response:retargeted", {
         status,
         from,
         to: target,

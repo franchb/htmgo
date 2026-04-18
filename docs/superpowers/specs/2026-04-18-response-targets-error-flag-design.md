@@ -56,9 +56,9 @@ When a retarget actually happens (a new target is resolved and assigned to `main
 
 **Name:** `htmgo:response:retargeted`
 
-**Dispatched on:** `ctx.sourceElement` (bubbling).
+**Dispatched on:** `ctx.sourceElement ?? ctx.elt` (i.e., the same element used to resolve the target; bubbling).
 
-**Mechanism:** `api.triggerHtmxEvent(ctx.sourceElement, "htmgo:response:retargeted", detail)`. The `api` ref is already captured in `init`.
+**Mechanism:** `api.triggerHtmxEvent(ctx.sourceElement ?? ctx.elt, "htmgo:response:retargeted", detail)`. The `api` ref is already captured in `init`.
 
 **Detail payload:**
 

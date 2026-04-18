@@ -137,4 +137,22 @@ describe("response-targets extension", () => {
     expect(events[0].detail.to).toBe(newTarget);
     expect(events[0].detail.ctx).toBe(detail.ctx);
   });
+
+  it("fires htmgo:response:retargeted on ctx.elt when sourceElement is absent", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const fallbackElt = document.createElement("button");
+    document.body.appendChild(fallbackElt);
+    const { api, triggered } = makeApi({ "hx-target-404": "#err" });
+    ext.init(api);
+    const mainTask: any = { type: "main", target: null };
+    const detail: any = {
+      ctx: { response: { status: 404 }, elt: fallbackElt },
+      tasks: [mainTask],
+    };
+    ext.htmx_before_swap(fallbackElt, detail);
+
+    const events = triggered.filter((e) => e.name === "htmgo:response:retargeted");
+    expect(events.length).toBe(1);
+    expect(events[0].elt).toBe(fallbackElt);
+  });
 });
