@@ -141,3 +141,27 @@ func TestOnFamily(t *testing.T) {
 		})
 	}
 }
+
+func TestModelVariants(t *testing.T) {
+	t.Parallel()
+	type c struct {
+		name     string
+		attr     h.Ren
+		contains string
+	}
+	cases := []c{
+		{"ModelNumber", ModelNumber("age"), `x-model.number="age"`},
+		{"ModelLazy", ModelLazy("title"), `x-model.lazy="title"`},
+		{"ModelTrim", ModelTrim("name"), `x-model.trim="name"`},
+		{"ModelFill", ModelFill("notes"), `x-model.fill="notes"`},
+		{"ModelBoolean", ModelBoolean("checked"), `x-model.boolean="checked"`},
+		{"ModelDebounce", ModelDebounce("query", "500ms"), `x-model.debounce.500ms="query"`},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Contains(t, renderAttr(tc.attr), tc.contains)
+		})
+	}
+}

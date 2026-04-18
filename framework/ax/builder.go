@@ -74,3 +74,15 @@ func OnKeyup(handler string, mods ...string) h.Ren   { return On("keyup", handle
 func OnClickOutside(handler string) h.Ren  { return On("click", handler, "outside") }
 func OnKeydownEscape(handler string) h.Ren { return On("keydown", handler, "escape") }
 func OnKeydownEnter(handler string) h.Ren  { return On("keydown", handler, "enter") }
+
+// x-model modifier variants. Each emits x-model.{modifier}[.{arg}]="{expr}".
+
+func ModelNumber(expr string) h.Ren  { return h.Attribute(ModelAttr+".number", expr) }
+func ModelLazy(expr string) h.Ren    { return h.Attribute(ModelAttr+".lazy", expr) }
+func ModelTrim(expr string) h.Ren    { return h.Attribute(ModelAttr+".trim", expr) }
+func ModelFill(expr string) h.Ren    { return h.Attribute(ModelAttr+".fill", expr) }
+func ModelBoolean(expr string) h.Ren { return h.Attribute(ModelAttr+".boolean", expr) }
+
+func ModelDebounce(expr, duration string) h.Ren {
+	return h.Attribute(ModelAttr+".debounce."+duration, expr)
+}
