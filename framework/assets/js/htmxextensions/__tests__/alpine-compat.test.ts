@@ -242,4 +242,94 @@ describe("alpine-compat extension", () => {
       expect(newNode._x_dataStack).toBeUndefined();
     });
   });
+
+  describe("history cache hooks", () => {
+    let ext: any;
+    let destroyTree: ReturnType<typeof vi.fn>;
+
+    beforeEach(async () => {
+      vi.resetModules();
+      await import("../alpine-compat");
+      ext = registered["alpine-compat"];
+      destroyTree = vi.fn();
+      (window as any).Alpine = { destroyTree };
+    });
+
+    it("before_save serializes _x_dataStack[0] for each [x-data] node", () => {
+      const root = document.createElement("div");
+      const a: any = document.createElement("div");
+      a.setAttribute("x-data", "");
+      a._x_dataStack = [{ count: 1 }];
+      const b: any = document.createElement("div");
+      b.setAttribute("x-data", "");
+      b._x_dataStack = [{ open: true }];
+      root.append(a, b);
+      document.body.appendChild(root);
+
+      ext.htmx_history_cache_before_save(document.body, { target: root });
+
+      expect(a.getAttribute("data-alpine-state")).toBe(JSON.stringify({ count: 1 }));
+      expect(b.getAttribute("data-alpine-state")).toBe(JSON.stringify({ open: true }));
+      expect(destroyTree).toHaveBeenCalledWith(root);
+    });
+
+    it("before_save skips [x-data] nodes without _x_dataStack", () => {
+      const root = document.createElement("div");
+      const a: any = document.createElement("div");
+      a.setAttribute("x-data", "");
+      // no _x_dataStack
+      root.append(a);
+      document.body.appendChild(root);
+
+      ext.htmx_history_cache_before_save(document.body, { target: root });
+
+      expect(a.hasAttribute("data-alpine-state")).toBe(false);
+      expect(destroyTree).toHaveBeenCalledWith(root);
+    });
+
+    it("before_save no-ops when window.Alpine.destroyTree is absent", () => {
+      (window as any).Alpine = {};
+      const root = document.createElement("div");
+      const a: any = document.createElement("div");
+      a.setAttribute("x-data", "");
+      a._x_dataStack = [{ count: 1 }];
+      root.append(a);
+      document.body.appendChild(root);
+
+      ext.htmx_history_cache_before_save(document.body, { target: root });
+      expect(a.hasAttribute("data-alpine-state")).toBe(false);
+    });
+
+    it("after_restore merges saved state into _x_dataStack[0] and removes attribute", () => {
+      const a: any = document.createElement("div");
+      a.setAttribute("data-alpine-state", JSON.stringify({ count: 42 }));
+      a._x_dataStack = [{ count: 0, other: "keep" }];
+      document.body.appendChild(a);
+
+      ext.htmx_history_cache_after_restore(document.body, {});
+
+      expect(a._x_dataStack[0]).toEqual({ count: 42, other: "keep" });
+      expect(a.hasAttribute("data-alpine-state")).toBe(false);
+    });
+
+    it("after_restore silently skips nodes without _x_dataStack", () => {
+      const a: any = document.createElement("div");
+      a.setAttribute("data-alpine-state", JSON.stringify({ x: 1 }));
+      document.body.appendChild(a);
+
+      ext.htmx_history_cache_after_restore(document.body, {});
+
+      expect(a.hasAttribute("data-alpine-state")).toBe(false);
+    });
+
+    it("after_restore no-ops when window.Alpine is absent", () => {
+      delete (window as any).Alpine;
+      const a: any = document.createElement("div");
+      a.setAttribute("data-alpine-state", JSON.stringify({ x: 1 }));
+      document.body.appendChild(a);
+
+      ext.htmx_history_cache_after_restore(document.body, {});
+      expect(a.hasAttribute("data-alpine-state")).toBe(true);
+    });
+  });
 });

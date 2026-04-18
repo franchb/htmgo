@@ -84,12 +84,27 @@ htmx.registerExtension("alpine-compat", {
     }
   },
 
-  htmx_history_cache_before_save(_elt: any, _detail: any) {
-    // filled in Task 5
+  htmx_history_cache_before_save(_elt: any, detail: any) {
+    const alpine = (window as any).Alpine;
+    if (!alpine?.destroyTree) return;
+
+    detail.target.querySelectorAll("[x-data]").forEach((el: any) => {
+      if (el._x_dataStack) {
+        el.setAttribute("data-alpine-state", JSON.stringify(el._x_dataStack[0]));
+      }
+    });
+    alpine.destroyTree(detail.target);
   },
 
   htmx_history_cache_after_restore(_elt: any, _detail: any) {
-    // filled in Task 5
+    const alpine = (window as any).Alpine;
+    if (!alpine) return;
+
+    document.querySelectorAll("[data-alpine-state]").forEach((el: any) => {
+      const saved = JSON.parse(el.getAttribute("data-alpine-state"));
+      el.removeAttribute("data-alpine-state");
+      if (el._x_dataStack) Object.assign(el._x_dataStack[0], saved);
+    });
   },
 
   htmx_after_swap(_elt: any, detail: any) {
