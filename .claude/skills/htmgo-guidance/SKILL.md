@@ -91,7 +91,7 @@ h.Div(
 - `h.If(cond, ifTrue)` — includes `ifTrue` only when `cond` is true; otherwise renders nothing.
 - `h.IfElse(cond, ifTrue, ifFalse)` — generic ternary (works for any type `T`, not just `Ren`).
 - `h.List(items, func(item T, index int) *Element { ... })` — renders a typed slice; the primary loop builder for lists.
-- `h.IterMap(m, func(key string, value T) *Element { ... })` — renders a `map[string]T`; iterates in insertion order.
+- `h.IterMap(m, func(key string, value T) *Element { ... })` — renders a `map[string]T` (order undefined).
 
 **Worked example — a small card component:**
 
