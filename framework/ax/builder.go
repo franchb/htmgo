@@ -30,3 +30,18 @@ func Ignore() h.Ren { return h.Attribute(IgnoreAttr, "") }
 // use h.Attribute("x-transition:enter", ...) directly when needed.
 
 func Transition() h.Ren { return h.Attribute(TransitionAttr, "") }
+
+// x-bind:* family. Bind is the generic form; the shortcut helpers cover the
+// attributes that appear most often in practice.
+
+func Bind(attr, expr string) h.Ren {
+	return h.Attribute(BindAttr+":"+attr, expr)
+}
+
+func BindClass(expr string) h.Ren    { return Bind("class", expr) }
+func BindStyle(expr string) h.Ren    { return Bind("style", expr) }
+func BindHref(expr string) h.Ren     { return Bind("href", expr) }
+func BindValue(expr string) h.Ren    { return Bind("value", expr) }
+func BindDisabled(expr string) h.Ren { return Bind("disabled", expr) }
+func BindChecked(expr string) h.Ren  { return Bind("checked", expr) }
+func BindId(expr string) h.Ren       { return Bind("id", expr) }

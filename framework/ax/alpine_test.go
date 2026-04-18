@@ -81,3 +81,29 @@ func TestNoArgDirectives(t *testing.T) {
 	assert.Contains(t, renderAttr(Cloak()), `x-cloak`)
 	assert.Contains(t, renderAttr(Ignore()), `x-ignore`)
 }
+
+func TestBindFamily(t *testing.T) {
+	t.Parallel()
+	type c struct {
+		name     string
+		attr     h.Ren
+		contains string
+	}
+	cases := []c{
+		{"Bind generic", Bind("data-foo", "bar"), `x-bind:data-foo="bar"`},
+		{"BindClass", BindClass("{ active: isActive }"), `x-bind:class="{ active: isActive }"`},
+		{"BindStyle", BindStyle("{ color: hex }"), `x-bind:style="{ color: hex }"`},
+		{"BindHref", BindHref("url"), `x-bind:href="url"`},
+		{"BindValue", BindValue("input"), `x-bind:value="input"`},
+		{"BindDisabled", BindDisabled("locked"), `x-bind:disabled="locked"`},
+		{"BindChecked", BindChecked("selected"), `x-bind:checked="selected"`},
+		{"BindId", BindId("compId"), `x-bind:id="compId"`},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Contains(t, renderAttr(tc.attr), tc.contains)
+		})
+	}
+}
