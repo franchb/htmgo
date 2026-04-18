@@ -50,7 +50,7 @@ Users wanting generic HTTP-error handling in htmx 4 subscribe to `htmx:before:re
 
 ### Add
 
-When a retarget actually happens (a new target is resolved and assigned to `mainTask.target`), emit `htmgo:response:retargeted` on `ctx.sourceElement` via `api.triggerHtmxEvent`.
+When a retarget actually happens (a new target is resolved and assigned to `mainTask.target`), emit `htmgo:response:retargeted` on `ctx.sourceElement ?? ctx.elt` via `api.triggerHtmxEvent`.
 
 ## Event contract
 
@@ -93,7 +93,7 @@ When a retarget actually happens (a new target is resolved and assigned to `main
 Replace the existing defaults-only test with the following vitest cases. Use a minimal htmx api stub (mock `getClosestAttributeValue`, `findThisElement`, `querySelectorExt`, `triggerHtmxEvent`) following the existing file's stub pattern.
 
 1. **Config defaults** — assert `responseTargetPrefersExisting` and `responseTargetPrefersRetargetHeader` are initialized. Assert `responseTargetUnsetsError` and `responseTargetSetsError` are NOT set (regression guard).
-2. **Retarget fires event** — simulate `htmx:before:swap` with a 404 response and a matching `hx-target-404` ancestor. Assert `htmgo:response:retargeted` fires once on `ctx.sourceElement` with expected detail fields; assert `mainTask.target` reflects the new target.
+2. **Retarget fires event** — simulate `htmx:before:swap` with a 404 response and a matching `hx-target-404` ancestor. Assert `htmgo:response:retargeted` fires once on `ctx.sourceElement ?? ctx.elt` with expected detail fields; assert `mainTask.target` reflects the new target.
 3. **No match, no event** — 404 response, no `hx-target-*` anywhere. Assert event does NOT fire and `mainTask.target` is unchanged.
 4. **PrefersExisting suppresses event** — `mainTask.target` already set, `responseTargetPrefersExisting=true`. Assert event does NOT fire.
 5. **HX-Retarget suppresses event** — `responseTargetPrefersRetargetHeader=true` and `HX-Retarget` response header present. Assert event does NOT fire.
