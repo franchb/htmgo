@@ -89,35 +89,41 @@ htmx.registerExtension("response-targets", {
     }
   },
 
+  // htmx 4: `htmx:before:swap` extension hooks receive `{ctx, tasks}`.
+  // Retargeting happens by mutating the main task's `target`, not by setting
+  // `detail.target`/`detail.shouldSwap` (those are htmx 2 fields and are
+  // ignored by the core in htmx 4).
   htmx_before_swap(_elt: HTMLElement, detail: any) {
     const ctx = detail?.ctx;
+    const tasks = detail?.tasks;
     const status = ctx?.response?.status ?? 0;
     if (status === 0 || status === 200) return;
+    if (!Array.isArray(tasks)) return;
 
-    if (detail.target) {
+    const mainTask = tasks.find((t: any) => t?.type === "main");
+    if (!mainTask) return;
+
+    if (mainTask.target) {
       if (config.responseTargetPrefersExisting) {
-        detail.shouldSwap = true;
-        handleErrorFlag(detail);
+        handleErrorFlag(ctx);
         return;
       }
       const headers = ctx?.response?.headers;
       const retarget =
         typeof headers?.get === "function" ? headers.get("HX-Retarget") : null;
       if (config.responseTargetPrefersRetargetHeader && retarget) {
-        detail.shouldSwap = true;
-        handleErrorFlag(detail);
+        handleErrorFlag(ctx);
         return;
       }
     }
 
-    const reqElt = detail.requestConfig?.elt ?? ctx?.elt;
+    const reqElt = ctx?.sourceElement ?? ctx?.elt;
     if (!reqElt) return;
 
     const target = getRespCodeTarget(reqElt, status);
     if (target) {
-      handleErrorFlag(detail);
-      detail.shouldSwap = true;
-      detail.target = target;
+      handleErrorFlag(ctx);
+      mainTask.target = target;
     }
   },
 });

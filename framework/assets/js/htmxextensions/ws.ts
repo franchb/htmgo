@@ -42,8 +42,11 @@ function connectWs(ele: Element, url: string, attempt = 0): WebSocket | null {
   const socket = new WebSocket(url);
   ws = socket;
 
+  // Event names match htmx 4 colon form (see official hx-ws.js and the
+  // trigger-children event list).  Listeners register as
+  //   hx-on::ws:close / hx-on::after:ws:message / OnEvent("htmx:ws:close", …).
   socket.addEventListener("close", (event) => {
-    htmx.trigger(ele, "htmx:wsClose", { event });
+    htmx.trigger(ele, "htmx:ws:close", { event });
     // Don't reconnect on clean close, when the element has been detached,
     // or once we've exhausted our retry budget.
     if (event.wasClean || !ele.isConnected || attempt >= MAX_RECONNECT_ATTEMPTS) {
@@ -52,12 +55,12 @@ function connectWs(ele: Element, url: string, attempt = 0): WebSocket | null {
     const delay = exponentialBackoff(attempt);
     setTimeout(() => connectWs(ele, url, attempt + 1), delay);
   });
-  socket.addEventListener("open", (event) => htmx.trigger(ele, "htmx:wsOpen", { event }));
-  socket.addEventListener("error", (event) => htmx.trigger(ele, "htmx:wsError", { event }));
+  socket.addEventListener("open", (event) => htmx.trigger(ele, "htmx:after:ws:connection", { event }));
+  socket.addEventListener("error", (event) => htmx.trigger(ele, "htmx:ws:error", { event }));
   socket.addEventListener("message", (event) => {
-    htmx.trigger(ele, "htmx:wsBeforeMessage", { event });
+    htmx.trigger(ele, "htmx:before:ws:message", { event });
     applyOobSwap(ele, event.data);
-    htmx.trigger(ele, "htmx:wsAfterMessage", { event });
+    htmx.trigger(ele, "htmx:after:ws:message", { event });
   });
 
   return socket;

@@ -46,60 +46,52 @@ describe("response-targets extension", () => {
     expect(cfg.responseTargetPrefersRetargetHeader).toBe(true);
   });
 
+  function makeDetail(srcElt: HTMLElement, status: number, initialTarget: HTMLElement | null = null) {
+    const mainTask: any = { type: "main", target: initialTarget };
+    return {
+      detail: {
+        ctx: { response: { status }, sourceElement: srcElt },
+        tasks: [mainTask],
+      } as any,
+      mainTask,
+    };
+  }
+
   it("retargets to hx-target-404 when status is 404", () => {
     document.body.innerHTML = `<div id="err"></div>`;
     const srcElt = document.createElement("button");
     ext.init(makeApi({ "hx-target-404": "#err" }));
-    const detail: any = {
-      ctx: { response: { status: 404 }, elt: srcElt },
-      requestConfig: { elt: srcElt },
-      shouldSwap: false,
-    };
+    const { detail, mainTask } = makeDetail(srcElt, 404);
     ext.htmx_before_swap(srcElt, detail);
-    expect(detail.shouldSwap).toBe(true);
-    expect((detail.target as HTMLElement)?.id).toBe("err");
+    expect((mainTask.target as HTMLElement)?.id).toBe("err");
   });
 
   it("falls back to hx-target-4xx when hx-target-404 is absent", () => {
     document.body.innerHTML = `<div id="err4"></div>`;
     const srcElt = document.createElement("button");
     ext.init(makeApi({ "hx-target-4xx": "#err4" }));
-    const detail: any = {
-      ctx: { response: { status: 404 }, elt: srcElt },
-      requestConfig: { elt: srcElt },
-      shouldSwap: false,
-    };
+    const { detail, mainTask } = makeDetail(srcElt, 404);
     ext.htmx_before_swap(srcElt, detail);
-    expect(detail.shouldSwap).toBe(true);
-    expect((detail.target as HTMLElement)?.id).toBe("err4");
+    expect((mainTask.target as HTMLElement)?.id).toBe("err4");
   });
 
   it("falls back to hx-target-error for 4xx/5xx", () => {
     document.body.innerHTML = `<div id="errany"></div>`;
     const srcElt = document.createElement("button");
     ext.init(makeApi({ "hx-target-error": "#errany" }));
-    const detail: any = {
-      ctx: { response: { status: 500 }, elt: srcElt },
-      requestConfig: { elt: srcElt },
-      shouldSwap: false,
-    };
+    const { detail, mainTask } = makeDetail(srcElt, 500);
     ext.htmx_before_swap(srcElt, detail);
-    expect(detail.shouldSwap).toBe(true);
-    expect((detail.target as HTMLElement)?.id).toBe("errany");
+    expect((mainTask.target as HTMLElement)?.id).toBe("errany");
   });
 
   it("does nothing when status is 200", () => {
     document.body.innerHTML = `<div id="err"></div>`;
     const srcElt = document.createElement("button");
     ext.init(makeApi({ "hx-target-error": "#err" }));
-    const detail: any = {
-      ctx: { response: { status: 200 }, elt: srcElt },
-      requestConfig: { elt: srcElt },
-      shouldSwap: false,
-    };
+    const existing = document.createElement("div");
+    const { detail, mainTask } = makeDetail(srcElt, 200, existing);
     ext.htmx_before_swap(srcElt, detail);
-    // Unchanged
-    expect(detail.shouldSwap).toBe(false);
+    expect(mainTask.target).toBe(existing);
   });
 
   it("hx-target-404='this' retargets to the request element", () => {
@@ -107,13 +99,8 @@ describe("response-targets extension", () => {
     srcElt.id = "btn";
     document.body.appendChild(srcElt);
     ext.init(makeApi({ "hx-target-404": "this" }));
-    const detail: any = {
-      ctx: { response: { status: 404 }, elt: srcElt },
-      requestConfig: { elt: srcElt },
-      shouldSwap: false,
-    };
+    const { detail, mainTask } = makeDetail(srcElt, 404);
     ext.htmx_before_swap(srcElt, detail);
-    expect(detail.shouldSwap).toBe(true);
-    expect(detail.target).toBe(srcElt);
+    expect(mainTask.target).toBe(srcElt);
   });
 });
