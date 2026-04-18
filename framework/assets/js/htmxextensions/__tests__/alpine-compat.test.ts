@@ -30,4 +30,58 @@ describe("alpine-compat extension", () => {
     expect(typeof ext.htmx_after_swap).toBe("function");
     expect(typeof ext.htmx_finally_request).toBe("function");
   });
+
+  describe("init hook", () => {
+    function makeApi() {
+      const api: any = {
+        isSoftMatch: vi.fn((oldNode: any, newNode: any) => {
+          return oldNode?.tagName === newNode?.tagName;
+        }),
+        morph: vi.fn(),
+      };
+      return api;
+    }
+
+    it("captures api ref and wraps isSoftMatch", () => {
+      const api = makeApi();
+      const original = api.isSoftMatch;
+      ext.init(api);
+      expect(api.isSoftMatch).not.toBe(original);
+      expect(typeof api.isSoftMatch).toBe("function");
+    });
+
+    it("delegates to original isSoftMatch when nodes lack Alpine ID bindings", () => {
+      const api = makeApi();
+      ext.init(api);
+      const oldNode = document.createElement("div");
+      const newNode = document.createElement("div");
+      api.isSoftMatch(oldNode, newNode);
+      // Original was called once (through the wrapped version)
+      // Verified by the fact it returns true for matching tagName.
+      expect(api.isSoftMatch(oldNode, newNode)).toBe(true);
+    });
+
+    it("treats nodes with Alpine reactive IDs as soft-matching when tag names agree", () => {
+      const api = makeApi();
+      ext.init(api);
+      const oldNode = document.createElement("div") as any;
+      oldNode._x_bindings = { id: "dyn-1" };
+      oldNode.id = "dyn-1";
+      const newNode = document.createElement("div") as any;
+      newNode.setAttribute(":id", "something-else");
+      newNode.id = "dyn-2";
+      // Even though ids differ, the wrapped isSoftMatch must return true.
+      expect(api.isSoftMatch(oldNode, newNode)).toBe(true);
+    });
+
+    it("returns false from wrapped isSoftMatch when Alpine reactive IDs present but tag mismatches", () => {
+      const api = makeApi();
+      ext.init(api);
+      const oldNode = document.createElement("div") as any;
+      oldNode._x_bindings = { id: "dyn-1" };
+      const newNode = document.createElement("span") as any;
+      newNode.setAttribute(":id", "whatever");
+      expect(api.isSoftMatch(oldNode, newNode)).toBe(false);
+    });
+  });
 });

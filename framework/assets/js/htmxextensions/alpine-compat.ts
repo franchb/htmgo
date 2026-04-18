@@ -17,8 +17,20 @@ function maybeFlush() {
 }
 
 htmx.registerExtension("alpine-compat", {
-  init(_api: any) {
-    // filled in Task 2
+  init(internalAPI: any) {
+    api = internalAPI;
+
+    // Override isSoftMatch to handle Alpine reactive IDs.
+    // When both nodes carry Alpine-managed ID bindings (`_x_bindings.id` on the
+    // old node and a `:id` / `x-bind:id` attr on the new node), ignore the id
+    // mismatch and match on tagName only. Otherwise defer to the original.
+    const originalIsSoftMatch = api.isSoftMatch;
+    api.isSoftMatch = function (oldNode: any, newNode: any) {
+      if (oldNode?._x_bindings?.id && newNode?.matches?.("[\\:id], [x-bind\\:id]")) {
+        return oldNode instanceof Element && oldNode.tagName === newNode.tagName;
+      }
+      return originalIsSoftMatch(oldNode, newNode);
+    };
   },
 
   htmx_before_swap(_elt: any, _detail: any) {
