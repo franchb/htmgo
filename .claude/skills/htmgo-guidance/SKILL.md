@@ -194,9 +194,9 @@ func CounterPage(ctx *h.RequestContext) *h.Page {
             h.Text("count: 0"),
         ),
         h.Button(
-            h.HxPost("/counter/increment"),
+            h.Post("/counter/increment"),
             h.HxTarget("#counter"),
-            h.HxSwap(hx.SwapTypeOuterHtml),
+            h.Attribute(hx.SwapAttr, hx.SwapTypeOuterHtml),
             h.Text("+"),
         ),
     )
