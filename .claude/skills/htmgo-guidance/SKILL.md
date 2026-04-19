@@ -861,7 +861,7 @@ Lives at the app root. The loader searches in that order and uses the first it f
 ```yaml
 tailwind: true                    # run Tailwind CSS compilation
 tailwind_version: "4"             # optional; auto-detected otherwise
-watch_ignore: [node_modules, .git, assets/dist]      # substrings watcher ignores
+watch_ignore: ["**/node_modules/**", "**/.git/**", "assets/dist/**"]  # globs watcher ignores
 watch_files:  ["**/*.go", "**/*.css", "**/*.md"]     # globs watcher rebuilds on
 automatic_page_routing_ignore:    ["_shared.go"]     # skip for page auto-routing
 automatic_partial_routing_ignore: ["internal/*.go"]  # skip for partial auto-routing
