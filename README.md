@@ -43,6 +43,31 @@ func IndexPage(ctx *h.RequestContext) *h.Page {
 
 View documentation on [htmgo.dev](https://htmgo.dev/docs).
 
+## Claude Code skills
+
+This repo ships [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) skills under `.claude/skills/` that teach AI coding sessions how to work with htmgo:
+
+- `htmgo-guidance` — writing htmgo apps (builder, pages, partials, hx/ax helpers, caching, CLI).
+- `htmx-guidance` — htmx 4 patterns and best practices.
+- `htmx-debugging`, `htmx-extension-authoring`, `htmx-migration`, `htmx-upgrade-from-htmx2` — specialized htmx skills.
+
+To use `htmgo-guidance` in a project that consumes this fork:
+
+```bash
+# From your consumer project root:
+mkdir -p .claude/skills
+
+# If you have htmgo cloned locally:
+cp -r /path/to/htmgo/.claude/skills/htmgo-guidance .claude/skills/
+
+# Or fetch directly:
+git clone --depth=1 https://github.com/franchb/htmgo.git /tmp/htmgo
+cp -r /tmp/htmgo/.claude/skills/htmgo-guidance .claude/skills/
+rm -rf /tmp/htmgo
+```
+
+Run `/skills` in Claude Code to verify `htmgo-guidance` is loaded. Repeat for any other skills you want.
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=franchb/htmgo&type=Date)](https://star-history.com/#franchb/htmgo&Date)
