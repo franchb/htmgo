@@ -584,7 +584,7 @@ Note `ax.ModelDebounce(expr, duration string)` — the duration is a plain strin
 | Pure-client state that never needs the server (theme toggle, popover open/close, keyboard overlay, copy-to-clipboard) | `ax.*` |
 | Server round-trip required (load data, save form, refresh a list) | htmx — `h.Get(path, trigger...)`, `h.Post(url, trigger...)`, or `h.Attribute(hx.GetAttr, ...)` |
 | Widget with BOTH client state AND server-loaded content (popover whose body is fetched lazily) | `ax.Data(...)` on the outer wrapper + `h.Get(...)` on inner elements. The alpine-compat extension carries `_x_dataStack` across the morph swap. |
-| Imperative one-shots without state (focus an input, scroll to an element, set a value) | Lifecycle commands — `h.OnClick(js.Focus(...))`, not Alpine |
+| Imperative one-shots without state (set a value, add/remove a class, fire an alert) | Lifecycle commands — `h.OnClick(js.SetValue("…"))`, not Alpine |
 
 ### Worked example — popover with server-loaded content
 
