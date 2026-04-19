@@ -283,15 +283,11 @@ import "github.com/franchb/htmgo/framework/hx"
 h.Attribute("hx-swap:inherited", string(hx.SwapTypeInnerHtml))
 ```
 
-**Attribute name constants** (`framework/hx/htmx.go`):
-`GetAttr`, `PostAttr`, `PutAttr`, `PatchAttr`, `DeleteAttr`, `TargetAttr`, `TriggerAttr`, `SwapAttr`, `SwapOobAttr`, `SelectAttr`, `SelectOobAttr`, `IncludeAttr`, `IndicatorAttr`, `ConfirmAttr`, `BoostAttr`, `PushUrlAttr`, `ReplaceUrlAttr`, `ValsAttr`, `ValidateAttr`, `HeadersAttr`, `EncodingAttr`, `PreserveAttr`, `SyncAttr`, `DisableAttr` (disable form elements during in-flight; htmx 4 semantics — **repurposed** from htmx 2 where it stopped htmx processing), `IgnoreAttr` (stop htmx processing within the element subtree; htmx 4 migration of htmx 2 `hx-disable`), `ConfigAttr` (replaces `hx-request`), `StatusAttr` (per-status swap/target control).
-
-**Event name constants** (htmx 4 colon form):
-`AfterSwapEvent = "htmx:after:swap"`, `BeforeSwapEvent = "htmx:before:swap"`, `AfterRequestEvent = "htmx:after:request"`, `BeforeRequestEvent = "htmx:before:request"`, `AfterOnLoadEvent = "htmx:after:init"`, `BeforeOnLoadEvent = "htmx:before:init"`, `ConfigRequestEvent = "htmx:config:request"`, `ErrorEvent = "htmx:error"`, `AfterSettleEvent = "htmx:after:settle"`, `AbortEvent = "htmx:abort"`.
-
-**Swap type constants:** `SwapTypeInnerHtml`, `SwapTypeOuterHtml`, `SwapTypeBeforeBegin`, `SwapTypeAfterBegin`, `SwapTypeBeforeEnd`, `SwapTypeAfterEnd`, `SwapTypeTextContent`, `SwapTypeDelete`, `SwapTypeNone`, `SwapTypeTrue`.
-
-**Header name constants:** `RequestHeader = "HX-Request"`, `RedirectHeader = "HX-Redirect"`, `RetargetHeader = "HX-Retarget"`, `ReswapHeader = "HX-Reswap"`, `ReselectHeader = "HX-Reselect"`, `TriggerHeader = "HX-Trigger"`, `PushUrlHeader = "HX-Push-Url"`, `ReplaceUrlHeader = "HX-Replace-Url"`, `LocationHeader = "HX-Location"`, `SourceHeader = "HX-Source"` (htmx 4), `RequestTypeHeader = "HX-Request-Type"` (htmx 4 — `"full"` or `"partial"`), `CurrentUrlHeader = "HX-Current-Url"`, `RefreshHeader = "HX-Refresh"`.
+**Key constants** (see `framework/hx/htmx.go` for the full set):
+- **Attributes:** `GetAttr`, `PostAttr`, `TargetAttr`, `TriggerAttr`, `SwapAttr`, `IncludeAttr`, `IndicatorAttr`, `ConfirmAttr`, `ValsAttr`, `SyncAttr`, `BoostAttr`, `SwapOobAttr`, `SelectAttr`, `PushUrlAttr`, `ReplaceUrlAttr`, `EncodingAttr`, `HeadersAttr`, `ValidateAttr`, `PreserveAttr`, plus htmx 4 `ConfigAttr` (replaces `hx-request`), `StatusAttr` (per-status swap/target), `DisableAttr` (disables form elements during in-flight — **repurposed** in htmx 4; the old "stop processing" role moved to `IgnoreAttr`).
+- **Events (htmx 4 colon form):** `AfterSwapEvent = "htmx:after:swap"`, `BeforeSwapEvent`, `AfterRequestEvent`, `BeforeRequestEvent`, `AfterOnLoadEvent = "htmx:after:init"`, `ConfigRequestEvent = "htmx:config:request"`, `ErrorEvent = "htmx:error"`, `AfterSettleEvent = "htmx:after:settle"`, `AbortEvent`.
+- **Swap types:** `SwapTypeInnerHtml`, `SwapTypeOuterHtml`, `SwapTypeBeforeBegin`, `SwapTypeAfterBegin`, `SwapTypeBeforeEnd`, `SwapTypeAfterEnd`, `SwapTypeTextContent`, `SwapTypeDelete`, `SwapTypeNone`, `SwapTypeTrue`.
+- **Headers:** `RequestHeader`, `RedirectHeader`, `RetargetHeader`, `ReswapHeader`, `ReselectHeader`, `TriggerHeader`, `PushUrlHeader`, `ReplaceUrlHeader`, `LocationHeader`, `CurrentUrlHeader`, `RefreshHeader`, plus htmx 4 `SourceHeader` (`HX-Source`) and `RequestTypeHeader` (`HX-Request-Type`, values `"full"`/`"partial"`).
 
 ### Setting htmx attributes directly
 
@@ -332,19 +328,7 @@ h.HxIndicator("#spinner")             // hx-indicator="..."
 
 In htmx 2, `hx-target` on an ancestor cascaded to descendants automatically. **htmx 4 removed implicit inheritance.** If you set `hx-target` on a wrapper element and expect its children to use that target, you MUST use the `:inherited` form.
 
-`h.Hx*Inherited` helpers:
-- `h.HxTargetInherited("#x")` → `hx-target:inherited="#x"`
-- `h.HxIncludeInherited(sel)`
-- `h.HxSwapInherited(strategy)`
-- `h.HxBoostInherited(value)`
-- `h.HxConfirmInherited(msg)`
-- `h.HxHeadersInherited(jsonStr)`
-- `h.HxIndicatorInherited(sel)`
-- `h.HxSyncInherited(spec)`
-- `h.HxEncodingInherited(enc)`
-- `h.HxValidateInherited(value)`
-
-*`hx-config` does NOT support inheritance; configure htmx globally via `htmx.config` or a `<meta name="htmx-config">`.*
+`h.Hx*Inherited` helpers emit the `attr:inherited` form — 10 exist: `HxTargetInherited` (`hx-target:inherited="#x"`), `HxIncludeInherited`, `HxSwapInherited`, `HxBoostInherited`, `HxConfirmInherited`, `HxHeadersInherited`, `HxIndicatorInherited`, `HxSyncInherited`, `HxEncodingInherited`, `HxValidateInherited`. *`hx-config` does NOT inherit; configure htmx globally via `htmx.config` or a `<meta name="htmx-config">`.*
 
 **Wrong (htmx 2 thinking):**
 
@@ -525,43 +509,15 @@ ax.Transition()  // x-transition
 
 For richer transitions (`x-transition:enter`, `.opacity`, `.duration.500ms`), drop to `h.Attribute("x-transition:enter", ...)` directly.
 
-**`x-bind:*` family** — bind any attribute to an expression. `ax.Bind(attr, expr string) h.Ren` is the generic form; the seven shortcuts cover the most-used targets:
+**`x-bind:*` family** — bind any attribute to an expression. `ax.Bind(attr, expr string) h.Ren` is the generic form; seven shortcuts exist: `BindClass`, `BindStyle`, `BindHref`, `BindValue`, `BindDisabled`, `BindChecked`, `BindId`. Example: `ax.BindClass("{ active: isActive }")` emits `x-bind:class="{ active: isActive }"`.
+
+**`x-on:*` family** — event handlers. `ax.On(event, handler string, modifiers ...string) h.Ren` is the generic form. Eight event shortcuts — `OnClick`, `OnSubmit`, `OnInput`, `OnChange`, `OnFocus`, `OnBlur`, `OnKeydown`, `OnKeyup` — all with signature `(handler string, mods ...string) h.Ren`. Three combos bake in the modifier: `OnClickOutside(h)` → `@click.outside`, `OnKeydownEscape(h)` → `@keydown.escape`, `OnKeydownEnter(h)` → `@keydown.enter`.
 
 ```go
-ax.Bind("data-foo", "value")  // x-bind:data-foo="value"
-
-ax.BindClass("{ active: isActive }")
-ax.BindStyle("{ color: hex }")
-ax.BindHref("url")
-ax.BindValue("input")
-ax.BindDisabled("locked")
-ax.BindChecked("selected")
-ax.BindId("compId")
-```
-
-**`x-on:*` family** — event handlers. `ax.On(event, handler string, modifiers ...string) h.Ren` is the generic form; eight event shortcuts and three combo shortcuts forward to it:
-
-```go
-ax.On("click", "count++")                         // x-on:click="count++"
-ax.On("click", "submit()", "prevent")             // x-on:click.prevent="submit()"
-ax.On("keydown", "handle()", "meta", "k", "prevent")
-// emits: x-on:keydown.meta.k.prevent="handle()"
-
-// Event shortcuts — each signature: (handler string, mods ...string) h.Ren
-ax.OnClick(handler, mods...)
-ax.OnSubmit(handler, mods...)
-ax.OnInput(handler, mods...)
-ax.OnChange(handler, mods...)
-ax.OnFocus(handler, mods...)
-ax.OnBlur(handler, mods...)
-ax.OnKeydown(handler, mods...)
-ax.OnKeyup(handler, mods...)
-
-// Combo shortcuts — signature: (handler string) h.Ren (no modifier slot; the
-// modifier is baked in)
-ax.OnClickOutside("open = false")     // @click.outside
-ax.OnKeydownEscape("open = false")    // @keydown.escape
-ax.OnKeydownEnter("submit()")         // @keydown.enter
+ax.On("click", "count++")                             // x-on:click="count++"
+ax.On("keydown", "handle()", "meta", "k", "prevent")  // x-on:keydown.meta.k.prevent="handle()"
+ax.OnClick("submit()", "prevent")                     // x-on:click.prevent="submit()"
+ax.OnKeydownEscape("open = false")                    // x-on:keydown.escape="open = false"
 ```
 
 **`x-model` modifier variants:**
@@ -899,3 +855,14 @@ Example apps wrap these commands in a `Taskfile.yml` (`task watch` / `task build
 - **Wrong return type from a route handler.** *Symptom:* build fails in generated `__htmgo/*-generated.go` with a type mismatch. *Fix:* `pages/` returns `*h.Page`; `partials/` returns `*h.Partial`.
 - **Calling `h.Render(el)` from a request handler.** *Symptom:* handler returns a plain string; page metadata missing and htmx response headers never set. *Fix:* return `h.NewPage(...)` / `h.NewPartial(...)`; `h.Render` is a `string`-returning helper for tests only.
 - **Mutating `RequestContext` fields for per-request state.** *Symptom:* occasional cross-request data leaks; tests that flake only under concurrency. *Fix:* treat `RequestContext` as read-only; use Fiber's two-arg locals — `ctx.Fiber.Locals("key", value)` to set, `ctx.Fiber.Locals("key")` to read.
+
+## 12. Upgrade pointers
+
+Short pointers for common migrations — `CHANGELOG.md` entry `[1.2.0-beta.1]` (2026-04-17) is the authoritative source for the htmx 4 + Fiber v3 cuts.
+
+- **htmx 2 → htmx 4** (done in `1.2.0-beta.1`). Key breakers: explicit inheritance via `Hx*Inherited` (§5); `hx-ext` removed — extensions self-register on import, so delete any `h.HxExtension(...)` calls; `hx-disable` semantics flipped — now disables form elements during in-flight, use `hx.IgnoreAttr` for the old "stop htmx processing" role; event names in colon form (`htmx:afterSwap` → `htmx:after:swap`) — use `hx/` constants; extensions rewritten for the new `registerExtension` API (`detail.xhr` → `detail.ctx`).
+- **chi → Fiber v3** (same release). Handler signature moved from `http.Handler`/`http.HandlerFunc` to `fiber.Ctx`-based; raw Fiber context is at `ctx.Fiber` inside `RequestContext`. Port middleware to `func(fiber.Ctx) error`.
+- **`maddalax/htmgo` → `franchb/htmgo`.** Replace `github.com/maddalax/htmgo/framework` → `github.com/franchb/htmgo/framework` across imports and `go.mod`, then apply the htmx 4 + Fiber changes above. Run `htmgo generate` + `go build ./...` to surface remaining breakage.
+- **Alpine adoption.** The `alpine-compat` extension is auto-bundled from v1.2.0-beta.2 — no opt-in. Add the Alpine CDN script (§6), the `[x-cloak]` CSS rule, and reach for `ax.*` helpers.
+
+See also: `CHANGELOG.md`, and the `htmx-upgrade-from-htmx2` skill for step-by-step htmx 2→4 guidance.
