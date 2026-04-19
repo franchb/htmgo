@@ -623,3 +623,167 @@ All three layers compose: Alpine manages the `open` flag, htmx lazy-loads the bo
 - **Alpine plugins load before Alpine itself.** Per upstream plugin docs — `@alpinejs/persist`, `@alpinejs/intersect`, `@alpinejs/focus`, etc. go in `<script>` tags ABOVE the main Alpine script.
 - **`[x-cloak]` CSS rule is required** to prevent FOUC. Without it, Alpine-hidden elements flash visible on page load before Alpine initializes.
 - **Don't outer-swap an Alpine root element** with htmx. Morphs of inner content preserve `_x_dataStack`; full replacement of the `[x-data]` root loses state. Either swap inner content only, or re-attach state via `ax.Data(...)` on the new root.
+
+## 7. Lifecycle & JS command DSL
+
+Not every interaction needs Alpine or a server round-trip. For **imperative one-shots** (fire an alert, set a value, add a class, mutate the DOM), htmgo provides event helpers in `framework/h/lifecycle.go` that emit generated JavaScript at render time.
+
+### Event helpers
+
+Bind a JS command to a DOM event:
+
+```go
+h.Button(
+    h.OnClick(js.Alert("Hello!")),
+    h.Text("Say hi"),
+)
+```
+
+The narrow set of named helpers (see `framework/h/lifecycle.go`) — use `h.OnEvent(event, cmd...)` for anything not on this list:
+
+- DOM events: `h.OnClick(cmd...)`, `h.OnSubmit(cmd...)`, `h.OnLoad(cmd...)`.
+- Generic: `h.OnEvent(event hx.Event, cmd...)` — pass any event name, e.g. `h.OnEvent("change", js.Alert("changed"))` or `h.OnEvent("input", ...)`, `h.OnEvent("keyup", ...)`, `h.OnEvent("focus", ...)`, `h.OnEvent("blur", ...)`, `h.OnEvent("mouseover", ...)`, etc.
+- htmx request lifecycle: `h.HxBeforeRequest(cmd...)`, `h.HxAfterRequest(cmd...)`, `h.HxOnAfterSwap(cmd...)`, `h.HxOnMutationError(cmd...)`.
+- SSE hooks: `h.HxBeforeSseMessage(cmd...)`, `h.HxAfterSseMessage(cmd...)`, `h.HxOnSseError(cmd...)`, `h.HxOnSseClose(cmd...)`, `h.HxOnSseConnecting(cmd...)`, `h.HxOnSseOpen(cmd...)`.
+
+Note: `h.OnLoad` works on any element because htmgo's bundled htmx extension fires a synthetic `load` event on swap-in — useful for initializing a just-swapped fragment.
+
+### JS commands (`framework/js/`)
+
+The `framework/js/` package is a set of variable aliases re-exporting the command constructors from `framework/h/`. Each helper takes one or more `js.Command` values. Common commands (non-exhaustive):
+
+```go
+js.Alert("Message")                         // alert('...')
+js.SetValue("new value")                    // (self || this).value = ...
+js.SetText("hello")                         // (self || this).innerText = ...
+js.SetInnerHtml(h.Div(h.Text("x")))         // (self || this).innerHTML = <rendered Ren>
+js.SetOuterHtml(h.Span(h.Text("y")))        // (self || this).outerHTML = ...
+js.AddClass("active")
+js.RemoveClass("hidden")
+js.ToggleClass("open")
+js.AddAttribute("disabled", "true")
+js.RemoveAttribute("disabled")
+js.Remove()                                 // (self || this).remove()
+js.ConsoleLog("debug")
+js.PreventDefault()                         // event.preventDefault()
+js.EvalJs("customFunction()")               // raw JS escape hatch
+```
+
+Most commands act on the element they're attached to (`this` / `self`). To target a different element, the `*OnParent`, `*OnChildren`, `*OnSibling` variants exist (`js.SetClassOnChildren`, `js.ToggleClassOnParent`, `js.EvalJsOnSibling`, etc.).
+
+There's no `js.Redirect` or `js.Focus` — use `js.EvalJs("window.location = '/home'")` or `js.EvalJs("self.focus()")`.
+
+Commands chain automatically — pass multiple to one handler:
+
+```go
+h.OnClick(
+    js.AddClass("fade-out"),
+    js.EvalJs("setTimeout(() => self.remove(), 300)"),
+)
+```
+
+### Two command shapes
+
+- `SimpleJsCommand` — single statement; inlined into the `hx-on:<event>="..."` attribute value. Examples: `Alert`, `AddClass`, `SetValue`, `SetText`, `Remove`.
+- `ComplexJsCommand` — multi-statement block; htmgo emits a generated `__eval_<id>()` helper and wires the handler to invoke it. Examples: `EvalJs`, `SetTextOnChildren`, `EvalJsOnParent`, `RunAfterTimeout`.
+
+Both satisfy the `Command` interface (aliased to `Ren`), so you can mix them freely in a single handler.
+
+### Contrast with Alpine's `ax.OnClick` and htmx requests
+
+Three superficially-similar things do different jobs — picking the right one matters.
+
+| Expression | Mechanism | When to use |
+|---|---|---|
+| `h.OnClick(js.Alert("hi"))` | htmgo-generated JS wired via `hx-on:click` | Imperative one-shot with no state and no server call |
+| `ax.OnClick("open = !open")` | `x-on:click="..."` evaluated by Alpine at runtime against the component's `x-data` scope | Mutate Alpine state |
+| `h.Button(h.Get("/x", "click"))` | htmx request — click triggers a GET; server returns a fragment to swap | Server round-trip |
+
+**Common mistake:** putting `h.OnClick(js.X)` AND `ax.OnClick("...")` on the same element. Both fire. Pick one per element, or use separate nested elements if you genuinely need both.
+
+## 8. Service locator (DI)
+
+For dependencies that handlers need (DB connections, config, external API clients), use `framework/service/`. The locator is generic and type-keyed — each registered type can be resolved from any `RequestContext` via `ctx.ServiceLocator()`.
+
+### Setup in `main.go`
+
+```go
+package main
+
+import (
+    "database/sql"
+
+    "github.com/franchb/htmgo/framework/h"
+    "github.com/franchb/htmgo/framework/service"
+
+    "myapp/__htmgo"
+)
+
+func main() {
+    locator := service.NewLocator()
+
+    service.Set[sql.DB](locator, service.Singleton, func() *sql.DB {
+        return openDB()
+    })
+    service.Set[Config](locator, service.Singleton, loadConfig)
+
+    h.Start(h.AppOpts{
+        ServiceLocator: locator,
+        LiveReload:     true,
+        Register: func(app *h.App) {
+            __htmgo.Register(app.Router)
+        },
+    })
+}
+```
+
+Key signature details:
+- `service.Set[T](locator, lifecycle, func() *T)` — the provider **must return a pointer** to `T`. Don't write `service.Set[*sql.DB]`; write `service.Set[sql.DB]` and the provider returns `*sql.DB`.
+- `service.Get[T](locator) *T` — always returns `*T`.
+
+### Resolving in handlers
+
+```go
+func GetUsers(ctx *h.RequestContext) *h.Partial {
+    db := service.Get[sql.DB](ctx.ServiceLocator())
+    // ... use db ...
+    return h.NewPartial(renderUsers())
+}
+```
+
+### Lifecycles
+
+`service.Singleton` and `service.Transient` are the two string-valued lifecycle constants.
+
+- `service.Singleton` — provider runs once; same `*T` returned for every `Get`. Cached after first resolve.
+- `service.Transient` — provider runs on every `Get`; returns a fresh instance.
+
+Pick `Singleton` for pools, long-lived clients, config. Pick `Transient` for per-request scoped state (though request-scoped values are better stored via `ctx.Set(key, value)` / `ctx.Get(key)` on `RequestContext` than via the locator).
+
+If a `Get[T]` is called for an unregistered type, the framework calls `log.Fatalf` — registration errors fail fast at first use, not at startup.
+
+### Worked example — DB handle + config
+
+```go
+// main.go
+locator := service.NewLocator()
+
+service.Set[Config](locator, service.Singleton, func() *Config {
+    return mustLoad("config.yaml")
+})
+
+service.Set[sql.DB](locator, service.Singleton, func() *sql.DB {
+    cfg := service.Get[Config](locator)
+    return sql.MustOpen(cfg.DatabaseURL)
+})
+
+// partials/search/query.go
+func GetQuery(ctx *h.RequestContext) *h.Partial {
+    db := service.Get[sql.DB](ctx.ServiceLocator())
+    q := ctx.QueryParam("q")
+    rows := queryRows(db, q)
+    return h.NewPartial(renderResults(rows))
+}
+```
+
+Providers can resolve other services from the same locator (as `sql.DB`'s provider does with `Config` above) — the locator releases its internal lock before invoking a Singleton provider, so nested resolution doesn't deadlock.
