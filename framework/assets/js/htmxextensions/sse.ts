@@ -108,16 +108,11 @@ function applyOobSwap(ele: Element, responseText: string) {
 
   // Extract and append __eval scripts first (htmgo-specific behaviour).
   // These must be appended to document.body so the browser executes them.
-  const evalScripts: HTMLScriptElement[] = [];
+  // Use querySelectorAll so scripts nested inside OOB wrappers are still found.
   const content = templateEl.content;
-  for (const child of Array.from(content.children)) {
-    if (
-      child.tagName === "SCRIPT" &&
-      child.id.startsWith("__eval")
-    ) {
-      evalScripts.push(child as HTMLScriptElement);
-    }
-  }
+  const evalScripts = Array.from(
+    content.querySelectorAll('script[id^="__eval"]'),
+  ) as HTMLScriptElement[];
   for (const script of evalScripts) {
     script.remove(); // remove from fragment before swap
     document.body.appendChild(script);

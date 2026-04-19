@@ -98,7 +98,13 @@ htmx.registerExtension("alpine-compat", {
 
     for (const el of roots) {
       if (el._x_dataStack) {
-        el.setAttribute("data-alpine-state", JSON.stringify(el._x_dataStack[0]));
+        // Alpine state can contain Proxies or circular references; skip this
+        // element rather than crashing the history save for the whole page.
+        try {
+          el.setAttribute("data-alpine-state", JSON.stringify(el._x_dataStack[0]));
+        } catch {
+          /* not serialisable — skip */
+        }
       }
     }
     alpine.destroyTree(target);
@@ -109,8 +115,14 @@ htmx.registerExtension("alpine-compat", {
     if (!alpine) return;
 
     document.querySelectorAll("[data-alpine-state]").forEach((el: any) => {
-      const saved = JSON.parse(el.getAttribute("data-alpine-state"));
+      const raw = el.getAttribute("data-alpine-state");
       el.removeAttribute("data-alpine-state");
+      let saved: any;
+      try {
+        saved = JSON.parse(raw);
+      } catch {
+        return; // corrupted attr — skip this element, continue the loop
+      }
       if (el._x_dataStack) Object.assign(el._x_dataStack[0], saved);
     });
   },
