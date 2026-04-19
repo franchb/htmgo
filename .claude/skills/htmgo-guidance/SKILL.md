@@ -892,3 +892,12 @@ Subcommands (from `cli/htmgo/runner.go` — no `htmgo dev` alias, use `watch`):
 Every `htmgo build` / `watch` / `generate` overwrites `__htmgo/*-generated.go`. Add `__htmgo/` to `.gitignore`.
 
 Example apps wrap these commands in a `Taskfile.yml` (`task watch` / `task build` / `task run`) — copy `examples/todo-list/Taskfile.yml` when bootstrapping.
+
+## 11. Common pitfalls
+
+- **Missing `:inherited` after htmx 4 upgrade.** *Symptom:* clicks on descendants don't hit the expected swap target; an ancestor's `hx-target` is silently ignored. *Fix:* use `h.HxTargetInherited(...)`, `h.HxIncludeInherited(...)`, `h.HxSwapInherited(...)` on the ancestor.
+- **Wrong return type from a route handler.** *Symptom:* build fails in generated `__htmgo/*-generated.go` with a type mismatch. *Fix:* `pages/` handlers return `*h.Page` (`h.NewPage`); `partials/` handlers return `*h.Partial` (`h.NewPartial` or `h.NewPartialWithHeaders`).
+- **Outer-swapping an Alpine root element.** *Symptom:* Alpine `x-data` state resets every swap. *Fix:* own the `x-data` on a stable outer parent and use `hx-swap="innerHTML"`, or re-declare initial state on the new root.
+- **`h.OnClick` plus `ax.OnClick` on the same element.** *Symptom:* both fire on every click; effects double up and conflict. *Fix:* pick one per element; split onto nested elements if you genuinely need both.
+- **Calling `h.Render(el)` from a request handler.** *Symptom:* handler returns a plain string; page metadata missing and htmx response headers (`HX-Retarget`, `HX-Trigger`, …) never set. *Fix:* return `h.NewPage(...)` / `h.NewPartial(...)` / `h.NewPartialWithHeaders(...)`; `h.Render` is a `string`-returning helper intended for tests.
+- **Mutating `RequestContext` fields for per-request state.** *Symptom:* occasional cross-request data leaks; tests that flake only under concurrency. *Fix:* treat `RequestContext` as read-only; use Fiber's two-arg locals — `ctx.Fiber.Locals("key", value)` to set, `ctx.Fiber.Locals("key")` to read.
