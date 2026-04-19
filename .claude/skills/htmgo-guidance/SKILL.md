@@ -889,8 +889,6 @@ Subcommands (from `cli/htmgo/runner.go` — no `htmgo dev` alias, use `watch`):
 
 ### `__htmgo/` — generated, never edit
 
-Every `htmgo build` / `watch` / `generate` overwrites `__htmgo/pages-generated.go`, `__htmgo/partials-generated.go`, and `__htmgo/setup-generated.go`. Add `__htmgo/` to `.gitignore`.
+Every `htmgo build` / `watch` / `generate` overwrites `__htmgo/*-generated.go`. Add `__htmgo/` to `.gitignore`.
 
-### Dev workflow via `task`
-
-Example apps wrap the CLI in a `Taskfile.yml`: `task watch` / `task build` / `task run`. Copy the shape from `examples/todo-list/Taskfile.yml` when bootstrapping a new app.
+Example apps wrap these commands in a `Taskfile.yml` (`task watch` / `task build` / `task run`) — copy `examples/todo-list/Taskfile.yml` when bootstrapping.
