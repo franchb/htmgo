@@ -787,3 +787,110 @@ func GetQuery(ctx *h.RequestContext) *h.Partial {
 ```
 
 Providers can resolve other services from the same locator (as `sql.DB`'s provider does with `Config` above) — the locator releases its internal lock before invoking a Singleton provider, so nested resolution doesn't deadlock.
+
+## 9. Caching
+
+### High-level helpers (`h.Cached` family)
+
+htmgo's cache helpers in `framework/h/cache.go` wrap `*Element` nodes and return a *constructor* you call at render time:
+
+```go
+// Package-level: cache once, globally.
+CachedHeader := h.Cached(5*time.Minute, func() *h.Element {
+    return h.Header(h.H1(h.Text("Welcome")))
+})
+// Inside a page/partial:
+return h.NewPage(h.Div(CachedHeader()))
+```
+
+Signature: `h.Cached(duration time.Duration, cb func() *h.Element, opts ...h.CacheOption) func() *h.Element`. Globally cached, not per-request — the callback runs once per `duration`.
+
+For user-scoped or parameterized caching, use the `PerKey` variants, whose callback returns `(key, renderFunc)`:
+
+```go
+UserProfile := h.CachedPerKeyT(15*time.Minute,
+    func(u User) (int, h.GetElementFunc) {
+        return u.ID, func() *h.Element { return renderProfile(u) }
+    })
+UserProfile(currentUser)   // returns *h.Element
+```
+
+Also: `CachedT`/`T2`/`T3`/`T4` (parameterized, globally cached — NOT per-key), and `CachedPerKeyT2`/`T3`/`T4`. There is **no** `h.Cache` or `h.CacheGlobal`.
+
+### Swapping the underlying store
+
+The default is `cache.TTLStore` via `h.DefaultCacheProvider`. Override per-component with `h.WithCacheStore(store)`, or replace the default globally:
+
+```go
+lru := cache.NewLRUStore[any, string](1000)
+UserProfile := h.CachedPerKeyT(15*time.Minute, profileCb, h.WithCacheStore(lru))
+
+// Or app-wide:
+h.DefaultCacheProvider = func() cache.Store[any, string] {
+    return cache.NewLRUStore[any, string](5000)
+}
+```
+
+### Low-level pluggable stores
+
+`framework/h/cache/interface.go` defines:
+
+```go
+type Store[K comparable, V any] interface {
+    Set(key K, value V, ttl time.Duration)
+    Get(key K) (V, bool)
+    GetOrCompute(key K, compute func() V, ttl time.Duration) V
+    Delete(key K); Purge(); Close()   // Close returns no error
+}
+```
+
+TTL is per call, not per store. **Built-in:** `cache.NewTTLStore[K, V]()`, plus `NewTTLStoreWithInterval(d)` and `NewTTLStoreWithMaxSize(n)` (TTL + LRU cap). **Example:** `cache.NewLRUStore[K, V](maxSize)` in `framework/h/cache/lru_store_example.go` — copy its shape for a Redis/distributed store, or see `ExampleDistributedCacheAdapter` in `framework/h/cache/example_test.go` for the adapter pattern.
+
+### When to cache / not cache
+
+**Cache:** expensive DB reads shown on many pages; shared nav/sidebar/footer fragments; rate-limited third-party responses.
+
+**Don't cache:** user-specific content without a user-scoped key (use `CachedPerKey*`, never plain `Cached`); data with strict freshness requirements; content cheap enough that caching overhead dominates — measure first.
+
+## 10. Project configuration & CLI
+
+### `htmgo.yaml` / `htmgo.yml` / `_htmgo.yaml` / `_htmgo.yml`
+
+Lives at the app root. The loader searches in that order and uses the first it finds (`framework/config/project.go`). Fields (yaml tags are ground truth):
+
+```yaml
+tailwind: true                    # run Tailwind CSS compilation
+tailwind_version: "4"             # optional; auto-detected otherwise
+watch_ignore: [node_modules, .git, assets/dist]      # substrings watcher ignores
+watch_files:  ["**/*.go", "**/*.css", "**/*.md"]     # globs watcher rebuilds on
+automatic_page_routing_ignore:    ["_shared.go"]     # skip for page auto-routing
+automatic_partial_routing_ignore: ["internal/*.go"]  # skip for partial auto-routing
+public_asset_path: "/public"      # URL prefix for static assets
+```
+
+Defaults in `config.DefaultProjectConfig()`: `tailwind: true`, `public_asset_path: "/public"`, standard watch globs. `automatic_page_routing_ignore` entries are auto-prefixed with `pages/`; partial entries with `partials/`.
+
+### CLI commands
+
+Install: `cd /path/to/htmgo/cli/htmgo && go install .` — or one-shot `go run github.com/franchb/htmgo/cli/htmgo@latest <subcommand>`.
+
+Subcommands (from `cli/htmgo/runner.go` — no `htmgo dev` alias, use `watch`):
+
+- `htmgo template [name]` — scaffold a new app from a starter template into `./<name>`.
+- `htmgo setup` — run the project setup task in the current app.
+- `htmgo build` — full production build: regenerates `__htmgo/`, builds CSS, emits binary.
+- `htmgo watch` — live-reload dev server: assets, CSS, `__htmgo/` + ent regen, server, watcher.
+- `htmgo run` — build and run without the watcher.
+- `htmgo generate` — regenerate `__htmgo/*-generated.go` + run ent codegen.
+- `htmgo css` — Tailwind/CSS build only.
+- `htmgo schema` — prompts for an entity name and scaffolds an ent schema.
+- `htmgo format <file|.>` — format a file or the whole working directory.
+- `htmgo version` — print the CLI version.
+
+### `__htmgo/` — generated, never edit
+
+Every `htmgo build` / `watch` / `generate` overwrites `__htmgo/pages-generated.go`, `__htmgo/partials-generated.go`, and `__htmgo/setup-generated.go`. Add `__htmgo/` to `.gitignore`.
+
+### Dev workflow via `task`
+
+Example apps wrap the CLI in a `Taskfile.yml`: `task watch` / `task build` / `task run`. Copy the shape from `examples/todo-list/Taskfile.yml` when bootstrapping a new app.
