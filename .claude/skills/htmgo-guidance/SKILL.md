@@ -462,3 +462,164 @@ func SearchBox() *h.Element {
 ### See also
 
 For general htmx patterns (attribute semantics, event lifecycle, OOB swaps, SSE/WS), the `htmx-guidance` skill covers the htmx side in depth. This skill focuses on the Go builder layer; the two are complementary.
+
+## 6. Alpine integration (`ax/` package + bundled `alpine-compat`)
+
+Alpine.js is **optional**. When you need small client-side state (open/closed, theme, density, copy-to-clipboard, command-palette modals), reach for Alpine. For server round-trips, reach for htmx. For imperative one-shots without state, reach for the lifecycle command DSL (see `h/lifecycle.go`).
+
+### Setup (two lines of HTML + one CSS rule)
+
+1. Add the Alpine CDN script to your layout `<head>`:
+
+```go
+h.Head(
+    h.Tag("script",
+        h.Attribute("src", "https://unpkg.com/alpinejs@3.15.11/dist/cdn.min.js"),
+        h.Attribute("defer", ""),
+    ),
+    h.Script("/public/htmgo.js"),
+)
+```
+
+The `defer` attribute is important — Alpine initializes on `DOMContentLoaded`, so it must defer until `[x-data]` nodes are parsed. `htmgo.js` can load in either order; extensions self-register at import time in htmx 4.
+
+2. Add the FOUC-prevention CSS rule to your stylesheet:
+
+```css
+[x-cloak] { display: none !important; }
+```
+
+The `alpine-compat` htmx extension is **already bundled** in `/public/htmgo.js` — no additional script tag, no `hx-ext` attribute. It auto-gates on `window.Alpine?.*` presence, so if Alpine isn't loaded, every hook no-ops.
+
+### The `ax/` package — constants + builders
+
+`framework/ax/` mirrors the `hx/` shape: string constants for directive names, plus `h.Ren`-returning builders. Import as `github.com/franchb/htmgo/framework/ax`.
+
+**Constants** (all 18 are `ax.Attribute` which is `type Attribute = string`): `DataAttr`, `InitAttr`, `ShowAttr`, `BindAttr`, `OnAttr`, `TextAttr`, `HtmlAttr`, `ModelAttr`, `ModelableAttr`, `CloakAttr`, `RefAttr`, `IgnoreAttr`, `TeleportAttr`, `EffectAttr`, `IfAttr`, `ForAttr`, `IdAttr`, `TransitionAttr`.
+
+**Simple single-arg directives** (Alpine expression as the value):
+
+```go
+ax.Data("{ open: false, count: 0 }")  // x-data="..."
+ax.Init("count = 10")                  // x-init="..."
+ax.Show("open")                        // x-show="..."
+ax.Text("message")                     // x-text="..."
+ax.Html("markup")                      // x-html="..."
+ax.Model("query")                      // x-model="..."
+ax.Effect("console.log(count)")        // x-effect="..."
+ax.If("visible")                       // x-if="..." (template-only)
+ax.For("item in items")                // x-for="..."
+ax.Id("['tab']")                       // x-id="..."
+ax.Ref("input")                        // x-ref="input"
+ax.Teleport("body")                    // x-teleport="body"
+ax.Modelable("value")                  // x-modelable="value"
+```
+
+**No-arg directives** (emit the bare attribute; Alpine accepts the boolean form):
+
+```go
+ax.Cloak()       // x-cloak
+ax.Ignore()      // x-ignore
+ax.Transition()  // x-transition
+```
+
+For richer transitions (`x-transition:enter`, `.opacity`, `.duration.500ms`), drop to `h.Attribute("x-transition:enter", ...)` directly.
+
+**`x-bind:*` family** — bind any attribute to an expression. `ax.Bind(attr, expr string) h.Ren` is the generic form; the seven shortcuts cover the most-used targets:
+
+```go
+ax.Bind("data-foo", "value")  // x-bind:data-foo="value"
+
+ax.BindClass("{ active: isActive }")
+ax.BindStyle("{ color: hex }")
+ax.BindHref("url")
+ax.BindValue("input")
+ax.BindDisabled("locked")
+ax.BindChecked("selected")
+ax.BindId("compId")
+```
+
+**`x-on:*` family** — event handlers. `ax.On(event, handler string, modifiers ...string) h.Ren` is the generic form; eight event shortcuts and three combo shortcuts forward to it:
+
+```go
+ax.On("click", "count++")                         // x-on:click="count++"
+ax.On("click", "submit()", "prevent")             // x-on:click.prevent="submit()"
+ax.On("keydown", "handle()", "meta", "k", "prevent")
+// emits: x-on:keydown.meta.k.prevent="handle()"
+
+// Event shortcuts — each signature: (handler string, mods ...string) h.Ren
+ax.OnClick(handler, mods...)
+ax.OnSubmit(handler, mods...)
+ax.OnInput(handler, mods...)
+ax.OnChange(handler, mods...)
+ax.OnFocus(handler, mods...)
+ax.OnBlur(handler, mods...)
+ax.OnKeydown(handler, mods...)
+ax.OnKeyup(handler, mods...)
+
+// Combo shortcuts — signature: (handler string) h.Ren (no modifier slot; the
+// modifier is baked in)
+ax.OnClickOutside("open = false")     // @click.outside
+ax.OnKeydownEscape("open = false")    // @keydown.escape
+ax.OnKeydownEnter("submit()")         // @keydown.enter
+```
+
+**`x-model` modifier variants:**
+
+```go
+ax.ModelNumber("age")               // x-model.number="age"
+ax.ModelLazy("title")               // x-model.lazy="title"
+ax.ModelTrim("name")                // x-model.trim="name"
+ax.ModelFill("notes")               // x-model.fill="notes"
+ax.ModelBoolean("checked")          // x-model.boolean="checked"
+ax.ModelDebounce("query", "500ms")  // x-model.debounce.500ms="query"
+```
+
+Note `ax.ModelDebounce(expr, duration string)` — the duration is a plain string (`"500ms"`, `"2s"`), not a `time.Duration`. Whatever you pass is appended verbatim to the attribute name.
+
+### When to use `ax.*` vs htmx swaps vs lifecycle commands
+
+| Use case | Tool |
+|---|---|
+| Pure-client state that never needs the server (theme toggle, popover open/close, keyboard overlay, copy-to-clipboard) | `ax.*` |
+| Server round-trip required (load data, save form, refresh a list) | htmx — `h.Get(path, trigger...)`, `h.Post(url, trigger...)`, or `h.Attribute(hx.GetAttr, ...)` |
+| Widget with BOTH client state AND server-loaded content (popover whose body is fetched lazily) | `ax.Data(...)` on the outer wrapper + `h.Get(...)` on inner elements. The alpine-compat extension carries `_x_dataStack` across the morph swap. |
+| Imperative one-shots without state (focus an input, scroll to an element, set a value) | Lifecycle commands — `h.OnClick(js.Focus(...))`, not Alpine |
+
+### Worked example — popover with server-loaded content
+
+```go
+func Popover() *h.Element {
+    return h.Div(
+        h.Class("relative"),
+        ax.Data("{ open: false }"),
+
+        h.Button(
+            h.Class("btn"),
+            ax.OnClick("open = !open"),
+            h.Text("Toggle"),
+        ),
+
+        h.Div(
+            h.Class("popover"),
+            ax.Show("open"),
+            ax.Cloak(),
+            ax.OnClickOutside("open = false"),
+            ax.OnKeydownEscape("open = false"),
+            h.Get("/popover/content", "intersect once"),
+            h.Attribute(hx.SwapAttr, hx.SwapTypeInnerHtml),
+            h.Text("Loading..."),
+        ),
+    )
+}
+```
+
+All three layers compose: Alpine manages the `open` flag, htmx lazy-loads the body on first intersect, and the bundled `alpine-compat` extension preserves Alpine state through the morph swap automatically.
+
+### Gotchas
+
+- **Alpine v3 only.** v2 is unsupported upstream; the compat extension uses v3 internal APIs (`closestDataStack`, `cloneNode`, `deferMutations`, `destroyTree`, `flushAndStopDeferringMutations`).
+- **Load Alpine with `defer` in `<head>`.** Without `defer`, Alpine may initialize before `[x-data]` elements are parsed and silently skip them.
+- **Alpine plugins load before Alpine itself.** Per upstream plugin docs — `@alpinejs/persist`, `@alpinejs/intersect`, `@alpinejs/focus`, etc. go in `<script>` tags ABOVE the main Alpine script.
+- **`[x-cloak]` CSS rule is required** to prevent FOUC. Without it, Alpine-hidden elements flash visible on page load before Alpine initializes.
+- **Don't outer-swap an Alpine root element** with htmx. Morphs of inner content preserve `_x_dataStack`; full replacement of the `[x-data]` root loses state. Either swap inner content only, or re-attach state via `ax.Data(...)` on the new root.
