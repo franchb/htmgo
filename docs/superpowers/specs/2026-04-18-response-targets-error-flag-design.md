@@ -9,7 +9,7 @@
 
 `framework/assets/js/htmxextensions/response-targets.ts` contains htmx 2-era error-flag logic that no longer functions in htmx 4. Specifically:
 
-- `handleErrorFlag(detail)` mutates `detail.isError`, but htmx 4's `ctx` has no `isError` property. Verified against `node_modules/htmx.org/dist/htmax.js` and `htmx.js` (beta2): zero occurrences.
+- `handleErrorFlag(detail)` mutates `detail.isError`, but htmx 4's `ctx` has no `isError` property. Verified against `node_modules/htmx.org/dist/htmx.js` (beta2): zero occurrences.
 - The `responseTargetSetsError` and `responseTargetUnsetsError` config knobs are initialized but gate nothing observable.
 - A rename to `handleErrorFlag(detail)` does not fix it — `detail.isError` is also absent in htmx 4's `before:swap` payload.
 

@@ -730,7 +730,11 @@ service.Set[Config](locator, service.Singleton, func() *Config {
 
 service.Set[sql.DB](locator, service.Singleton, func() *sql.DB {
     cfg := service.Get[Config](locator)
-    return sql.MustOpen(cfg.DatabaseURL)
+    db, err := sql.Open("postgres", cfg.DatabaseURL)
+    if err != nil {
+        panic(err)
+    }
+    return db
 })
 
 // partials/search/query.go

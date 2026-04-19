@@ -13,12 +13,12 @@ const HX_ON_ATTRS = [
   "hx-on::on-mutation-error",
 ];
 
-function broadcast(status: number) {
+function broadcast(status: number, exclude?: Element) {
   const seen = new Set<Element>();
   for (const attr of HX_ON_ATTRS) {
     const selector = `[${attr.replace(/:/g, "\\:")}]`;
     document.querySelectorAll(selector).forEach((el) => {
-      if (seen.has(el)) return;
+      if (seen.has(el) || el === exclude) return;
       seen.add(el);
       htmx.trigger(el as HTMLElement, "htmx:onMutationError", { status, elt: el });
     });
@@ -36,7 +36,7 @@ htmx.registerExtension("mutation-error", {
     const status = ctx.response?.status ?? 0;
     if (status === 0 || status >= 400) {
       htmx.trigger(elt, "htmx:onMutationError", { status, elt });
-      broadcast(status);
+      broadcast(status, elt);
     }
   },
 });

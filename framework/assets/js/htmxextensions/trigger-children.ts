@@ -9,7 +9,6 @@ const ignoredEvents = new Set([
   "htmx:after:init",
   "htmx:config:request",
   "htmx:config:response",
-  "htmx:error",
   // legacy names (in case any consumer still dispatches them)
   "htmx:beforeProcessNode",
   "htmx:afterProcessNode",

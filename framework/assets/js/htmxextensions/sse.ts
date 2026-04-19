@@ -40,8 +40,15 @@ function connectEventSource(ele: Element, url: string): EventSource | undefined 
   htmx.trigger(ele, "htmx:before:sse:connection", { url });
   const eventSource = new EventSource(url);
 
+  // A server-sent `event: close` frame is terminal — EventSource has no native
+  // "close" event, so this handler only fires when the server sends one. Treat
+  // it the same as the onerror-CLOSED branch: close the source and drop the
+  // element from the connection maps so the URL can be reconnected later.
   eventSource.addEventListener("close", (event) => {
+    eventSource.close();
     htmx.trigger(ele, "htmx:sse:close", { event });
+    connections.delete(ele);
+    if (processedUrls.get(url) === ele) processedUrls.delete(url);
   });
 
   eventSource.onopen = (event) =>

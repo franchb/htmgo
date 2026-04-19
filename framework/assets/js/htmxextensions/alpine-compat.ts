@@ -88,12 +88,20 @@ htmx.registerExtension("alpine-compat", {
     const alpine = (window as any).Alpine;
     if (!alpine?.destroyTree) return;
 
-    detail.target.querySelectorAll("[x-data]").forEach((el: any) => {
+    const target = detail?.target;
+    if (!target?.querySelectorAll) return;
+
+    // querySelectorAll only visits descendants — include the target itself if
+    // it is an Alpine root, otherwise its _x_dataStack is lost before destroyTree.
+    const roots: any[] = target.matches?.("[x-data]") ? [target] : [];
+    target.querySelectorAll("[x-data]").forEach((el: any) => roots.push(el));
+
+    for (const el of roots) {
       if (el._x_dataStack) {
         el.setAttribute("data-alpine-state", JSON.stringify(el._x_dataStack[0]));
       }
-    });
-    alpine.destroyTree(detail.target);
+    }
+    alpine.destroyTree(target);
   },
 
   htmx_history_cache_after_restore(_elt: any, _detail: any) {
