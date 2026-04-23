@@ -18,7 +18,6 @@ var AbstractedRootPageUsageSnippet = `func UserPage(ctx *h.RequestContext) *h.Pa
 var RootPageSnippet = `func RootPage(children ...h.Ren) *h.Page {
 	return h.NewPage(
 		h.Html(
-		h.HxExtension(h.BaseExtensions()),
 		h.Head(
 			h.Meta("viewport", "width=device-width, initial-scale=1"),
 			h.Link("/public/main.css", "stylesheet"),
@@ -38,7 +37,6 @@ var PagesSnippet = `// route will be automatically registered based on the file 
 func HelloHtmgoPage(ctx *h.RequestContext) *h.Page {
 	return h.NewPage(
 		h.Html(
-			h.HxExtension(h.BaseExtensions()),
 			h.Head(
 				h.Link("/public/main.css", "stylesheet"),
 				h.Script("/public/htmgo.js"),

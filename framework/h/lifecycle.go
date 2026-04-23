@@ -38,9 +38,9 @@ func validateCommands(cmds []Command) {
 func (l *LifeCycle) OnEvent(event hx.Event, cmd ...Command) *LifeCycle {
 	validateCommands(cmd)
 
-	if strings.HasPrefix(event, "htmx:") {
-		event = event[5:]
-		event = util.ConvertCamelToDash("hx-on::" + event)
+	// htmx 4: hx-on::<event:with:colons> shortcut for htmx:event:with:colons
+	if strings.HasPrefix(string(event), "htmx:") {
+		event = hx.Event("hx-on::" + string(event)[len("htmx:"):])
 	}
 
 	if l.handlers[event] == nil {
@@ -60,12 +60,6 @@ func OnLoad(cmd ...Command) *LifeCycle {
 func (l *LifeCycle) HxBeforeRequest(cmd ...Command) *LifeCycle {
 	l.OnEvent(hx.BeforeRequestEvent, cmd...)
 	return l
-}
-
-// HxOnLoad executes the given commands when the element is loaded into the DOM.
-// Deprecated: Use OnLoad instead.
-func HxOnLoad(cmd ...Command) *LifeCycle {
-	return NewLifeCycle().OnEvent(hx.LoadEvent, cmd...)
 }
 
 // HxOnAfterSwap executes the given commands when the element is swapped in.

@@ -49,7 +49,7 @@ func TestRender(t *testing.T) {
 
 	div.attributes.Set("data-attr-1", "value")
 
-	expected := `<div data-attr-1="value" id="my-div" data-attr-2="value" data-attr-3="value" hx-on::before-request="(self || this).innerText = &#39;before request&#39;;" hx-on::after-request="(self || this).innerText = &#39;after request&#39;;"><div>hello, world</div>hello, child</div>`
+	expected := `<div data-attr-1="value" id="my-div" data-attr-2="value" data-attr-3="value" hx-on::before:request="(self || this).innerText = &#39;before request&#39;;" hx-on::after:request="(self || this).innerText = &#39;after request&#39;;"><div>hello, world</div>hello, child</div>`
 	result := Render(div)
 
 	assert.Equal(t,

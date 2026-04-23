@@ -1,9 +1,7 @@
 import htmx from "htmx.org";
 const config: any = htmx.config;
 
-/** @type {import("../htmx").HtmxInternalApi} */
 let api: any;
-
 const attrPrefix = "hx-target-";
 
 // IE11 doesn't support string.startsWith
@@ -31,13 +29,13 @@ function getRespCodeTarget(elt: Element, respCodeNumber: number) {
   const attrPossibilities = [
     respCode,
 
-    respCode.substr(0, 2) + "*",
-    respCode.substr(0, 2) + "x",
+    respCode.slice(0, 2) + "*",
+    respCode.slice(0, 2) + "x",
 
-    respCode.substr(0, 1) + "*",
-    respCode.substr(0, 1) + "x",
-    respCode.substr(0, 1) + "**",
-    respCode.substr(0, 1) + "xx",
+    respCode.slice(0, 1) + "*",
+    respCode.slice(0, 1) + "x",
+    respCode.slice(0, 1) + "**",
+    respCode.slice(0, 1) + "xx",
 
     "*",
     "x",
@@ -48,8 +46,8 @@ function getRespCodeTarget(elt: Element, respCodeNumber: number) {
     attrPossibilities.push("error");
   }
 
-  for (let i = 0; i < attrPossibilities.length; i++) {
-    const attr = attrPrefix + attrPossibilities[i];
+  for (const p of attrPossibilities) {
+    const attr = attrPrefix + p;
     const attrValue = api.getClosestAttributeValue(elt, attr);
     if (attrValue) {
       if (attrValue === "this") {
@@ -63,28 +61,10 @@ function getRespCodeTarget(elt: Element, respCodeNumber: number) {
   return null;
 }
 
-/** @param {Event} evt */
-function handleErrorFlag(evt: CustomEvent) {
-  if (evt.detail.isError) {
-    if (config.responseTargetUnsetsError) {
-      evt.detail.isError = false;
-    }
-  } else if (config.responseTargetSetsError) {
-    evt.detail.isError = true;
-  }
-}
-
-htmx.defineExtension("response-targets", {
-  // @ts-ignore
-  init: (apiRef) => {
+htmx.registerExtension("response-targets", {
+  init(apiRef: any) {
     api = apiRef;
 
-    if (config.responseTargetUnsetsError === undefined) {
-      config.responseTargetUnsetsError = true;
-    }
-    if (config.responseTargetSetsError === undefined) {
-      config.responseTargetSetsError = false;
-    }
     if (config.responseTargetPrefersExisting === undefined) {
       config.responseTargetPrefersExisting = false;
     }
@@ -93,44 +73,45 @@ htmx.defineExtension("response-targets", {
     }
   },
 
-  // @ts-ignore
-  onEvent: (name, evt) => {
-    if (!(evt instanceof CustomEvent)) {
-      return false;
+  // htmx 4: `htmx:before:swap` extension hooks receive `{ctx, tasks}`.
+  // Retargeting happens by mutating the main task's `target`, not by setting
+  // `detail.target`/`detail.shouldSwap` (those are htmx 2 fields and are
+  // ignored by the core in htmx 4).
+  htmx_before_swap(_elt: HTMLElement, detail: any) {
+    const ctx = detail?.ctx;
+    const tasks = detail?.tasks;
+    const status = ctx?.response?.status ?? 0;
+    if (status === 0 || status === 200) return;
+    if (!Array.isArray(tasks)) return;
+
+    const mainTask = tasks.find((t: any) => t?.type === "main");
+    if (!mainTask) return;
+
+    if (mainTask.target) {
+      if (config.responseTargetPrefersExisting) {
+        return;
+      }
+      const headers = ctx?.response?.headers;
+      const retarget =
+        typeof headers?.get === "function" ? headers.get("HX-Retarget") : null;
+      if (config.responseTargetPrefersRetargetHeader && retarget) {
+        return;
+      }
     }
-    if (
-      name === "htmx:beforeSwap" &&
-      evt.detail.xhr &&
-      evt.detail.xhr.status !== 200
-    ) {
-      if (evt.detail.target) {
-        if (config.responseTargetPrefersExisting) {
-          evt.detail.shouldSwap = true;
-          handleErrorFlag(evt);
-          return true;
-        }
-        if (
-          config.responseTargetPrefersRetargetHeader &&
-          evt.detail.xhr.getAllResponseHeaders().match(/HX-Retarget:/i)
-        ) {
-          evt.detail.shouldSwap = true;
-          handleErrorFlag(evt);
-          return true;
-        }
-      }
-      if (!evt.detail.requestConfig) {
-        return true;
-      }
-      const target = getRespCodeTarget(
-        evt.detail.requestConfig.elt,
-        evt.detail.xhr.status,
-      );
-      if (target) {
-        handleErrorFlag(evt);
-        evt.detail.shouldSwap = true;
-        evt.detail.target = target;
-      }
-      return true;
+
+    const reqElt = ctx?.sourceElement ?? ctx?.elt;
+    if (!reqElt) return;
+
+    const target = getRespCodeTarget(reqElt, status);
+    if (target && target !== mainTask.target) {
+      const from = mainTask.target ?? null;
+      mainTask.target = target;
+      api.triggerHtmxEvent(reqElt, "htmgo:response:retargeted", {
+        status,
+        from,
+        to: target,
+        ctx,
+      });
     }
   },
 });

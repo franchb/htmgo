@@ -1,6 +1,15 @@
 import htmx from "htmx.org";
 
-function dependsOn(pathSpec: any, url: string) {
+const mutationMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/**
+ * Segment-by-segment wildcard matching.
+ * Each segment of `pathSpec` must match the corresponding segment of `url`,
+ * where `*` matches any single segment.
+ * Returns true when all segments of `pathSpec` are consumed and matched.
+ * "ignore" always returns false (opt-out sentinel).
+ */
+function dependsOn(pathSpec: string, url: string): boolean {
   if (pathSpec === "ignore") {
     return false;
   }
@@ -22,34 +31,18 @@ function dependsOn(pathSpec: any, url: string) {
   return false;
 }
 
-function refreshPath(path: string) {
-  const eltsWithDeps = htmx.findAll("[path-deps]");
-  for (let i = 0; i < eltsWithDeps.length; i++) {
-    const elt = eltsWithDeps[i];
-    if (dependsOn(elt.getAttribute("path-deps"), path)) {
-      htmx.trigger(elt, "path-deps", null);
-    }
-  }
-}
+htmx.registerExtension("path-deps", {
+  init(_api: unknown) {},
 
-htmx.defineExtension("path-deps", {
-  // @ts-ignore
-  onEvent: function (name, evt) {
-    if (!(evt instanceof CustomEvent)) {
-      return false;
-    }
-    if (name === "htmx:beforeOnLoad") {
-      const config = evt.detail.requestConfig;
-      // mutating call
-      if (
-        config &&
-        config.verb !== "get" &&
-        evt.target != null &&
-        evt.target instanceof Element &&
-        evt.target.getAttribute("path-deps") !== "ignore"
-      ) {
-        refreshPath(config.path);
-      }
-    }
+  htmx_after_request(_elt: HTMLElement, detail: any) {
+    const ctx = detail?.ctx;
+    if (!ctx || !ctx.request) return;
+    const method = (ctx.request.method || "").toUpperCase();
+    if (!mutationMethods.has(method)) return;
+    const path = ctx.request.action || "";
+    document.querySelectorAll("[path-deps]").forEach((el) => {
+      const dep = el.getAttribute("path-deps") || "";
+      if (dependsOn(dep, path)) htmx.trigger(el, "path-deps");
+    });
   },
 });

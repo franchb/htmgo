@@ -21,7 +21,6 @@ func CenteredForm(props CenteredFormProps) *h.Element {
 				h.Class("text-3xl font-bold text-center mb-6"),
 			),
 			h.Form(
-				h.TriggerChildren(),
 				h.Post(props.PostUrl),
 				h.Attribute("hx-swap", "none"),
 				h.Class("flex flex-col gap-4"),

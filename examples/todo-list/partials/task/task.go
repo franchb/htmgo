@@ -381,7 +381,7 @@ func Create(ctx *h.RequestContext) *h.Partial {
 	if len(name) > 150 {
 		return h.NewPartial(
 			h.Div(
-				h.HxOnLoad(
+				h.OnLoad(
 					js.Alert("Task must be less than 150 characters"),
 				),
 			),
@@ -395,7 +395,7 @@ func Create(ctx *h.RequestContext) *h.Partial {
 	if list != nil && len(list) >= 100 {
 		return h.NewPartial(
 			h.Div(
-				h.HxOnLoad(
+				h.OnLoad(
 					js.Alert("There are too many tasks, please complete and clear some."),
 				),
 			),

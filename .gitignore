@@ -1,3 +1,6 @@
+/htmgo-site/tailwindcss-linux-x64
+/cli/htmgo/htmgo
+.playwright-mcp
 # Project exclude paths
 /tmp/
 node_modules/

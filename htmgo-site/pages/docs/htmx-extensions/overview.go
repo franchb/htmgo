@@ -13,27 +13,22 @@ func Overview(ctx *h.RequestContext) *h.Page {
 			h.Class("flex flex-col gap-3"),
 			Title("HTMX Extensions"),
 			Text(`
-				htmgo provides a few extra htmx extensions to make common tasks easier.
-				Some of these extensions are optional, and some of these are required for htmgo to work correctly.
+				In htmx 4, extensions self-register on script import — the <code>hx-ext</code>
+				attribute has been removed. htmgo bundles the built-in extensions automatically
+				via the <code>/public/htmgo.js</code> script tag.
 			`),
 			Text(`
-			 The following extensions are provided by htmgo:
+				The following extensions are included in htmgo's bundled script:
 			`),
 			Link("Trigger Children", "/docs/htmx-extensions/trigger-children"),
 			Link("Mutation Error", "/docs/htmx-extensions/mutation-error"),
+			Link("Alpine Compat", "/docs/htmx-extensions/alpine-compat"),
 			Link("Path Deps", "https://github.com/bigskysoftware/htmx-extensions/blob/main/src/path-deps/README.md"),
 			h.P(
 				h.Class("mt-3"),
-				h.Text("Default extensions should be included in your project by adding the following attribute to your html tag."),
-				ui.GoCodeSnippet(DefaultExtensions),
-				h.Text("If you need to combine multiple extensions, you can use:"),
-				ui.GoCodeSnippet(CombineMultipleExtensions),
-				h.Text("or"),
-				ui.GoCodeSnippet(CombineMultipleExtensions2),
+				h.Text("To include the htmgo script in your project:"),
+				ui.GoCodeSnippet(IncludeScript),
 			),
-			Text(`
-				<b>Important:</b> h.BaseExtensions will add the 'htmgo' extension, which is a required extension for inline scripts to work properly, please always include it in your project.
-			`),
 			NextStep(
 				"mt-4",
 				PrevBlock("Pushing Data", DocPath("/pushing-data/sse")),
@@ -43,21 +38,10 @@ func Overview(ctx *h.RequestContext) *h.Page {
 	)
 }
 
-const DefaultExtensions = `
+const IncludeScript = `
 h.Html(
-    h.HxExtension(h.BaseExtensions())
-)
-`
-
-const CombineMultipleExtensions = `
-h.HxExtensions(
-	h.BaseExtensions(), "my-extension"
-)
-`
-
-const CombineMultipleExtensions2 = `
-h.JoinExtensions(
-    h.HxExtension("sse"),
-    h.HxExtension("my-extension"),
+    h.Head(
+        h.Script("/public/htmgo.js"),
+    ),
 )
 `

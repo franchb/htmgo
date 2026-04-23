@@ -92,18 +92,6 @@ func TestD(t *testing.T) {
 	assert.Equal(t, "M10 10 H 90 V 90 H 10 Z", attr.(*AttributeR).Value)
 }
 
-func TestHxExtension(t *testing.T) {
-	attr := HxExtension("trigger-children")
-	assert.Equal(t, "hx-ext", attr.Name)
-	assert.Equal(t, "trigger-children", attr.Value)
-}
-
-func TestHxExtensions(t *testing.T) {
-	attr := HxExtensions("foo", "bar")
-	assert.Equal(t, "hx-ext", attr.(*AttributeR).Name)
-	assert.Equal(t, "foo,bar", attr.(*AttributeR).Value)
-}
-
 func TestHxTrigger(t *testing.T) {
 	trigger := hx.NewTrigger(hx.OnClick()) // This assumes hx.NewTrigger is a correct call
 	attr := HxTrigger(hx.OnClick())
@@ -117,11 +105,6 @@ func TestHxTriggerClick(t *testing.T) {
 	assert.Equal(t, "click", attr.Value)
 }
 
-func TestTriggerChildren(t *testing.T) {
-	attr := TriggerChildren()
-	assert.Equal(t, "hx-ext", attr.Name)
-	assert.Equal(t, "trigger-children", attr.Value)
-}
 
 func TestHxInclude(t *testing.T) {
 	attr := HxInclude(".include-selector")
@@ -157,4 +140,33 @@ func TestBoost(t *testing.T) {
 	attr := Boost()
 	assert.Equal(t, "hx-boost", attr.(*AttributeR).Name)
 	assert.Equal(t, "true", attr.(*AttributeR).Value)
+}
+
+func TestHxInheritedAttributes(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name  string
+		attr  Ren
+		key   string
+		value string
+	}{
+		{"HxTargetInherited", HxTargetInherited("#out"), "hx-target:inherited", "#out"},
+		{"HxIncludeInherited", HxIncludeInherited("closest form"), "hx-include:inherited", "closest form"},
+		{"HxSwapInherited", HxSwapInherited("outerHTML"), "hx-swap:inherited", "outerHTML"},
+		{"HxBoostInherited", HxBoostInherited("true"), "hx-boost:inherited", "true"},
+		{"HxConfirmInherited", HxConfirmInherited("Sure?"), "hx-confirm:inherited", "Sure?"},
+		{"HxHeadersInherited", HxHeadersInherited(`{"X-Token":"abc"}`), "hx-headers:inherited", `{"X-Token":"abc"}`},
+		{"HxIndicatorInherited", HxIndicatorInherited("#spinner"), "hx-indicator:inherited", "#spinner"},
+		{"HxSyncInherited", HxSyncInherited("this:drop"), "hx-sync:inherited", "this:drop"},
+		{"HxEncodingInherited", HxEncodingInherited("multipart/form-data"), "hx-encoding:inherited", "multipart/form-data"},
+		{"HxValidateInherited", HxValidateInherited("true"), "hx-validate:inherited", "true"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ar, ok := tc.attr.(*AttributeR)
+			assert.True(t, ok, "expected *AttributeR from %s", tc.name)
+			assert.Equal(t, tc.key, ar.Name)
+			assert.Equal(t, tc.value, ar.Value)
+		})
+	}
 }

@@ -9,9 +9,6 @@ import (
 func Index(ctx *h.RequestContext) *h.Page {
 	return h.NewPage(
 		h.Html(
-			h.HxExtensions(
-				h.BaseExtensions(),
-			),
 			h.Head(
 				h.Meta("viewport", "width=device-width, initial-scale=1"),
 				h.Script("/public/htmgo.js"),

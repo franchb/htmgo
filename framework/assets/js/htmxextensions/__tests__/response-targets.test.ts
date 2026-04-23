@@ -1,0 +1,233 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+const registered: Record<string, any> = {};
+vi.mock("htmx.org", () => ({
+  default: {
+    registerExtension: (n: string, e: any) => (registered[n] = e),
+    config: {} as any,
+  },
+}));
+
+function makeApi(attrs: Record<string, string>) {
+  const triggered: Array<{ elt: any; name: string; detail: any }> = [];
+  const api = {
+    getClosestAttributeValue: (_elt: any, name: string) => attrs[name] ?? null,
+    findThisElement: (elt: any) => elt,
+    querySelectorExt: (_elt: any, sel: string) => {
+      const el = document.querySelector(sel);
+      return el;
+    },
+    triggerHtmxEvent: (elt: any, name: string, detail: any) => {
+      triggered.push({ elt, name, detail });
+    },
+  };
+  return { api, triggered };
+}
+
+describe("response-targets extension", () => {
+  let ext: any;
+  beforeEach(async () => {
+    await import("../response-targets");
+    ext = registered["response-targets"];
+    document.body.innerHTML = "";
+  });
+
+  it("registers with init and htmx_before_swap", () => {
+    expect(ext).toBeDefined();
+    expect(typeof ext.init).toBe("function");
+    expect(typeof ext.htmx_before_swap).toBe("function");
+  });
+
+  it("init sets defaults in htmx.config without clobbering existing values", async () => {
+    const cfg = (await import("htmx.org")).default.config as any;
+    delete cfg.responseTargetUnsetsError;
+    delete cfg.responseTargetSetsError;
+    cfg.responseTargetPrefersExisting = undefined;
+    cfg.responseTargetPrefersRetargetHeader = undefined;
+    ext.init(makeApi({}).api);
+    // Regression guard: the htmx-2 isError knobs must NOT be initialized.
+    expect("responseTargetUnsetsError" in cfg).toBe(false);
+    expect("responseTargetSetsError" in cfg).toBe(false);
+    expect(cfg.responseTargetPrefersExisting).toBe(false);
+    expect(cfg.responseTargetPrefersRetargetHeader).toBe(true);
+
+    // Pre-set non-default values on the surviving knobs must be preserved on re-init.
+    cfg.responseTargetPrefersExisting = true;
+    cfg.responseTargetPrefersRetargetHeader = false;
+    ext.init(makeApi({}).api);
+    expect(cfg.responseTargetPrefersExisting).toBe(true);
+    expect(cfg.responseTargetPrefersRetargetHeader).toBe(false);
+  });
+
+  function makeDetail(srcElt: HTMLElement, status: number, initialTarget: HTMLElement | null = null) {
+    const mainTask: any = { type: "main", target: initialTarget };
+    return {
+      detail: {
+        ctx: { response: { status }, sourceElement: srcElt },
+        tasks: [mainTask],
+      } as any,
+      mainTask,
+    };
+  }
+
+  it("retargets to hx-target-404 when status is 404", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    ext.init(makeApi({ "hx-target-404": "#err" }).api);
+    const { detail, mainTask } = makeDetail(srcElt, 404);
+    ext.htmx_before_swap(srcElt, detail);
+    expect((mainTask.target as HTMLElement)?.id).toBe("err");
+  });
+
+  it("falls back to hx-target-4xx when hx-target-404 is absent", () => {
+    document.body.innerHTML = `<div id="err4"></div>`;
+    const srcElt = document.createElement("button");
+    ext.init(makeApi({ "hx-target-4xx": "#err4" }).api);
+    const { detail, mainTask } = makeDetail(srcElt, 404);
+    ext.htmx_before_swap(srcElt, detail);
+    expect((mainTask.target as HTMLElement)?.id).toBe("err4");
+  });
+
+  it("falls back to hx-target-error for 4xx/5xx", () => {
+    document.body.innerHTML = `<div id="errany"></div>`;
+    const srcElt = document.createElement("button");
+    ext.init(makeApi({ "hx-target-error": "#errany" }).api);
+    const { detail, mainTask } = makeDetail(srcElt, 500);
+    ext.htmx_before_swap(srcElt, detail);
+    expect((mainTask.target as HTMLElement)?.id).toBe("errany");
+  });
+
+  it("does nothing when status is 200", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    ext.init(makeApi({ "hx-target-error": "#err" }).api);
+    const existing = document.createElement("div");
+    const { detail, mainTask } = makeDetail(srcElt, 200, existing);
+    ext.htmx_before_swap(srcElt, detail);
+    expect(mainTask.target).toBe(existing);
+  });
+
+  it("hx-target-404='this' retargets to the request element", () => {
+    const srcElt = document.createElement("button");
+    srcElt.id = "btn";
+    document.body.appendChild(srcElt);
+    ext.init(makeApi({ "hx-target-404": "this" }).api);
+    const { detail, mainTask } = makeDetail(srcElt, 404);
+    ext.htmx_before_swap(srcElt, detail);
+    expect(mainTask.target).toBe(srcElt);
+  });
+
+  it("fires htmgo:response:retargeted when a new target is resolved", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    document.body.appendChild(srcElt);
+    const { api, triggered } = makeApi({ "hx-target-404": "#err" });
+    ext.init(api);
+    const { detail, mainTask } = makeDetail(srcElt, 404);
+    ext.htmx_before_swap(srcElt, detail);
+
+    const newTarget = document.getElementById("err")!;
+    expect(mainTask.target).toBe(newTarget);
+
+    const events = triggered.filter((e) => e.name === "htmgo:response:retargeted");
+    expect(events.length).toBe(1);
+    expect(events[0].elt).toBe(srcElt);
+    expect(events[0].detail.status).toBe(404);
+    expect(events[0].detail.from).toBe(null);
+    expect(events[0].detail.to).toBe(newTarget);
+    expect(events[0].detail.ctx).toBe(detail.ctx);
+  });
+
+  it("fires htmgo:response:retargeted on ctx.elt when sourceElement is absent", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const fallbackElt = document.createElement("button");
+    document.body.appendChild(fallbackElt);
+    const { api, triggered } = makeApi({ "hx-target-404": "#err" });
+    ext.init(api);
+    const mainTask: any = { type: "main", target: null };
+    const detail: any = {
+      ctx: { response: { status: 404 }, elt: fallbackElt },
+      tasks: [mainTask],
+    };
+    ext.htmx_before_swap(fallbackElt, detail);
+
+    const events = triggered.filter((e) => e.name === "htmgo:response:retargeted");
+    expect(events.length).toBe(1);
+    expect(events[0].elt).toBe(fallbackElt);
+  });
+
+  it("does not fire htmgo:response:retargeted when PrefersExisting keeps existing target", async () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    document.body.appendChild(srcElt);
+    const cfg = (await import("htmx.org")).default.config as any;
+    cfg.responseTargetPrefersExisting = true;
+    const { api, triggered } = makeApi({ "hx-target-404": "#err" });
+    ext.init(api);
+    const existing = document.createElement("div");
+    const { detail } = makeDetail(srcElt, 404, existing);
+    ext.htmx_before_swap(srcElt, detail);
+
+    cfg.responseTargetPrefersExisting = false;
+    expect(triggered.find((e) => e.name === "htmgo:response:retargeted")).toBeUndefined();
+  });
+
+  it("does not fire htmgo:response:retargeted when HX-Retarget header is honored", async () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    document.body.appendChild(srcElt);
+    const cfg = (await import("htmx.org")).default.config as any;
+    cfg.responseTargetPrefersRetargetHeader = true;
+    const { api, triggered } = makeApi({ "hx-target-404": "#err" });
+    ext.init(api);
+    const existing = document.createElement("div");
+    const { detail } = makeDetail(srcElt, 404, existing);
+    detail.ctx.response.headers = {
+      get: (name: string) => (name === "HX-Retarget" ? "#other" : null),
+    };
+    ext.htmx_before_swap(srcElt, detail);
+
+    cfg.responseTargetPrefersRetargetHeader = false;
+    expect(triggered.find((e) => e.name === "htmgo:response:retargeted")).toBeUndefined();
+  });
+
+  it("does not fire htmgo:response:retargeted when no hx-target-* matches", () => {
+    const srcElt = document.createElement("button");
+    document.body.appendChild(srcElt);
+    const { api, triggered } = makeApi({});
+    ext.init(api);
+    const { detail, mainTask } = makeDetail(srcElt, 404);
+    ext.htmx_before_swap(srcElt, detail);
+
+    expect(mainTask.target).toBe(null);
+    expect(triggered.find((e) => e.name === "htmgo:response:retargeted")).toBeUndefined();
+  });
+
+  it("does not fire htmgo:response:retargeted when resolved target equals existing target", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    document.body.appendChild(srcElt);
+    const { api, triggered } = makeApi({ "hx-target-404": "#err" });
+    ext.init(api);
+    const existing = document.getElementById("err")!;
+    const { detail, mainTask } = makeDetail(srcElt, 404, existing);
+    ext.htmx_before_swap(srcElt, detail);
+
+    expect(mainTask.target).toBe(existing);
+    expect(triggered.find((e) => e.name === "htmgo:response:retargeted")).toBeUndefined();
+  });
+
+  it("does not fire htmgo:response:retargeted on 2xx status", () => {
+    document.body.innerHTML = `<div id="err"></div>`;
+    const srcElt = document.createElement("button");
+    document.body.appendChild(srcElt);
+    const { api, triggered } = makeApi({ "hx-target-error": "#err" });
+    ext.init(api);
+    const existing = document.createElement("div");
+    const { detail, mainTask } = makeDetail(srcElt, 200, existing);
+    ext.htmx_before_swap(srcElt, detail);
+
+    expect(mainTask.target).toBe(existing);
+    expect(triggered.find((e) => e.name === "htmgo:response:retargeted")).toBeUndefined();
+  });
+});

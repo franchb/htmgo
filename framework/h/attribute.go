@@ -119,12 +119,6 @@ func HxIndicator(tag string) *AttributeR {
 	return Attribute(hx.IndicatorAttr, tag)
 }
 
-// TriggerChildren Adds the hx-extension="trigger-children" to an element
-// See https://htmgo.dev/docs#htmx-extensions-trigger-children
-func TriggerChildren() *AttributeR {
-	return HxExtension("trigger-children")
-}
-
 // HxTriggerString Adds a hx-trigger to an element based on a string of triggers
 func HxTriggerString(triggers ...string) *AttributeR {
 	trigger := hx.NewStringTrigger(strings.Join(triggers, ", "))
@@ -139,20 +133,6 @@ func HxTrigger(opts ...hx.TriggerEvent) *AttributeR {
 // HxTriggerClick Adds a hx-trigger="click" to an element
 func HxTriggerClick(opts ...hx.Modifier) *AttributeR {
 	return HxTrigger(hx.OnClick(opts...))
-}
-
-// HxExtension Adds a hx-ext to an element
-func HxExtension(value string) *AttributeR {
-	return Attribute(hx.ExtAttr, value)
-}
-
-// HxExtensions Adds multiple hx-ext to an element, separated by commas
-func HxExtensions(value ...string) Ren {
-	return Attribute(hx.ExtAttr, strings.Join(value, ","))
-}
-
-func JoinExtensions(attrs ...*AttributeR) Ren {
-	return JoinAttributes(", ", attrs...)
 }
 
 // JoinAttributes joins multiple attributes into a single attribute string based on a separator
@@ -363,3 +343,17 @@ func TabIndex(value int) *AttributeR {
 func GenId(len int) string {
 	return util.RandSeq(len)
 }
+
+// Inheritance-aware helpers (htmx 4 explicit inheritance).
+// Emits `<attr>:inherited="..."` which propagates to descendants.
+
+func HxTargetInherited(selector string) Ren    { return Attribute("hx-target:inherited", selector) }
+func HxIncludeInherited(selector string) Ren   { return Attribute("hx-include:inherited", selector) }
+func HxSwapInherited(swap string) Ren          { return Attribute("hx-swap:inherited", swap) }
+func HxBoostInherited(value string) Ren        { return Attribute("hx-boost:inherited", value) }
+func HxConfirmInherited(message string) Ren    { return Attribute("hx-confirm:inherited", message) }
+func HxHeadersInherited(json string) Ren       { return Attribute("hx-headers:inherited", json) }
+func HxIndicatorInherited(selector string) Ren { return Attribute("hx-indicator:inherited", selector) }
+func HxSyncInherited(spec string) Ren          { return Attribute("hx-sync:inherited", spec) }
+func HxEncodingInherited(enc string) Ren       { return Attribute("hx-encoding:inherited", enc) }
+func HxValidateInherited(value string) Ren     { return Attribute("hx-validate:inherited", value) }

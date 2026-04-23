@@ -9,6 +9,7 @@ import "./htmxextensions/htmgo";
 import "./htmxextensions/sse"
 import "./htmxextensions/ws"
 import "./htmxextensions/ws-event-handler"
+import "./htmxextensions/alpine-compat"
 
 // @ts-ignore
 window.htmx = htmx;

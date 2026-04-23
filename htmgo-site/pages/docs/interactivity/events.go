@@ -111,7 +111,6 @@ const CurrentHandlersSnippet = `
 h.OnEvent
 h.OnLoad
 h.HxBeforeRequest
-h.HxOnLoad
 h.HxOnAfterSwap
 h.OnClick
 h.OnSubmit

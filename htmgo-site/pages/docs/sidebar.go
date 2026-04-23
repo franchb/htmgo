@@ -74,6 +74,7 @@ var sections = []Section{
 			{Title: "Overview", Path: DocPath("/htmx-extensions/overview")},
 			{Title: "Trigger Children", Path: DocPath("/htmx-extensions/trigger-children")},
 			{Title: "Mutation Error", Path: DocPath("/htmx-extensions/mutation-error")},
+			{Title: "Alpine Compat", Path: DocPath("/htmx-extensions/alpine-compat")},
 		},
 	},
 	{

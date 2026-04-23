@@ -32,7 +32,6 @@ func UserProfilePage(u db.User) *h.Element {
 		h.Form(
 			h.Attribute("hx-swap", "none"),
 			h.PostPartial(partials.UpdateProfile),
-			h.TriggerChildren(),
 			h.Class("flex flex-col gap-4 w-full max-w-md p-6 bg-white rounded-md shadow-md"),
 			ui.Input(ui.InputProps{
 				Id:           "email",

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -21,10 +22,10 @@ type RequestContext struct {
 	locator           *service.Locator
 	isBoosted         bool
 	currentBrowserUrl string
-	hxPromptResponse  string
 	isHxRequest       bool
 	hxTargetId        string
-	hxTriggerName     string
+	hxSource          string
+	hxRequestType     string
 	hxTriggerId       string
 	kv                map[string]interface{}
 }
@@ -94,16 +95,27 @@ func (c *RequestContext) IsHxRequest() bool {
 	return c.isHxRequest
 }
 
-func (c *RequestContext) HxPromptResponse() string {
-	return c.hxPromptResponse
-}
-
 func (c *RequestContext) HxTargetId() string {
 	return c.hxTargetId
 }
 
-func (c *RequestContext) HxTriggerName() string {
-	return c.hxTriggerName
+// HxSource returns the raw HX-Source header: "tag#id" (e.g. "button#save"), empty if none.
+func (c *RequestContext) HxSource() string {
+	return c.hxSource
+}
+
+// HxSourceID returns the id portion of HX-Source, empty if no id.
+func (c *RequestContext) HxSourceID() string {
+	_, id, ok := strings.Cut(c.hxSource, "#")
+	if !ok {
+		return ""
+	}
+	return id
+}
+
+// HxRequestType returns "full" or "partial" for htmx 4 requests, empty otherwise.
+func (c *RequestContext) HxRequestType() string {
+	return c.hxRequestType
 }
 
 func (c *RequestContext) HxTriggerId() string {
@@ -161,10 +173,10 @@ func Start(opts AppOpts) {
 func populateHxFields(cc *RequestContext) {
 	cc.isBoosted = cc.Fiber.Get(hx.BoostedHeader) == "true"
 	cc.currentBrowserUrl = cc.Fiber.Get(hx.CurrentUrlHeader)
-	cc.hxPromptResponse = cc.Fiber.Get(hx.PromptResponseHeader)
 	cc.isHxRequest = cc.Fiber.Get(hx.RequestHeader) == "true"
 	cc.hxTargetId = cc.Fiber.Get(hx.TargetIdHeader)
-	cc.hxTriggerName = cc.Fiber.Get(hx.TriggerNameHeader)
+	cc.hxSource = cc.Fiber.Get(hx.SourceHeader)
+	cc.hxRequestType = cc.Fiber.Get(hx.RequestTypeHeader)
 	cc.hxTriggerId = cc.Fiber.Get(hx.TriggerIdHeader)
 }
 
@@ -307,12 +319,36 @@ func writeHtml(c fiber.Ctx, element Ren) error {
 	return c.SendString(Render(element, WithDocType()))
 }
 
+// livereloadMetaTag is injected into <head> when running in development mode.
+// The livereload JS extension gates on this meta tag's presence.
+const livereloadMetaTag = `<meta name="htmgo-livereload" content="/dev/livereload">`
+
+// headOpenRe matches the opening <head> tag, with or without attributes
+// (e.g. <head>, <head lang="en">, <HEAD class="x">).
+var headOpenRe = regexp.MustCompile(`(?i)<head\b[^>]*>`)
+
+// injectLivereloadMeta inserts the htmgo-livereload meta tag immediately after
+// the opening <head> tag in the rendered HTML.  It is a no-op when the page
+// does not contain a <head> element.
+func injectLivereloadMeta(html string) string {
+	loc := headOpenRe.FindStringIndex(html)
+	if loc == nil {
+		return html
+	}
+	return html[:loc[1]] + livereloadMetaTag + html[loc[1]:]
+}
+
 func HtmlView(c fiber.Ctx, page *Page) error {
 	// if the page is nil, do nothing, this can happen if custom response is written, such as a 302 redirect
 	if page == nil {
 		return nil
 	}
-	return writeHtml(c, page.Root)
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	rendered := Render(page.Root, WithDocType())
+	if IsDevelopment() {
+		rendered = injectLivereloadMeta(rendered)
+	}
+	return c.SendString(rendered)
 }
 
 func PartialViewWithHeaders(c fiber.Ctx, headers *Headers, partial *Partial) error {

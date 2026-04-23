@@ -1,72 +1,136 @@
-import htmx from 'htmx.org'
-import {removeAssociatedScripts} from "./htmgo";
+import htmx from "htmx.org";
+import { removeAssociatedScripts } from "./htmgo";
 
-let api : any = null;
-let processed = new Set<string>()
+const connections = new WeakMap<Element, EventSource>();
+const processedUrls = new Map<string, Element>();
 
-htmx.defineExtension("sse", {
-    init: function (apiRef) {
-        api = apiRef;
-    },
-    // @ts-ignore
-    onEvent: function (name, evt) {
-        const target = evt.target;
-        if(!(target instanceof HTMLElement)) {
-            return
-        }
+htmx.registerExtension("sse", {
+  init(_api: unknown) {},
 
-        if(name === 'htmx:beforeCleanupElement') {
-            removeAssociatedScripts(target);
-        }
-
-        if(name === 'htmx:beforeProcessNode') {
-            const elements = document.querySelectorAll('[sse-connect]');
-            for (let element of Array.from(elements)) {
-                const url = element.getAttribute("sse-connect")!;
-                if(url && !processed.has(url)) {
-                    connectEventSource(element, url)
-                    processed.add(url)
-                }
-            }
-        }
+  htmx_before_cleanup(elt: HTMLElement, _detail: unknown) {
+    if (!elt) return;
+    removeAssociatedScripts(elt);
+    const es = connections.get(elt);
+    if (es) {
+      es.close();
+      connections.delete(elt);
+      const url = elt.getAttribute("sse-connect");
+      if (url && processedUrls.get(url) === elt) processedUrls.delete(url);
     }
-})
+  },
 
-function connectEventSource(ele: Element, url: string) {
-    if(!url) {
-        return
-    }
-    console.info('Connecting to EventSource', url)
-    const eventSource = new EventSource(url);
-
-    eventSource.addEventListener("close", function(event) {
-        htmx.trigger(ele, "htmx:sseClose", {event: event});
-    })
-
-    eventSource.onopen = function(event) {
-        htmx.trigger(ele, "htmx:sseOpen", {event: event});
-    }
-
-    eventSource.onerror = function(event) {
-        htmx.trigger(ele, "htmx:sseError", {event: event});
-        if (eventSource.readyState == EventSource.CLOSED) {
-            htmx.trigger(ele, "htmx:sseClose", {event: event});
+  htmx_before_process(_elt: HTMLElement, _detail: unknown) {
+    const elements = document.querySelectorAll("[sse-connect]");
+    for (const element of Array.from(elements)) {
+      const url = element.getAttribute("sse-connect");
+      if (url && !processedUrls.has(url)) {
+        const es = connectEventSource(element, url);
+        if (es) {
+          connections.set(element, es);
+          processedUrls.set(url, element);
         }
+      }
     }
+  },
+});
 
-    eventSource.onmessage = function(event) {
-        const settleInfo = api.makeSettleInfo(ele);
-        htmx.trigger(ele, "htmx:sseBeforeMessage", {event: event});
-        const response = event.data
-        const fragment = api.makeFragment(response) as DocumentFragment;
-        const children = Array.from(fragment.children);
-        for (let child of children) {
-            api.oobSwap(api.getAttributeValue(child, 'hx-swap-oob') || 'true', child, settleInfo);
-            // support htmgo eval__ scripts
-            if(child.tagName === 'SCRIPT' && child.id.startsWith("__eval")) {
-                document.body.appendChild(child);
-            }
-        }
-        htmx.trigger(ele, "htmx:sseAfterMessage", {event: event});
+function connectEventSource(ele: Element, url: string): EventSource | undefined {
+  if (!url) return undefined;
+  console.info("Connecting to EventSource", url);
+  htmx.trigger(ele, "htmx:before:sse:connection", { url });
+  const eventSource = new EventSource(url);
+
+  // A server-sent `event: close` frame is terminal — EventSource has no native
+  // "close" event, so this handler only fires when the server sends one. Treat
+  // it the same as the onerror-CLOSED branch: close the source and drop the
+  // element from the connection maps so the URL can be reconnected later.
+  eventSource.addEventListener("close", (event) => {
+    eventSource.close();
+    htmx.trigger(ele, "htmx:sse:close", { event });
+    connections.delete(ele);
+    if (processedUrls.get(url) === ele) processedUrls.delete(url);
+  });
+
+  eventSource.onopen = (event) =>
+    htmx.trigger(ele, "htmx:after:sse:connection", { event });
+
+  eventSource.onerror = (event) => {
+    htmx.trigger(ele, "htmx:sse:error", { event });
+    if (eventSource.readyState === EventSource.CLOSED) {
+      htmx.trigger(ele, "htmx:sse:close", { event });
+      connections.delete(ele);
+      if (processedUrls.get(url) === ele) processedUrls.delete(url);
     }
+  };
+
+  eventSource.onmessage = (event) => {
+    htmx.trigger(ele, "htmx:before:sse:message", { event });
+    applyOobSwap(ele, event.data);
+    htmx.trigger(ele, "htmx:after:sse:message", { event });
+  };
+
+  return eventSource;
+}
+
+/**
+ * Parses the SSE message text and applies OOB swaps via htmx 4's htmx.swap().
+ *
+ * htmx 4 removed the internal api methods makeFragment / makeSettleInfo /
+ * oobSwap / getAttributeValue that htmx 2 exposed.  The replacement is the
+ * public htmx.swap(ctx) which accepts a plain ctx object and processes all
+ * hx-swap-oob children automatically.
+ *
+ * The one htmgo-specific behaviour that htmx.swap() does NOT handle is the
+ * appending of <script id="__eval…"> elements to document.body.  We extract
+ * those from the parsed fragment ourselves before handing the rest off to
+ * htmx.swap(), so they are not lost.
+ */
+function applyOobSwap(ele: Element, responseText: string) {
+  // Parse the HTML into a document fragment so we can inspect children.
+  // DOMParser is always available in the browser environments htmgo targets.
+  const doc = new DOMParser().parseFromString(
+    `<template>${responseText}</template>`,
+    "text/html"
+  );
+  const templateEl = doc.querySelector("template");
+  if (!templateEl) {
+    // Fallback: hand the raw text to htmx.swap() with swap:'none' so OOB
+    // attributes are still processed by htmx core.
+    (htmx as any).swap({
+      sourceElement: ele,
+      target: ele,
+      swap: "none",
+      text: responseText,
+      transition: false,
+    });
+    return;
+  }
+
+  // Extract and append __eval scripts first (htmgo-specific behaviour).
+  // These must be appended to document.body so the browser executes them.
+  // Use querySelectorAll so scripts nested inside OOB wrappers are still found.
+  const content = templateEl.content;
+  const evalScripts = Array.from(
+    content.querySelectorAll('script[id^="__eval"]'),
+  ) as HTMLScriptElement[];
+  for (const script of evalScripts) {
+    script.remove(); // remove from fragment before swap
+    document.body.appendChild(script);
+  }
+
+  // Pass the (now __eval-stripped) HTML to htmx.swap().
+  // htmx 4's swap() calls __processOOB internally, so all children carrying
+  // hx-swap-oob will be handled correctly.  We use swap:'none' for the main
+  // target because htmgo SSE messages are entirely OOB — there is no primary
+  // target to replace.
+  (htmx as any).swap({
+    sourceElement: ele,
+    target: ele,
+    swap: "none",
+    // Serialise fragment back to string for htmx.swap()'s __makeFragment.
+    text: Array.from(content.children)
+      .map((c) => c.outerHTML)
+      .join(""),
+    transition: false,
+  });
 }
