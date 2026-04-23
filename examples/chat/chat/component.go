@@ -3,7 +3,7 @@ package chat
 import (
 	"chat/internal/db"
 	"fmt"
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 	"strings"
 	"time"
 )

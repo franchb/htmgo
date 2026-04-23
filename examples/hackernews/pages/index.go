@@ -1,7 +1,7 @@
 package pages
 
 import (
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 	"hackernews/partials"
 )
 

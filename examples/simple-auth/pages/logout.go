@@ -1,6 +1,6 @@
 package pages
 
-import "github.com/franchb/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/v2/h"
 
 func LogoutPage(ctx *h.RequestContext) *h.Page {
 

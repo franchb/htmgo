@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/franchb/htmgo/tools/html-to-htmgo/internal/domain"
+	"github.com/franchb/htmgo/tools/html-to-htmgo/v2/internal/domain"
 	"golang.org/x/net/html"
 	"strings"
 )

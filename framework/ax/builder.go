@@ -3,7 +3,7 @@ package ax
 import (
 	"strings"
 
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 
 // Simple single-arg directives. Each wraps h.Attribute and returns h.Ren.

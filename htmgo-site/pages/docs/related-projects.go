@@ -1,7 +1,7 @@
 package docs
 
 import (
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 
 func RelatedProjects(ctx *h.RequestContext) *h.Page {

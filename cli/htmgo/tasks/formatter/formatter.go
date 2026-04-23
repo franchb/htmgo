@@ -2,7 +2,7 @@ package formatter
 
 import (
 	"fmt"
-	"github.com/franchb/htmgo/tools/html-to-htmgo/htmltogo"
+	"github.com/franchb/htmgo/tools/html-to-htmgo/v2/htmltogo"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,7 +38,7 @@ func FormatFile(file string) {
 
 	str := string(source)
 
-	if !strings.Contains(str, "github.com/franchb/htmgo/framework/h") {
+	if !strings.Contains(str, "github.com/franchb/htmgo/framework/v2/h") {
 		return
 	}
 

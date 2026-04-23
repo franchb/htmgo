@@ -1,4 +1,4 @@
-module github.com/franchb/htmgo/tools/html-to-htmgo
+module github.com/franchb/htmgo/tools/html-to-htmgo/v2
 
 go 1.26
 

@@ -12,8 +12,8 @@ import (
 	"sync"
 )
 
-const frameworkRepo = "github.com/franchb/htmgo/framework"
-const htmlToHtmgoRepo = "github.com/franchb/htmgo/tools/html-to-htmgo"
+const frameworkRepo = "github.com/franchb/htmgo/framework/v2"
+const htmlToHtmgoRepo = "github.com/franchb/htmgo/tools/html-to-htmgo/v2"
 
 var depsToUpdate = []string{
 	frameworkRepo,

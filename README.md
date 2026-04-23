@@ -5,7 +5,7 @@
 -------
 [![Go Report Card](https://goreportcard.com/badge/github.com/franchb/htmgo)](https://goreportcard.com/report/github.com/franchb/htmgo)
 ![Build](https://github.com/franchb/htmgo/actions/workflows/run-framework-tests.yml/badge.svg)
-[![Go Reference](https://pkg.go.dev/badge/github.com/franchb/htmgo/framework@v1.0.2/h.svg)](https://htmgo.dev/docs)
+[![Go Reference](https://pkg.go.dev/badge/github.com/franchb/htmgo/framework/v2/h.svg)](https://htmgo.dev/docs)
 [![Join Discord](https://img.shields.io/badge/Join%20Discord-gray?style=flat&logo=discord&logoColor=white&link=https://htmgo.dev/discord)](https://htmgo.dev/discord)
 
 

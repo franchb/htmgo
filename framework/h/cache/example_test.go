@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/h/cache"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/framework/v2/h/cache"
 )
 
 // Example demonstrates basic caching with the default TTL store

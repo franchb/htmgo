@@ -1,7 +1,7 @@
 package core_concepts
 
 import "htmgo-site/ui"
-import "github.com/franchb/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/v2/h"
 import . "htmgo-site/pages/docs"
 
 func RawHtml(ctx *h.RequestContext) *h.Page {

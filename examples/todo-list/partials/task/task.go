@@ -3,9 +3,9 @@ package task
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/hx"
-	"github.com/franchb/htmgo/framework/js"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/framework/v2/hx"
+	"github.com/franchb/htmgo/framework/v2/js"
 	"todolist/ent"
 	"todolist/internal/tasks"
 )

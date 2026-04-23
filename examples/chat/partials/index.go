@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 
 func CreateOrJoinRoom(ctx *h.RequestContext) *h.Partial {

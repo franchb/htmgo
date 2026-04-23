@@ -1,6 +1,6 @@
 package components
 
-import "github.com/franchb/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/v2/h"
 
 func Badge(text string, active bool, children ...h.Ren) *h.Element {
 	return h.Button(

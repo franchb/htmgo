@@ -6,18 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added
+## [2.0.0] - 2026-04-23
 
-- **`alpine-compat` htmx extension bundled into `htmgo.js`.** Auto-preserves Alpine.js state across htmx morph swaps and re-initializes Alpine on swapped content. Auto-gates on `window.Alpine` presence; extension no-ops when Alpine is not loaded (zero runtime cost, ~3KB gz bundle cost). Tested against Alpine v3.15.11.
-- **`framework/ax/` Go package.** Constants and Ren-returning builder helpers for Alpine.js directives, mirroring the shape of `framework/hx/`. Covers `Data`, `Show`, `Init`, `Text`, `Html`, `Model` (plus `.number`/`.lazy`/`.trim`/`.fill`/`.boolean`/`.debounce` variants), `Bind` + 7 shortcuts (`BindClass`, `BindStyle`, `BindHref`, `BindValue`, `BindDisabled`, `BindChecked`, `BindId`), `On` + 8 event shortcuts + 3 combos (`OnClickOutside`, `OnKeydownEscape`, `OnKeydownEnter`), `Cloak`, `Ignore`, `Ref`, `Teleport`, `Effect`, `If`, `For`, `Id`, `Modelable`, `Transition`.
-- **New doc page:** `/docs/htmx-extensions/alpine-compat` — covers loading Alpine, FOUC prevention, `ax` package usage, and Alpine/htmx swap interaction.
+**Module path migration to `/v2` (Go Semantic Import Versioning).** All importable library modules moved to `/v2` import paths. Update your imports:
 
-## [1.2.0-beta.1] - 2026-04-17
+- `github.com/franchb/htmgo/framework` → `github.com/franchb/htmgo/framework/v2`
+- `github.com/franchb/htmgo/framework-ui` → `github.com/franchb/htmgo/framework-ui/v2`
+- `github.com/franchb/htmgo/tools/html-to-htmgo` → `github.com/franchb/htmgo/tools/html-to-htmgo/v2`
+- `github.com/franchb/htmgo/extensions/websocket` → `github.com/franchb/htmgo/extensions/websocket/v2`
 
-Released under the v1.x series (not v2) because the framework module path is
-`github.com/franchb/htmgo/framework` — Go's semantic import versioning requires a
-`/v2` suffix for v2+ tags, which we are not changing in this release. The changes
-are still fully breaking; treat this as a major bump despite the v1 tag.
+The CLI (`github.com/franchb/htmgo/cli/htmgo`) is a binary and keeps its path unchanged — continue using `go run github.com/franchb/htmgo/cli/htmgo@latest` (or `@v2.0.0`).
+
+v2.0.0 rolls in everything from the `1.2.0-beta.1` pre-release (htmx 4 migration) plus the Alpine.js compatibility work — see the sections below.
 
 ### Breaking
 
@@ -54,6 +54,9 @@ are still fully breaking; treat this as a major bump despite the v1 tag.
 - `vitest` test suite for JS extensions (`framework/assets/js/htmxextensions/__tests__/`).
 - `<meta name="htmgo-livereload">` injected into page `<head>` in dev mode so the livereload extension can detect dev server presence.
 - `htmgo:response:retargeted` event fired by the `response-targets` extension on the source element when a 4xx/5xx response triggers a retarget. Detail: `{status, from, to, ctx}`. Gives consumers a canonical hook without reintroducing htmx-2 error-flag semantics.
+- **`alpine-compat` htmx extension bundled into `htmgo.js`.** Auto-preserves Alpine.js state across htmx morph swaps and re-initializes Alpine on swapped content. Auto-gates on `window.Alpine` presence; extension no-ops when Alpine is not loaded (zero runtime cost, ~3KB gz bundle cost). Tested against Alpine v3.15.11.
+- **`framework/ax/` Go package.** Constants and Ren-returning builder helpers for Alpine.js directives, mirroring the shape of `framework/hx/`. Covers `Data`, `Show`, `Init`, `Text`, `Html`, `Model` (plus `.number`/`.lazy`/`.trim`/`.fill`/`.boolean`/`.debounce` variants), `Bind` + 7 shortcuts (`BindClass`, `BindStyle`, `BindHref`, `BindValue`, `BindDisabled`, `BindChecked`, `BindId`), `On` + 8 event shortcuts + 3 combos (`OnClickOutside`, `OnKeydownEscape`, `OnKeydownEnter`), `Cloak`, `Ignore`, `Ref`, `Teleport`, `Effect`, `If`, `For`, `Id`, `Modelable`, `Transition`.
+- **New doc page:** `/docs/htmx-extensions/alpine-compat` — covers loading Alpine, FOUC prevention, `ax` package usage, and Alpine/htmx swap interaction.
 
 ### Migration recipe
 

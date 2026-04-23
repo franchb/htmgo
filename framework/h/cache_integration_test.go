@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/franchb/htmgo/framework/h/cache"
+	"github.com/franchb/htmgo/framework/v2/h/cache"
 )
 
 func TestCached_WithDefaultStore(t *testing.T) {

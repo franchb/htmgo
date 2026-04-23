@@ -1,6 +1,6 @@
 package partials
 
-import "github.com/franchb/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/v2/h"
 
 func CountersPartial(ctx *h.RequestContext) *h.Partial {
 	return h.NewPartial(

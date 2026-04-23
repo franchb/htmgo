@@ -15,9 +15,9 @@ import (
 	"github.com/gobwas/ws/wsutil"
 	"github.com/gofiber/fiber/v3"
 
-	ws2 "github.com/franchb/htmgo/extensions/websocket/opts"
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/service"
+	ws2 "github.com/franchb/htmgo/extensions/websocket/v2/opts"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/framework/v2/service"
 )
 
 // websocketGUID is the magic GUID defined in RFC 6455 section 4.2.2

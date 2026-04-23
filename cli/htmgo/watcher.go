@@ -105,7 +105,7 @@ func startWatcher(cb func(version string, file []*fsnotify.Event)) {
 
 	rootDir := "."
 
-	frameworkPath := module.GetDependencyPath("github.com/franchb/htmgo/framework")
+	frameworkPath := module.GetDependencyPath("github.com/franchb/htmgo/framework/v2")
 
 	if !strings.HasPrefix(frameworkPath, "github.com/") {
 		assetPath := filepath.Join(frameworkPath, "assets", "dist")

@@ -1,8 +1,8 @@
 package partials
 
 import (
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/tools/html-to-htmgo/htmltogo"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/tools/html-to-htmgo/v2/htmltogo"
 	"htmgo-site/ui"
 )
 

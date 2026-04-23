@@ -1,7 +1,7 @@
 package h
 
 import (
-	"github.com/franchb/htmgo/framework/datastructure/orderedmap"
+	"github.com/franchb/htmgo/framework/v2/datastructure/orderedmap"
 )
 
 // Unique returns a new slice with only unique items.

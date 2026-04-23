@@ -3,7 +3,7 @@ package urlhelper
 import (
 	"net/url"
 
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 
 func ToAbsoluteUrl(ctx *h.RequestContext, path string) string {

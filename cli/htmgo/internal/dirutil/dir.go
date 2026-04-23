@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
-	"github.com/franchb/htmgo/framework/config"
+	"github.com/franchb/htmgo/framework/v2/config"
 	"io"
 	"log/slog"
 	"os"

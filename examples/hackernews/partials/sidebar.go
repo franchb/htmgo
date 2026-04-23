@@ -2,7 +2,7 @@ package partials
 
 import (
 	"fmt"
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 	"hackernews/components"
 	"hackernews/internal/news"
 	"hackernews/internal/parse"
