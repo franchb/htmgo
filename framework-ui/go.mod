@@ -4,7 +4,7 @@ go 1.26
 
 toolchain go1.26.0
 
-require github.com/franchb/htmgo/framework v0.0.0-20260416144811-e7f89c5fe4fe
+require github.com/franchb/htmgo/framework v1.2.0-beta.1.0.20260423171909-b9fa9063b9b3
 
 require (
 	github.com/andybalholm/brotli v1.2.0 // indirect

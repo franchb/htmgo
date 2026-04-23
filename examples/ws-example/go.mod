@@ -6,7 +6,7 @@ toolchain go1.26.0
 
 require (
 	github.com/franchb/htmgo/extensions/websocket v0.0.0-00010101000000-000000000000
-	github.com/franchb/htmgo/framework v0.0.0-20260416144811-e7f89c5fe4fe
+	github.com/franchb/htmgo/framework v1.2.0-beta.1.0.20260423171909-b9fa9063b9b3
 	github.com/gofiber/fiber/v3 v3.1.0
 )
 
