@@ -2,9 +2,9 @@ package h
 
 import (
 	"fmt"
-	"github.com/franchb/htmgo/framework/datastructure/orderedmap"
-	"github.com/franchb/htmgo/framework/hx"
-	"github.com/franchb/htmgo/framework/internal/util"
+	"github.com/franchb/htmgo/framework/v2/datastructure/orderedmap"
+	"github.com/franchb/htmgo/framework/v2/hx"
+	"github.com/franchb/htmgo/framework/v2/internal/util"
 	"strings"
 )
 

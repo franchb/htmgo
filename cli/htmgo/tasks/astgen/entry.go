@@ -16,7 +16,7 @@ import (
 
 	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
 	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 	"golang.org/x/mod/modfile"
 )
 
@@ -36,7 +36,7 @@ type Partial struct {
 
 const GeneratedDirName = "__htmgo"
 const FiberModuleName = "github.com/gofiber/fiber/v3"
-const ModuleName = "github.com/franchb/htmgo/framework/h"
+const ModuleName = "github.com/franchb/htmgo/framework/v2/h"
 
 var PackageName = fmt.Sprintf("package %s", GeneratedDirName)
 var GeneratedFileLine = fmt.Sprintf("// Package %s THIS FILE IS GENERATED. DO NOT EDIT.", GeneratedDirName)

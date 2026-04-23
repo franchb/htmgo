@@ -1,4 +1,4 @@
-module github.com/franchb/htmgo/framework
+module github.com/franchb/htmgo/framework/v2
 
 go 1.26
 

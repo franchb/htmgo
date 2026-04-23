@@ -2,7 +2,7 @@ package snippets
 
 import (
 	"fmt"
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 
 // RowClasses defined here for simplicity of the example

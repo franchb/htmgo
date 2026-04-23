@@ -1,8 +1,8 @@
 package snippets
 
 import (
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/js"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/framework/v2/js"
 )
 
 func SetTextOnClick(ctx *h.RequestContext) *h.Partial {

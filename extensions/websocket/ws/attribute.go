@@ -1,6 +1,6 @@
 package ws
 
-import "github.com/franchb/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/v2/h"
 
 func OnClick(ctx *h.RequestContext, handler Handler) *h.AttributeMapOrdered {
 	return AddClientSideHandler(ctx, "click", handler)

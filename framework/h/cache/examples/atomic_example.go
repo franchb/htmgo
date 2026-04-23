@@ -6,8 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/h/cache"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/framework/v2/h/cache"
 )
 
 // This example demonstrates the atomic guarantees of GetOrCompute,

@@ -5,11 +5,11 @@ import (
 
 	"github.com/gofiber/fiber/v3/middleware/static"
 
-	"github.com/franchb/htmgo/extensions/websocket"
-	ws2 "github.com/franchb/htmgo/extensions/websocket/opts"
-	"github.com/franchb/htmgo/extensions/websocket/session"
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/service"
+	"github.com/franchb/htmgo/extensions/websocket/v2"
+	ws2 "github.com/franchb/htmgo/extensions/websocket/v2/opts"
+	"github.com/franchb/htmgo/extensions/websocket/v2/session"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/framework/v2/service"
 
 	"ws-example/__htmgo"
 )

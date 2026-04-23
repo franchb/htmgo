@@ -1,7 +1,7 @@
 package partials
 
 import (
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 	"log/slog"
 	"simpleauth/internal/user"
 	"simpleauth/ui"

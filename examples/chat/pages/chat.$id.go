@@ -5,8 +5,8 @@ import (
 	"chat/internal/db"
 	"chat/partials"
 	"fmt"
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/js"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/framework/v2/js"
 	"time"
 )
 

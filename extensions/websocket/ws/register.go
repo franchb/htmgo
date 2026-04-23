@@ -1,9 +1,9 @@
 package ws
 
 import (
-	"github.com/franchb/htmgo/extensions/websocket/internal/wsutil"
-	"github.com/franchb/htmgo/extensions/websocket/session"
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/extensions/websocket/v2/internal/wsutil"
+	"github.com/franchb/htmgo/extensions/websocket/v2/session"
+	"github.com/franchb/htmgo/framework/v2/h"
 	"github.com/puzpuzpuz/xsync/v3"
 	"sync"
 	"sync/atomic"

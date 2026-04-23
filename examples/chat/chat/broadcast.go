@@ -5,8 +5,8 @@ import (
 	"chat/sse"
 	"context"
 	"fmt"
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/service"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/framework/v2/service"
 	"time"
 )
 

@@ -1,10 +1,10 @@
-module github.com/franchb/htmgo/framework-ui
+module github.com/franchb/htmgo/framework-ui/v2
 
 go 1.26
 
 toolchain go1.26.0
 
-require github.com/franchb/htmgo/framework v1.2.0-beta.1.0.20260423171909-b9fa9063b9b3
+require github.com/franchb/htmgo/framework/v2 v2.0.0
 
 require (
 	github.com/andybalholm/brotli v1.2.0 // indirect
@@ -26,4 +26,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/franchb/htmgo/framework => ../framework
+replace github.com/franchb/htmgo/framework/v2 => ../framework

@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/franchb/htmgo/framework/h"
-	"github.com/franchb/htmgo/framework/hx"
+	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/franchb/htmgo/framework/v2/hx"
 )
 
 type InputProps struct {

@@ -3,7 +3,7 @@ package h
 import (
 	"time"
 
-	"github.com/franchb/htmgo/framework/h/cache"
+	"github.com/franchb/htmgo/framework/v2/h/cache"
 )
 
 // A single key to represent the cache entry for non-per-key components.

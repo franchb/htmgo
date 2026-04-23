@@ -1,6 +1,6 @@
 package examples
 
-import "github.com/franchb/htmgo/framework/h"
+import "github.com/franchb/htmgo/framework/v2/h"
 
 type Snippet struct {
 	name           string

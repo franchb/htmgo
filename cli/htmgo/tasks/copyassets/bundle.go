@@ -39,7 +39,7 @@ func getModuleVersion(modulePath string) (string, error) {
 func CopyAssets() {
 	dirutil.CreateHtmgoDir()
 
-	moduleName := "github.com/franchb/htmgo/framework"
+	moduleName := "github.com/franchb/htmgo/framework/v2"
 	modulePath := module.GetDependencyPath(moduleName)
 
 	assetDir := ""

@@ -1,9 +1,9 @@
 package partials
 
 import (
-	"github.com/franchb/htmgo/extensions/websocket/session"
-	"github.com/franchb/htmgo/extensions/websocket/ws"
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/extensions/websocket/v2/session"
+	"github.com/franchb/htmgo/extensions/websocket/v2/ws"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 
 type Counter struct {

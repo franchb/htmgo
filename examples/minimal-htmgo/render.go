@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gofiber/fiber/v3"
 
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 
 func RenderToString(element *h.Element) string {

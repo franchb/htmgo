@@ -1,7 +1,7 @@
 package h
 
 import (
-	"github.com/franchb/htmgo/framework/hx"
+	"github.com/franchb/htmgo/framework/v2/hx"
 )
 
 // Get adds two attributes to the element: hx-get and hx-trigger.

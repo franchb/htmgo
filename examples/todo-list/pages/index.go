@@ -4,7 +4,7 @@ import (
 	"todolist/pages/base"
 	"todolist/partials/task"
 
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 
 func TaskListPage(ctx *h.RequestContext) *h.Page {

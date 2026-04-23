@@ -9,7 +9,7 @@ func TestIdentHRen(t *testing.T) {
 	input := `
 		package main
 		import (
-			"github.com/franchb/htmgo/framework/h"
+			"github.com/franchb/htmgo/framework/v2/h"
 		)
 		func Button(props ButtonProps) h.Ren {
 			return h.Div(
@@ -22,7 +22,7 @@ func TestIdentHRen(t *testing.T) {
 	assert.Equal(t, `package main
 
 import (
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 
 func Button(props ButtonProps) h.Ren {

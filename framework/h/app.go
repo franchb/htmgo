@@ -12,9 +12,9 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 
-	"github.com/franchb/htmgo/framework/config"
-	"github.com/franchb/htmgo/framework/hx"
-	"github.com/franchb/htmgo/framework/service"
+	"github.com/franchb/htmgo/framework/v2/config"
+	"github.com/franchb/htmgo/framework/v2/hx"
+	"github.com/franchb/htmgo/framework/v2/service"
 )
 
 type RequestContext struct {

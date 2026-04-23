@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/valyala/fasthttp"
 
-	"github.com/franchb/htmgo/framework/hx"
+	"github.com/franchb/htmgo/framework/v2/hx"
 )
 
 func TestReplaceUrlHeader(t *testing.T) {

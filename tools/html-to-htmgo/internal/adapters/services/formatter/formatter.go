@@ -1,7 +1,7 @@
 package formatter
 
 import (
-	"github.com/franchb/htmgo/tools/html-to-htmgo/internal/domain"
+	"github.com/franchb/htmgo/tools/html-to-htmgo/v2/internal/domain"
 	"go/format"
 )
 
@@ -11,7 +11,7 @@ type Formatter struct {
 func (f Formatter) Format(node *domain.CustomNode) string {
 	b := []byte(`package main
 import (
-	"github.com/franchb/htmgo/framework/h"
+	"github.com/franchb/htmgo/framework/v2/h"
 )
 func MyComponent() *h.Element {
 	return ` + node.String() + `

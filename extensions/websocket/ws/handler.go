@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/franchb/htmgo/extensions/websocket/internal/wsutil"
-	"github.com/franchb/htmgo/extensions/websocket/session"
+	"github.com/franchb/htmgo/extensions/websocket/v2/internal/wsutil"
+	"github.com/franchb/htmgo/extensions/websocket/v2/session"
 	"github.com/puzpuzpuz/xsync/v3"
 )
 
