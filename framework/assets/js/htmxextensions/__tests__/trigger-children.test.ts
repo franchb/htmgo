@@ -47,6 +47,38 @@ describe("trigger-children extension", () => {
     expect(fired).toBe(true);
   });
 
+  it("preserves camelCase event names when dispatching to children (e.g. htmx:after:viewTransition)", async () => {
+    await import("../trigger-children");
+    const ext = registered["trigger-children"];
+    ext.init({});
+
+    const parent = document.createElement("div");
+    const child = document.createElement("span");
+    // hx-on attribute uses kebab-case (DOM attribute name rule)
+    child.setAttribute("hx-on::after:view-transition", "");
+    let camelFired = false;
+    let kebabFired = false;
+    child.addEventListener("htmx:after:viewTransition", (e: any) => {
+      if (e.detail?.meta === "trigger-children") camelFired = true;
+    });
+    child.addEventListener("htmx:after:view-transition", (e: any) => {
+      if (e.detail?.meta === "trigger-children") kebabFired = true;
+    });
+    parent.appendChild(child);
+    document.body.appendChild(parent);
+
+    const evt = new CustomEvent("htmx:after:viewTransition", {
+      bubbles: true,
+      cancelable: true,
+      detail: { target: parent },
+    });
+    parent.dispatchEvent(evt);
+
+    await new Promise((r) => setTimeout(r, 20));
+    expect(camelFired).toBe(true);
+    expect(kebabFired).toBe(false);
+  });
+
   it("ignores re-entrant trigger-children events (meta marker)", async () => {
     await import("../trigger-children");
     const ext = registered["trigger-children"];

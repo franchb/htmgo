@@ -51,7 +51,10 @@ function triggerChildren(
             target: child,
             meta: "trigger-children",
           };
-          const newEvent = makeEvent(attrName.replace("hx-on::", "htmx:"), detail);
+          // Dispatch with the original event name (preserving any camelCase
+          // segments like `htmx:after:viewTransition`) — reconstructing from
+          // the kebab-cased attribute would lose that casing and miss listeners.
+          const newEvent = makeEvent(name, detail);
           child.dispatchEvent(newEvent);
           triggered.add(child as HTMLElement);
         }, 1);

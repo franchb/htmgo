@@ -9,7 +9,16 @@ import htmx from "htmx.org";
 let api: any;
 let deferCount = 0;
 
-function maybeFlush() {
+// maybeFlush is a no-op unless this ctx is the one that incremented deferCount
+// in `htmx_before_swap`. Without this guard, a concurrent request that never
+// entered `before_swap` (e.g. network error) would decrement another request's
+// deferral on `finally_request`, prematurely flushing Alpine mutations while
+// the first request's swap is still pending.
+function maybeFlush(detail: any) {
+  const ctx = detail?.ctx;
+  if (!ctx?._alpineDeferred) return;
+  ctx._alpineDeferred = false;
+
   if (deferCount > 0) deferCount--;
   if (deferCount === 0 && (window as any).Alpine?.flushAndStopDeferringMutations) {
     (window as any).Alpine.flushAndStopDeferringMutations();
@@ -53,6 +62,10 @@ htmx.registerExtension("alpine-compat", {
       alpine.deferMutations();
     }
     deferCount++;
+    // Tag this ctx so only it can later call maybeFlush(). Without per-ctx
+    // ownership, a concurrent request's finally_request can release this
+    // request's deferral.
+    if (detail?.ctx) detail.ctx._alpineDeferred = true;
 
     // Note: upstream iterates `detail.tasks` looking for innerMorph / outerMorph
     // entries and resolves string targets to DOM nodes, but the loop body is a
@@ -129,10 +142,10 @@ htmx.registerExtension("alpine-compat", {
 
   htmx_after_swap(_elt: any, detail: any) {
     if (detail?.ctx) detail.ctx._alpineFlushed = true;
-    maybeFlush();
+    maybeFlush(detail);
   },
 
   htmx_finally_request(_elt: any, detail: any) {
-    if (!detail?.ctx?._alpineFlushed) maybeFlush();
+    if (!detail?.ctx?._alpineFlushed) maybeFlush(detail);
   },
 });

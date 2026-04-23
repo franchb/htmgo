@@ -122,44 +122,47 @@ describe("alpine-compat extension", () => {
     });
 
     it("htmx_before_swap calls Alpine.deferMutations on the first call of a batch", () => {
-      ext.htmx_before_swap(document.body, { tasks: [] });
+      ext.htmx_before_swap(document.body, { tasks: [], ctx: {} });
       expect(deferMutations).toHaveBeenCalledTimes(1);
     });
 
     it("subsequent htmx_before_swap calls within the same batch do not re-defer", () => {
-      ext.htmx_before_swap(document.body, { tasks: [] });
-      ext.htmx_before_swap(document.body, { tasks: [] });
-      ext.htmx_before_swap(document.body, { tasks: [] });
+      ext.htmx_before_swap(document.body, { tasks: [], ctx: {} });
+      ext.htmx_before_swap(document.body, { tasks: [], ctx: {} });
+      ext.htmx_before_swap(document.body, { tasks: [], ctx: {} });
       expect(deferMutations).toHaveBeenCalledTimes(1);
     });
 
     it("htmx_after_swap flushes only when deferCount reaches zero", () => {
-      ext.htmx_before_swap(document.body, { tasks: [] });
-      ext.htmx_before_swap(document.body, { tasks: [] });
+      const ctxA: any = {};
+      const ctxB: any = {};
+      ext.htmx_before_swap(document.body, { tasks: [], ctx: ctxA });
+      ext.htmx_before_swap(document.body, { tasks: [], ctx: ctxB });
       // deferCount is now 2
-      ext.htmx_after_swap(document.body, { ctx: {} });
+      ext.htmx_after_swap(document.body, { ctx: ctxA });
       expect(flush).not.toHaveBeenCalled();
-      ext.htmx_after_swap(document.body, { ctx: {} });
+      ext.htmx_after_swap(document.body, { ctx: ctxB });
       expect(flush).toHaveBeenCalledTimes(1);
     });
 
     it("htmx_after_swap marks ctx._alpineFlushed = true", () => {
       const ctx: any = {};
-      ext.htmx_before_swap(document.body, { tasks: [] });
+      ext.htmx_before_swap(document.body, { tasks: [], ctx });
       ext.htmx_after_swap(document.body, { ctx });
       expect(ctx._alpineFlushed).toBe(true);
     });
 
     it("htmx_finally_request flushes if htmx_after_swap did not", () => {
-      ext.htmx_before_swap(document.body, { tasks: [] });
+      const ctx: any = {};
+      ext.htmx_before_swap(document.body, { tasks: [], ctx });
       // No htmx_after_swap — simulate a short-circuited swap.
-      ext.htmx_finally_request(document.body, { ctx: {} });
+      ext.htmx_finally_request(document.body, { ctx });
       expect(flush).toHaveBeenCalledTimes(1);
     });
 
     it("htmx_finally_request does NOT flush when ctx._alpineFlushed is already set", () => {
-      ext.htmx_before_swap(document.body, { tasks: [] });
       const ctx: any = {};
+      ext.htmx_before_swap(document.body, { tasks: [], ctx });
       ext.htmx_after_swap(document.body, { ctx });
       expect(flush).toHaveBeenCalledTimes(1);
       flush.mockClear();
@@ -169,8 +172,23 @@ describe("alpine-compat extension", () => {
 
     it("htmx_before_swap is a no-op when window.Alpine is missing required APIs", () => {
       (window as any).Alpine = {}; // no deferMutations / closestDataStack / cloneNode
-      ext.htmx_before_swap(document.body, { tasks: [] });
+      ext.htmx_before_swap(document.body, { tasks: [], ctx: {} });
       expect(deferMutations).not.toHaveBeenCalled();
+    });
+
+    it("finally_request of a ctx that never entered before_swap does not release another ctx's deferral", () => {
+      // Concurrency regression: request A starts and enters before_swap;
+      // request B fails before any swap (e.g. network error), so htmx only
+      // fires finally_request on B. B's maybeFlush must NOT decrement A's
+      // deferCount and prematurely flush Alpine mutations.
+      const ctxA: any = {};
+      const ctxB: any = {}; // never passed to before_swap
+      ext.htmx_before_swap(document.body, { tasks: [], ctx: ctxA });
+      ext.htmx_finally_request(document.body, { ctx: ctxB });
+      expect(flush).not.toHaveBeenCalled();
+      // A's own after_swap should still be able to flush.
+      ext.htmx_after_swap(document.body, { ctx: ctxA });
+      expect(flush).toHaveBeenCalledTimes(1);
     });
   });
 

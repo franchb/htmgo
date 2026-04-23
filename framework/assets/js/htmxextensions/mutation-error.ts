@@ -18,7 +18,11 @@ function broadcast(status: number, exclude?: Element) {
   for (const attr of HX_ON_ATTRS) {
     const selector = `[${attr.replace(/:/g, "\\:")}]`;
     document.querySelectorAll(selector).forEach((el) => {
-      if (seen.has(el) || el === exclude) return;
+      if (seen.has(el)) return;
+      // htmx.trigger dispatches bubbling CustomEvents, so ancestors of the
+      // excluded element already receive the event via bubbling — skip them
+      // here to avoid double-firing their hx-on listeners.
+      if (exclude && (el === exclude || el.contains(exclude))) return;
       seen.add(el);
       htmx.trigger(el as HTMLElement, "htmx:onMutationError", { status, elt: el });
     });
