@@ -104,9 +104,22 @@ currently point at the same commit).
 
 | Module | `go.mod` | Go source | Tag |
 | --- | --- | --- | --- |
-| `cli/htmgo` | `module …/cli/htmgo` → `module …/cli/htmgo/v2`; delete two `replace` lines; change `require` pseudo-versions `v2.0.0-20260423190209-1102e671d216` of `framework/v2` and `tools/html-to-htmgo/v2` → `v2.0.1` | Rewrite all internal imports `…/cli/htmgo/<pkg>` → `…/cli/htmgo/v2/<pkg>` across runner.go, watcher.go, signals.go, every `tasks/*` package, `internal/**`, and tests | `cli/htmgo/v2.0.1` |
-| `framework-ui` | delete `replace github.com/franchb/htmgo/framework/v2 => ../framework`; change `require github.com/franchb/htmgo/framework/v2 v2.0.0-20260423190209-1102e671d216` → `v2.0.1` | none (SIV path already correct) | `framework-ui/v2.0.1` |
-| `extensions/websocket` | delete `replace github.com/franchb/htmgo/framework/v2 => ../../framework`; change `require github.com/franchb/htmgo/framework/v2 v2.0.0-20260423190209-1102e671d216` → `v2.0.1` | none | `extensions/websocket/v2.0.1` |
+| `cli/htmgo` | `module …/cli/htmgo` → `module …/cli/htmgo/v2`; delete two `replace` lines. `require` pseudo-versions of `framework/v2` and `tools/html-to-htmgo/v2` are left unchanged (see correction below). | Rewrite all internal imports `…/cli/htmgo/<pkg>` → `…/cli/htmgo/v2/<pkg>` across runner.go, watcher.go, signals.go, every `tasks/*` package, `internal/**`, and tests | `cli/htmgo/v2.0.1` |
+| `framework-ui` | delete `replace github.com/franchb/htmgo/framework/v2 => ../framework`. `require` pseudo-version left unchanged. | none (SIV path already correct) | `framework-ui/v2.0.1` |
+| `extensions/websocket` | delete `replace github.com/franchb/htmgo/framework/v2 => ../../framework`. `require` pseudo-version left unchanged. | none | `extensions/websocket/v2.0.1` |
+
+> **Correction (noted during implementation of #14):** An earlier draft
+> of this design bumped the `require framework/v2` and `require
+> tools/html-to-htmgo/v2` pseudo-versions to `v2.0.1` on the fix commit.
+> That breaks `go build` on the fix branch because Go's workspace
+> overrides a module's *implementation* but not the version selection in
+> its `go.mod` — the require version still has to be resolvable, and
+> `v2.0.1` doesn't exist as a tag until post-merge. Keeping the existing
+> pseudo-versions is safe because `framework/v2.0.0` and
+> `tools/html-to-htmgo/v2.0.0` are packaged correctly, so the
+> pseudo-versions pointing at the `v2.0.0` commit resolve fine. Bumping
+> the require lines gains no downstream benefit and would need a
+> two-step release to avoid a broken intermediate state.
 | `framework` | version-only republish | none | `framework/v2.0.1` |
 | `tools/html-to-htmgo` | version-only republish | none | `tools/html-to-htmgo/v2.0.1` |
 

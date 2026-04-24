@@ -20,10 +20,10 @@
 
 **Modify:**
 - `.gitignore` — add `go.work.sum`.
-- `cli/htmgo/go.mod` — module path, two `replace` lines, two `require` pseudo-versions.
+- `cli/htmgo/go.mod` — module path (`cli/htmgo` → `cli/htmgo/v2`) + delete two `replace` lines. The `require` pseudo-versions of `framework/v2` and `tools/html-to-htmgo/v2` are left unchanged.
 - `cli/htmgo/**/*.go` — 46 internal import statements across 13 subpackage roots (listed below).
-- `framework-ui/go.mod` — one `replace` line, one `require` pseudo-version.
-- `extensions/websocket/go.mod` — one `replace` line, one `require` pseudo-version.
+- `framework-ui/go.mod` — delete one `replace` line. `require` pseudo-version left unchanged.
+- `extensions/websocket/go.mod` — delete one `replace` line. `require` pseudo-version left unchanged.
 - `CHANGELOG.md` — add `v2.0.1` entry; correct the v2.0.0 note about CLI install path.
 - `.github/workflows/verify-installer-works.yml` — add a job that installs via the public `cli/htmgo/v2@latest` path to guard the regression.
 - `htmgo-site/pages/docs/installation.go` — change install snippet from `cli/htmgo@latest` to `cli/htmgo/v2@latest`.
@@ -36,7 +36,7 @@
 - `framework/assets/js/**` — unrelated to this fix.
 
 **Critical invariant during this work:**
-> **Do NOT run `go mod tidy`** in any module during this work. The new `require …/framework/v2 v2.0.1` lines will be committed before the `framework/v2.0.1` tag is pushed. `go mod tidy` consults the module proxy and may rewrite the line back to a pseudo-version. The root `go.work` resolves sibling modules from disk for local builds, so tidy is not needed.
+> **Do NOT run `go mod tidy`** in any module during this work. Tidy may rewrite require pseudo-versions based on what the proxy currently knows, and this can subtly churn the go.mod lines we're deliberately leaving untouched. The root `go.work` resolves sibling modules from disk for local builds, so tidy is not needed.
 
 ---
 
@@ -398,19 +398,12 @@ EOF
 
 - [ ] **Step 1: Edit `go.mod`**
 
-  (a) Change:
-  ```
-  require github.com/franchb/htmgo/framework/v2 v2.0.0-20260423190209-1102e671d216
-  ```
-  to:
-  ```
-  require github.com/franchb/htmgo/framework/v2 v2.0.1
-  ```
-
-  (b) Delete:
+  Delete only this line:
   ```
   replace github.com/franchb/htmgo/framework/v2 => ../framework
   ```
+
+  **Do NOT bump the `require github.com/franchb/htmgo/framework/v2 v2.0.0-…<pseudo>` line.** Go's workspace overrides the module's *implementation* but still uses the `require` version for module-graph resolution — if we bumped to `v2.0.1` before the tag exists, `go build` would try to fetch it from the proxy and fail. The existing pseudo-version points to a correctly-packaged `framework/v2.0.0` module and works fine.
 
 - [ ] **Step 2: Verify the edits**
 
@@ -420,10 +413,10 @@ grep -E "^replace|framework/v2 " framework-ui/go.mod
 
 Expected:
 ```
-require github.com/franchb/htmgo/framework/v2 v2.0.1
+require github.com/franchb/htmgo/framework/v2 v2.0.0-20260423190209-1102e671d216
 ```
 
-(Zero `replace` lines, one `v2.0.1` require.)
+(Zero `replace` lines; the existing pseudo-version require is unchanged.)
 
 - [ ] **Step 3: Verify build**
 
@@ -444,7 +437,8 @@ The sibling `replace github.com/franchb/htmgo/framework/v2 => ../framework`
 directive is rejected by Go when framework-ui is fetched as a dependency.
 Local monorepo dev now uses the root go.work for this resolution.
 
-Pin required framework/v2 to v2.0.1.
+The existing pseudo-version require `v2.0.0-…1102e671d216` of framework/v2
+is kept — framework/v2.0.0 is packaged correctly and resolves fine.
 EOF
 )"
 ```
@@ -458,19 +452,12 @@ EOF
 
 - [ ] **Step 1: Edit `go.mod`**
 
-  (a) In the `require (` block, change:
-  ```
-      github.com/franchb/htmgo/framework/v2 v2.0.0-20260423190209-1102e671d216
-  ```
-  to:
-  ```
-      github.com/franchb/htmgo/framework/v2 v2.0.1
-  ```
-
-  (b) Delete:
+  Delete only this line:
   ```
   replace github.com/franchb/htmgo/framework/v2 => ../../framework
   ```
+
+  **Do NOT bump the `require github.com/franchb/htmgo/framework/v2 v2.0.0-…<pseudo>` line** in the `require (` block — same reasoning as Task 6.
 
 - [ ] **Step 2: Verify the edits**
 
@@ -480,10 +467,10 @@ grep -E "^replace|framework/v2 v" extensions/websocket/go.mod
 
 Expected:
 ```
-	github.com/franchb/htmgo/framework/v2 v2.0.1
+	github.com/franchb/htmgo/framework/v2 v2.0.0-20260423190209-1102e671d216
 ```
 
-(Zero `replace` lines, one `v2.0.1` require.)
+(Zero `replace` lines; the existing pseudo-version require is unchanged.)
 
 - [ ] **Step 3: Verify build**
 
@@ -502,7 +489,8 @@ fix(extensions/websocket): remove sibling-path replace from go.mod — #14
 
 Same root cause as cli/htmgo and framework-ui: sibling `replace` rule
 violation blocked downstream `go get`. Root go.work handles local
-resolution; `require framework/v2 v2.0.1` pins to the upcoming tag.
+resolution. Existing pseudo-version require of framework/v2 is kept
+(same reasoning as Task 6).
 EOF
 )"
 ```
@@ -879,8 +867,8 @@ Fixes #14. Makes `go install github.com/franchb/htmgo/cli/htmgo/v2@v2.0.1` succe
 ## Changes
 
 - **New file:** root `go.work` listing the five v2 submodules. Local monorepo dev now resolves sibling modules from the workspace, not from in-`go.mod` `replace` directives.
-- **`cli/htmgo`:** module path renamed to `…/cli/htmgo/v2` (Go SIV compliance); 46 internal imports rewritten; two `replace` lines removed; two `require` pseudo-versions pinned to `v2.0.1`.
-- **`framework-ui`, `extensions/websocket`:** sibling `replace` removed; `framework/v2` require pinned to `v2.0.1`.
+- **`cli/htmgo`:** module path renamed to `…/cli/htmgo/v2` (Go SIV compliance); 46 internal imports rewritten; two `replace` lines removed. The existing pseudo-version `require` lines of `framework/v2` and `tools/html-to-htmgo/v2` are kept — `v2.0.0` of those modules is packaged correctly, so the pseudo-versions resolve fine.
+- **`framework-ui`, `extensions/websocket`:** sibling `replace` removed. Existing pseudo-version `require` of `framework/v2` kept (same reasoning).
 - **Docs:** `htmgo-site` install snippets and help text now point at `cli/htmgo/v2@latest`.
 - **Examples/templates:** 16 `go run cli/htmgo@latest` references updated to the `/v2` path (Taskfiles, Dockerfiles).
 - **CI:** new `verify-public-install` job guards the regression post-merge.
