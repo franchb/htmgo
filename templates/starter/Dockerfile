@@ -18,7 +18,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go binary for Linux
-RUN GOPRIVATE=github.com/franchb GOPROXY=direct go run github.com/franchb/htmgo/cli/htmgo@latest build
+RUN GOPRIVATE=github.com/franchb GOPROXY=direct go run github.com/franchb/htmgo/cli/htmgo/v2@latest build
 
 
 # Stage 2: Create the smallest possible image

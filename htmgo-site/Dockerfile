@@ -21,7 +21,7 @@ COPY . .
 RUN npm install
 
 # Build the Go binary for Linux
-RUN LOG_LEVEL=debug GOPRIVATE=github.com/franchb GOPROXY=direct go run github.com/franchb/htmgo/cli/htmgo@latest build
+RUN LOG_LEVEL=debug GOPRIVATE=github.com/franchb GOPROXY=direct go run github.com/franchb/htmgo/cli/htmgo/v2@latest build
 
 
 # Stage 2: Create the smallest possible image
