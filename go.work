@@ -1,0 +1,9 @@
+go 1.26
+
+use (
+	./cli/htmgo
+	./extensions/websocket
+	./framework
+	./framework-ui
+	./tools/html-to-htmgo
+)
