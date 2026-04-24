@@ -37,6 +37,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/franchb/htmgo/framework/v2 => ../../framework
-
-replace github.com/franchb/htmgo/tools/html-to-htmgo/v2 => ../../tools/html-to-htmgo
