@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-04-24
+
+### Fixed
+
+- **`cli/htmgo` install.** `cli/htmgo/go.mod` now declares the `/v2` module path required by Go's Semantic Import Versioning rules (`module github.com/franchb/htmgo/cli/htmgo/v2`). The install invocation is now `go install github.com/franchb/htmgo/cli/htmgo/v2@v2.0.1`. The binary name (`htmgo`) is unchanged. See [#14](https://github.com/franchb/htmgo/issues/14).
+- **Sibling `replace` directives removed.** `cli/htmgo`, `framework-ui`, and `extensions/websocket` `go.mod` files no longer contain `replace github.com/franchb/htmgo/... => ../...` lines. These violated Go's rule that non-main modules must not carry local-path replaces and blocked all three from `go get` / `go install`. Local monorepo development now uses a root `go.work` file.
+
+### Changed
+
+- **Install path for `go install` / `go run` users.** All docs (`htmgo-site`), Dockerfiles, and Taskfiles under `examples/`, `templates/`, and `htmgo-site/` now reference `github.com/franchb/htmgo/cli/htmgo/v2@latest` instead of `github.com/franchb/htmgo/cli/htmgo@latest`. The old path still resolves to the v1.1.1 CLI (the last tag under the v1 module path), which is incompatible with `framework/v2`.
+
+### Chore
+
+- `framework/v2.0.1` and `tools/html-to-htmgo/v2.0.1` are republished at the fix commit with **no code change** so all five v2 submodule versions stay aligned.
+
 ## [2.0.0] - 2026-04-23
 
 **Module path migration to `/v2` (Go Semantic Import Versioning).** All importable library modules moved to `/v2` import paths. Update your imports:
@@ -15,7 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `github.com/franchb/htmgo/tools/html-to-htmgo` → `github.com/franchb/htmgo/tools/html-to-htmgo/v2`
 - `github.com/franchb/htmgo/extensions/websocket` → `github.com/franchb/htmgo/extensions/websocket/v2`
 
-The CLI (`github.com/franchb/htmgo/cli/htmgo`) is a binary and keeps its path unchanged — continue using `go run github.com/franchb/htmgo/cli/htmgo@latest` (or `@v2.0.0`).
+> **Correction (v2.0.1):** The claim that the CLI path was unchanged was incorrect. Go's Semantic Import Versioning applies to any submodule with its own `go.mod` at major ≥ 2, and the `v2.0.0` CLI tags are un-installable as a result. See [CHANGELOG v2.0.1](#201---2026-04-24) and [#14](https://github.com/franchb/htmgo/issues/14). Use `go install github.com/franchb/htmgo/cli/htmgo/v2@v2.0.1` or later.
 
 v2.0.0 rolls in everything from the `1.2.0-beta.1` pre-release (htmx 4 migration) plus the Alpine.js compatibility work — see the sections below.
 
