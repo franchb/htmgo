@@ -33,6 +33,13 @@ jobs:
       # We copy templates/starter instead of running `htmgo template` (which
       # clones master from GitHub and would miss changes on this branch).
       - name: Generate myapp template
+        # GOWORK=off so myapp (generated inside the monorepo tree in CI)
+        # is treated as a standalone module — a real downstream consumer
+        # would not be inside our workspace. Without this, the root
+        # go.work would cause "current directory is contained in a
+        # module that is not one of the workspace modules".
+        env:
+          GOWORK: 'off'
         run: |
           cp -r templates/starter myapp
           cd myapp
@@ -45,6 +52,8 @@ jobs:
 
       # Step 5: Build the app
       - name: Build myapp
+        env:
+          GOWORK: 'off'
         run: |
           cd myapp
           htmgo build
