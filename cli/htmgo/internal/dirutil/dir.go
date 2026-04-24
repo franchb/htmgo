@@ -3,7 +3,7 @@ package dirutil
 import (
 	"errors"
 	"fmt"
-	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/process"
 	"github.com/franchb/htmgo/framework/v2/config"
 	"io"
 	"log/slog"

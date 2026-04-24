@@ -2,10 +2,10 @@ package copyassets
 
 import (
 	"fmt"
-	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
-	"github.com/franchb/htmgo/cli/htmgo/internal/tailwind"
-	"github.com/franchb/htmgo/cli/htmgo/tasks/module"
-	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/cli/htmgo/v2/internal/dirutil"
+	"github.com/franchb/htmgo/cli/htmgo/v2/internal/tailwind"
+	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/module"
+	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/process"
 	"golang.org/x/mod/modfile"
 	"log"
 	"os"

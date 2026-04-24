@@ -1,4 +1,4 @@
-module github.com/franchb/htmgo/cli/htmgo
+module github.com/franchb/htmgo/cli/htmgo/v2
 
 go 1.26
 

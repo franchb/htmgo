@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/franchb/htmgo/cli/htmgo/internal"
-	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
-	"github.com/franchb/htmgo/cli/htmgo/tasks/module"
+	"github.com/franchb/htmgo/cli/htmgo/v2/internal"
+	"github.com/franchb/htmgo/cli/htmgo/v2/internal/dirutil"
+	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/module"
 )
 
 func startWatcher(cb func(version string, file []*fsnotify.Event)) {

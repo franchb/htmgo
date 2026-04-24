@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/franchb/htmgo/cli/htmgo/internal/dirutil"
-	"github.com/franchb/htmgo/cli/htmgo/internal/tailwind"
-	"github.com/franchb/htmgo/cli/htmgo/tasks/copyassets"
-	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/cli/htmgo/v2/internal/dirutil"
+	"github.com/franchb/htmgo/cli/htmgo/v2/internal/tailwind"
+	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/copyassets"
+	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/process"
 )
 
 func resolveVersion() string {
