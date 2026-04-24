@@ -33,6 +33,13 @@ jobs:
       # We copy templates/starter instead of running `htmgo template` (which
       # clones master from GitHub and would miss changes on this branch).
       - name: Generate myapp template
+        # GOWORK=off so myapp (generated inside the monorepo tree in CI)
+        # is treated as a standalone module — a real downstream consumer
+        # would not be inside our workspace. Without this, the root
+        # go.work would cause "current directory is contained in a
+        # module that is not one of the workspace modules".
+        env:
+          GOWORK: 'off'
         run: |
           cp -r templates/starter myapp
           cd myapp
@@ -45,6 +52,8 @@ jobs:
 
       # Step 5: Build the app
       - name: Build myapp
+        env:
+          GOWORK: 'off'
         run: |
           cd myapp
           htmgo build
@@ -72,3 +81,24 @@ jobs:
       - name: Test server with curl
         run: |
           curl --fail http://localhost:3000 || exit 1
+
+  verify-public-install:
+    # Runs on push to master after tags are published. Confirms the
+    # public install path works. Do not run on PRs — the tag may not
+    # exist yet for the version being shipped.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.26'
+
+      - name: Install htmgo CLI from public module proxy
+        run: |
+          GOPROXY=https://proxy.golang.org,direct \
+            go install github.com/franchb/htmgo/cli/htmgo/v2@latest
+
+      - name: Verify CLI binary runs
+        run: |
+          htmgo version

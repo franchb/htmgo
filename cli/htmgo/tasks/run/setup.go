@@ -1,7 +1,7 @@
 package run
 
 import (
-	"github.com/franchb/htmgo/cli/htmgo/tasks/process"
+	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/process"
 )
 
 func Setup() {

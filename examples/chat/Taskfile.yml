@@ -3,12 +3,12 @@ version: '3'
 tasks:
   run:
     cmds:
-      - go run github.com/franchb/htmgo/cli/htmgo@latest run
+      - go run github.com/franchb/htmgo/cli/htmgo/v2@latest run
     silent: true
 
   build:
     cmds:
-      - go run github.com/franchb/htmgo/cli/htmgo@latest build
+      - go run github.com/franchb/htmgo/cli/htmgo/v2@latest build
 
   docker:
     cmds:
@@ -16,5 +16,5 @@ tasks:
 
   watch:
     cmds:
-      - go run github.com/franchb/htmgo/cli/htmgo@latest watch
+      - go run github.com/franchb/htmgo/cli/htmgo/v2@latest watch
     silent: true

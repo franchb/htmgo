@@ -1,0 +1,10 @@
+go 1.26
+
+use (
+	./cli/htmgo
+	./cli/htmgo/tasks/astgen/project-sample
+	./extensions/websocket
+	./framework
+	./framework-ui
+	./tools/html-to-htmgo
+)

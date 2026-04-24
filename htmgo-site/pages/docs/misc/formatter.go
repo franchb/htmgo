@@ -16,7 +16,7 @@ func Formatter(ctx *h.RequestContext) *h.Page {
 				htmgo has a built-in formatter that can be used to format htmgo element blocks.
 				It is available through the 'htmgo' cli tool that is installed with htmgo.
 			`),
-			HelpText(`Note: if you have previously installed htmgo, you will need to run GOPROXY=direct go install github.com/franchb/htmgo/cli/htmgo@latest to update the cli tool.`),
+			HelpText(`Note: if you have previously installed htmgo, you will need to run GOPROXY=direct go install github.com/franchb/htmgo/cli/htmgo/v2@latest to update the cli tool.`),
 			Text("Usage:"),
 			ui.SingleLineBashCodeSnippet(`htmgo format .`),
 			HelpText(`This will format all htmgo element blocks in your project recursively.`),
