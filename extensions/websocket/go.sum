@@ -2,8 +2,8 @@ github.com/andybalholm/brotli v1.2.1 h1:R+f5xP285VArJDRgowrfb9DqL18yVK0gKAW/F+eT
 github.com/andybalholm/brotli v1.2.1/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/franchb/htmgo/framework/v2 v2.0.0-20260423190209-1102e671d216 h1:Gv6eiuPuBkrJmUxgwE+v1Eg+cAlBI191oxYWZOhMtYo=
-github.com/franchb/htmgo/framework/v2 v2.0.0-20260423190209-1102e671d216/go.mod h1:gCKmKZMt0Mz9XN26oS4FfpbgkZxM3iMfwz7aDRJltSw=
+github.com/franchb/htmgo/framework/v2 v2.0.2-0.20260505083052-20186dc510d0 h1:H1T444QCsHVfFzImOq5PU3K+dHb0IC2JtQn0XCNcUYk=
+github.com/franchb/htmgo/framework/v2 v2.0.2-0.20260505083052-20186dc510d0/go.mod h1:Ysv0tlW5KUr1zbXZa/zsE0OP8vAQiN9LqIpE+5g7vQY=
 github.com/fxamacker/cbor/v2 v2.9.1 h1:2rWm8B193Ll4VdjsJY28jxs70IdDsHRWgQYAI80+rMQ=
 github.com/fxamacker/cbor/v2 v2.9.1/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gobwas/httphead v0.1.0 h1:exrUm0f4YX0L7EBwZHuCF4GDp8aJfVeBrlLQrs6NqWU=
