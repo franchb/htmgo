@@ -15,13 +15,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           persist-credentials: false  # Necessary to avoid using the runner's credentials for commit
           fetch-depth: 0  # Full history for committing back changes
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v6
         with:
           go-version: ">=1.20"
 
