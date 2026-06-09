@@ -2,8 +2,8 @@ version: 2
 updates:
   - package-ecosystem: "gomod"
     commit-message:
-      prefix: "deps:"
-    directory: "/"
+      prefix: "deps(framework):"
+    directory: "framework"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -12,8 +12,65 @@ updates:
     cooldown:
       default-days: 3
       semver-major-days: 7
+  - package-ecosystem: "gomod"
+    commit-message:
+      prefix: "deps(framework-ui):"
+    directory: "framework-ui"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "12:00"
+      timezone: "UTC"
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+  - package-ecosystem: "gomod"
+    commit-message:
+      prefix: "deps(templates/starter):"
+    directory: "templates/starter"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "12:00"
+      timezone: "UTC"
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+  - package-ecosystem: "gomod"
+    commit-message:
+      prefix: "deps(cli):"
+    directory: "cli"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "12:00"
+      timezone: "UTC"
+    cooldown:
+      default-days: 3
+      semver-major-days: 7       
+  - package-ecosystem: "gomod"
+    commit-message:
+      prefix: "deps(extensions/websocket):"
+    directory: "extensions/websocket"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "12:00"
+      timezone: "UTC"
+  - package-ecosystem: "gomod"
+    commit-message:
+      prefix: "deps(htmgo-site):"
+    directory: "htmgo-site"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "12:00"
+      timezone: "UTC"      
+    cooldown:
+      default-days: 3
+      semver-major-days: 7         
   - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
+    directory: "htmgo-site" # Location of package manifests
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
