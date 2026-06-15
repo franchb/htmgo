@@ -5,7 +5,7 @@ go 1.26
 toolchain go1.26.0
 
 require (
-	github.com/franchb/htmgo/framework/v2 v2.0.2-0.20260505083052-20186dc510d0
+	github.com/franchb/htmgo/framework/v2 v2.0.2
 	github.com/gobwas/ws v1.4.0
 	github.com/gofiber/fiber/v3 v3.3.0
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
@@ -29,8 +29,8 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.71.0 // indirect
 	golang.org/x/crypto v0.51.0 // indirect
-	golang.org/x/net v0.54.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
