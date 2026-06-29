@@ -4,7 +4,7 @@ go 1.26
 
 toolchain go1.26.0
 
-require github.com/franchb/htmgo/framework/v2 v2.0.2
+require github.com/franchb/htmgo/framework/v2 v2.0.3-0.20260629073912-4bd91c72b30a
 
 require (
 	github.com/andybalholm/brotli v1.2.1 // indirect
@@ -19,9 +19,9 @@ require (
 	github.com/tinylib/msgp v1.6.4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.71.0 // indirect
-	golang.org/x/crypto v0.51.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
