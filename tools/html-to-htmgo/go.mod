@@ -6,9 +6,9 @@ toolchain go1.26.0
 
 require (
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/net v0.53.0
-	golang.org/x/text v0.36.0
-	golang.org/x/tools v0.43.0
+	golang.org/x/net v0.55.0
+	golang.org/x/text v0.37.0
+	golang.org/x/tools v0.44.0
 )
 
 require (
