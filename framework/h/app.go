@@ -153,6 +153,9 @@ type AppOpts struct {
 	ServiceLocator *service.Locator
 	Register       func(app *App)
 	Port           int
+	// FiberConfig, when non-nil, is passed verbatim to fiber.New. Nil keeps
+	// Fiber defaults (previous behavior).
+	FiberConfig *fiber.Config
 }
 
 type App struct {
@@ -160,9 +163,18 @@ type App struct {
 	Router *fiber.App
 }
 
+// newFiberApp builds the underlying fiber app, honoring an optional caller
+// config (trusted proxies, body limits, ...).
+func newFiberApp(opts AppOpts) *fiber.App {
+	if opts.FiberConfig != nil {
+		return fiber.New(*opts.FiberConfig)
+	}
+	return fiber.New()
+}
+
 // Start starts the htmgo server
 func Start(opts AppOpts) {
-	fiberApp := fiber.New()
+	fiberApp := newFiberApp(opts)
 	instance := App{
 		Opts:   opts,
 		Router: fiberApp,
