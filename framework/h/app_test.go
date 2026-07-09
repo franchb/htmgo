@@ -126,16 +126,14 @@ func TestRequestContext_HxSource(t *testing.T) {
 }
 
 func TestNewFiberAppUsesProvidedConfig(t *testing.T) {
+	t.Parallel()
 	cfg := &fiber.Config{ProxyHeader: fiber.HeaderXForwardedFor}
 	app := newFiberApp(AppOpts{FiberConfig: cfg})
-	if got := app.Config().ProxyHeader; got != fiber.HeaderXForwardedFor {
-		t.Fatalf("ProxyHeader = %q, want %q", got, fiber.HeaderXForwardedFor)
-	}
+	assert.Equal(t, fiber.HeaderXForwardedFor, app.Config().ProxyHeader)
 }
 
 func TestNewFiberAppNilConfigKeepsDefaults(t *testing.T) {
+	t.Parallel()
 	app := newFiberApp(AppOpts{})
-	if got := app.Config().ProxyHeader; got != "" {
-		t.Fatalf("ProxyHeader = %q, want empty default", got)
-	}
+	assert.Empty(t, app.Config().ProxyHeader)
 }
