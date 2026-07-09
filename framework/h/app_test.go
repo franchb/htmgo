@@ -124,3 +124,16 @@ func TestRequestContext_HxSource(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, called, "handler must be invoked")
 }
+
+func TestNewFiberAppUsesProvidedConfig(t *testing.T) {
+	t.Parallel()
+	cfg := &fiber.Config{ProxyHeader: fiber.HeaderXForwardedFor}
+	app := newFiberApp(AppOpts{FiberConfig: cfg})
+	assert.Equal(t, fiber.HeaderXForwardedFor, app.Config().ProxyHeader)
+}
+
+func TestNewFiberAppNilConfigKeepsDefaults(t *testing.T) {
+	t.Parallel()
+	app := newFiberApp(AppOpts{})
+	assert.Empty(t, app.Config().ProxyHeader)
+}
