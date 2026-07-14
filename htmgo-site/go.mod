@@ -6,8 +6,8 @@ toolchain go1.26.0
 
 require (
 	github.com/alecthomas/chroma/v2 v2.23.1
-	github.com/franchb/htmgo/framework/v2 v2.0.3-0.20260709020930-c71ade56f75d
-	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.0.3-0.20260709020930-c71ade56f75d
+	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20260714142045-9ef3389f9f5b
+	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20260714142045-9ef3389f9f5b
 	github.com/gofiber/fiber/v3 v3.4.0
 	github.com/google/uuid v1.6.0
 	github.com/yuin/goldmark v1.8.2
@@ -26,11 +26,11 @@ require (
 	github.com/tinylib/msgp v1.6.4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.72.0 // indirect
-	golang.org/x/crypto v0.53.0 // indirect
-	golang.org/x/net v0.56.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
-	golang.org/x/tools v0.45.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/tools v0.47.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
