@@ -43,6 +43,23 @@ func IndexPage(ctx *h.RequestContext) *h.Page {
 
 View documentation on [htmgo.dev](https://htmgo.dev/docs).
 
+## What this fork adds
+
+This is a maintained fork of upstream [`maddalax/htmgo`](https://github.com/maddalax/htmgo).
+It keeps the original's design and API shape while modernizing the stack and adding
+new capabilities:
+
+- **Fiber v3 routing** — replaces `go-chi/chi/v5` with [`gofiber/fiber/v3`](https://github.com/gofiber/fiber). `RequestContext` wraps `fiber.Ctx`, and `AppOpts.FiberConfig` exposes the underlying Fiber config.
+- **htmx 4** — upgraded to htmx `4.0.0-beta2` (from htmx 2). Colon-form event constants, explicit attribute inheritance via `Hx*Inherited` helpers, self-registering extensions (no more `hx-ext`), and all JS extensions rewritten for htmx 4's `registerExtension` API. New helpers: `HxSource`, `HxSourceID`, `HxRequestType`, `StatusAttr`, `ConfigAttr`.
+- **Alpine.js integration** — a bundled `alpine-compat` htmx extension preserves Alpine state across morph swaps, plus a new `framework/ax/` Go package with Alpine directive builders that mirror `framework/hx/`.
+- **Tailwind CSS v4** — docs site and starter template migrated to Tailwind v4 (CSS-based config, no `tailwind.config.js`).
+- **Go 1.26** across all modules (up from 1.23).
+- **`/v2` module paths** — all library modules follow Go Semantic Import Versioning (e.g. `github.com/franchb/htmgo/framework/v2`). Install the CLI with `go install github.com/franchb/htmgo/cli/htmgo/v2@latest`.
+- **Performance audit** — WebSocket leak fixes, config-aware static-asset prefixing, buffer-pool caps, and other subsystem-wide improvements.
+- **Project hygiene** — a Keep-a-Changelog [`CHANGELOG.md`](CHANGELOG.md), Dependabot for Go / GitHub Actions / npm, a `vitest` suite for the JS extensions, and Cloudflare Pages docs hosting at [htmgo.franchb.com](https://htmgo.franchb.com).
+
+See [`CHANGELOG.md`](CHANGELOG.md) for the full 2.0.0 breaking-change list and migration recipe.
+
 ## Claude Code skills
 
 This repo ships [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) skills under `.claude/skills/` that teach AI coding sessions how to work with htmgo:
