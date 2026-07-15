@@ -5,13 +5,7 @@
 -------
 [![Go Report Card](https://goreportcard.com/badge/github.com/franchb/htmgo)](https://goreportcard.com/report/github.com/franchb/htmgo)
 ![Build](https://github.com/franchb/htmgo/actions/workflows/run-framework-tests.yml/badge.svg)
-[![Go Reference](https://pkg.go.dev/badge/github.com/franchb/htmgo/framework/v2/h.svg)](https://htmgo.dev/docs)
-[![Join Discord](https://img.shields.io/badge/Join%20Discord-gray?style=flat&logo=discord&logoColor=white&link=https://htmgo.dev/discord)](https://htmgo.dev/discord)
-
-
-
-
-<sup>looking for a python version? check out: https://fastht.ml</sup>
+[![Go Reference](https://pkg.go.dev/badge/github.com/franchb/htmgo/framework/v2/h.svg)](https://pkg.go.dev/github.com/franchb/htmgo/framework/v2/h)
 
 **introduction:**
 
@@ -37,11 +31,11 @@ func IndexPage(ctx *h.RequestContext) *h.Page {
 2. live reload (rebuilds css, go, ent schema, and routes upon change)
 3. automatic page and partial registration based on file path
 4. built in tailwindcss support, no need to configure anything by default
-5. custom [htmx extensions](https://github.com/franchb/htmgo/tree/b610aefa36e648b98a13823a6f8d87566120cfcc/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
+5. custom [htmx extensions](https://github.com/franchb/htmgo/tree/master/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
 
 **get started:**
 
-View documentation on [htmgo.dev](https://htmgo.dev/docs).
+View documentation on [htmgo.franchb.com](https://htmgo.franchb.com/docs).
 
 ## What this fork adds
 
