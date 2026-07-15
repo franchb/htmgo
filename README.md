@@ -5,13 +5,7 @@
 -------
 [![Go Report Card](https://goreportcard.com/badge/github.com/franchb/htmgo)](https://goreportcard.com/report/github.com/franchb/htmgo)
 ![Build](https://github.com/franchb/htmgo/actions/workflows/run-framework-tests.yml/badge.svg)
-[![Go Reference](https://pkg.go.dev/badge/github.com/franchb/htmgo/framework/v2/h.svg)](https://htmgo.dev/docs)
-[![Join Discord](https://img.shields.io/badge/Join%20Discord-gray?style=flat&logo=discord&logoColor=white&link=https://htmgo.dev/discord)](https://htmgo.dev/discord)
-
-
-
-
-<sup>looking for a python version? check out: https://fastht.ml</sup>
+[![Go Reference](https://pkg.go.dev/badge/github.com/franchb/htmgo/framework/v2/h.svg)](https://pkg.go.dev/github.com/franchb/htmgo/framework/v2/h)
 
 **introduction:**
 
@@ -37,11 +31,28 @@ func IndexPage(ctx *h.RequestContext) *h.Page {
 2. live reload (rebuilds css, go, ent schema, and routes upon change)
 3. automatic page and partial registration based on file path
 4. built in tailwindcss support, no need to configure anything by default
-5. custom [htmx extensions](https://github.com/franchb/htmgo/tree/b610aefa36e648b98a13823a6f8d87566120cfcc/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
+5. custom [htmx extensions](https://github.com/franchb/htmgo/tree/master/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
 
 **get started:**
 
-View documentation on [htmgo.dev](https://htmgo.dev/docs).
+View documentation on [htmgo.franchb.com](https://htmgo.franchb.com/docs).
+
+## What this fork adds
+
+This is a maintained fork of upstream [`maddalax/htmgo`](https://github.com/maddalax/htmgo).
+It keeps the original's design and API shape while modernizing the stack and adding
+new capabilities:
+
+- **Fiber v3 routing** — replaces `go-chi/chi/v5` with [`gofiber/fiber/v3`](https://github.com/gofiber/fiber). `RequestContext` wraps `fiber.Ctx`, and `AppOpts.FiberConfig` exposes the underlying Fiber config.
+- **htmx 4** — upgraded to htmx `4.0.0-beta2` (from htmx 2). Colon-form event constants, explicit attribute inheritance via `Hx*Inherited` helpers, self-registering extensions (no more `hx-ext`), and all JS extensions rewritten for htmx 4's `registerExtension` API. New helpers: `HxSource`, `HxSourceID`, `HxRequestType`, `StatusAttr`, `ConfigAttr`.
+- **Alpine.js integration** — a bundled `alpine-compat` htmx extension preserves Alpine state across morph swaps, plus a new `framework/ax/` Go package with Alpine directive builders that mirror `framework/hx/`.
+- **Tailwind CSS v4** — docs site and starter template migrated to Tailwind v4 (CSS-based config, no `tailwind.config.js`).
+- **Go 1.26** across all modules (up from 1.23).
+- **`/v2` module paths** — all library modules follow Go Semantic Import Versioning (e.g. `github.com/franchb/htmgo/framework/v2`). Install the CLI with `go install github.com/franchb/htmgo/cli/htmgo/v2@latest`.
+- **Performance audit** — WebSocket leak fixes, config-aware static-asset prefixing, buffer-pool caps, and other subsystem-wide improvements.
+- **Project hygiene** — a Keep-a-Changelog [`CHANGELOG.md`](CHANGELOG.md), Dependabot for Go / GitHub Actions / npm, a `vitest` suite for the JS extensions, and Cloudflare Pages docs hosting at [htmgo.franchb.com](https://htmgo.franchb.com).
+
+See [`CHANGELOG.md`](CHANGELOG.md) for the full 2.0.0 breaking-change list and migration recipe.
 
 ## Claude Code skills
 
