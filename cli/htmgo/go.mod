@@ -3,8 +3,8 @@ module github.com/franchb/htmgo/cli/htmgo/v2
 go 1.26
 
 require (
-	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20260714142045-9ef3389f9f5b
-	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20260714142045-9ef3389f9f5b
+	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20260805125541-0e47199aea6e
+	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20260805125541-0e47199aea6e
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.37.0
