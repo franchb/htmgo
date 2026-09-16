@@ -1,7 +1,7 @@
 github.com/andybalholm/brotli v1.2.2 h1:HzTuoo2ErYQqf5qvcJInB8uvqSVxRttzkFexPWtnceM=
 github.com/andybalholm/brotli v1.2.2/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
-github.com/franchb/htmgo/framework/v2 v2.0.5-0.20260820072959-55e7367b5255 h1:csCueJyR6HLot8ehckO6//MVZQbBDDBSj+owU/+OAvw=
-github.com/franchb/htmgo/framework/v2 v2.0.5-0.20260820072959-55e7367b5255/go.mod h1:MJRbUUD8V7pQNK4PO9fiil+env6KvCjK2mib9BcfvvI=
+github.com/franchb/htmgo/framework/v2 v2.0.5-0.20260916070739-9cbd7316047f h1:s6+cPE/ehDPhx+dClEkGD4d2HwJKZO5qYOuJYUwJ+4c=
+github.com/franchb/htmgo/framework/v2 v2.0.5-0.20260916070739-9cbd7316047f/go.mod h1:5Hrw7tyjZp87mFp/f8NXlQiyCFe03ZNY6vuOFmMZ8z4=
 github.com/fxamacker/cbor/v2 v2.9.2 h1:X4Ksno9+x3cz0TZv69ec1hxP/+tymuR8PXQJyDwfh78=
 github.com/fxamacker/cbor/v2 v2.9.2/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gobwas/httphead v0.1.0 h1:exrUm0f4YX0L7EBwZHuCF4GDp8aJfVeBrlLQrs6NqWU=
