@@ -2,7 +2,7 @@ module github.com/franchb/htmgo/framework-ui/v2
 
 go 1.26.0
 
-require github.com/franchb/htmgo/framework/v2 v2.0.5-0.20260920210718-a8bb8e7140fa
+require github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261002132359-daf092f0eb3d
 
 require (
 	github.com/gofiber/fiber/v3 v3.5.0 // indirect
