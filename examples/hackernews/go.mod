@@ -1,6 +1,6 @@
 module hackernews
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261002132359-daf092f0eb3d

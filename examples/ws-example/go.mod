@@ -1,6 +1,6 @@
 module ws-example
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/franchb/htmgo/extensions/websocket/v2 v2.0.0-00010101000000-000000000000

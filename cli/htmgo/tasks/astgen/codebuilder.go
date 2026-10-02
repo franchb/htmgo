@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"slices"
 	"strings"
 	"text/template"
 )
@@ -93,8 +94,8 @@ func (cb *CodeBuilder) String() string {
 		return cb.builder.String()
 	}
 	var out strings.Builder
-	for i := len(cb.prepends) - 1; i >= 0; i-- {
-		out.WriteString(cb.prepends[i])
+	for _, v := range slices.Backward(cb.prepends) {
+		out.WriteString(v)
 		out.WriteString("\n")
 	}
 	out.WriteString(cb.builder.String())
