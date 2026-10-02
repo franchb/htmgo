@@ -541,7 +541,7 @@ func TestLRUStore_GetOrCompute_Concurrent(t *testing.T) {
 	store := NewLRUStore[string, string](100)
 	defer store.Close()
 
-	var computeCount int32
+	var computeCount atomic.Int32
 	const numGoroutines = 100
 
 	var wg sync.WaitGroup
@@ -554,7 +554,7 @@ func TestLRUStore_GetOrCompute_Concurrent(t *testing.T) {
 
 			result := store.GetOrCompute("shared-key", func() string {
 				// Increment atomically to count calls
-				atomic.AddInt32(&computeCount, 1)
+				computeCount.Add(1)
 				// Simulate some work
 				time.Sleep(10 * time.Millisecond)
 				return "shared-value"
@@ -569,8 +569,8 @@ func TestLRUStore_GetOrCompute_Concurrent(t *testing.T) {
 	wg.Wait()
 
 	// Only one goroutine should have computed the value
-	if computeCount != 1 {
-		t.Errorf("Expected exactly 1 compute for concurrent access, got %d", computeCount)
+	if computeCount.Load() != 1 {
+		t.Errorf("Expected exactly 1 compute for concurrent access, got %d", computeCount.Load())
 	}
 }
 

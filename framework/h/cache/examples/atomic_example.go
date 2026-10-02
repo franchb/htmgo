@@ -32,7 +32,7 @@ func demonstrateProblem() {
 	fmt.Println("Without atomic guarantees (simulated):")
 	fmt.Println("Multiple goroutines checking cache and computing...")
 
-	var computeCount int32
+	var computeCount atomic.Int32
 	var wg sync.WaitGroup
 
 	// Simulate 10 goroutines trying to get the same uncached value
@@ -46,7 +46,7 @@ func demonstrateProblem() {
 
 			// All goroutines think the value is not cached
 			// so they all compute it
-			atomic.AddInt32(&computeCount, 1)
+			computeCount.Add(1)
 			fmt.Printf("Goroutine %d: Computing expensive value...\n", id)
 
 			// Simulate expensive computation
@@ -55,7 +55,7 @@ func demonstrateProblem() {
 	}
 
 	wg.Wait()
-	fmt.Printf("\nResult: Computed %d times (wasteful!)\n", computeCount)
+	fmt.Printf("\nResult: Computed %d times (wasteful!)\n", computeCount.Load())
 }
 
 // demonstrateSolution shows how GetOrCompute solves the problem
@@ -64,7 +64,7 @@ func demonstrateSolution() {
 	store := cache.NewTTLStore[string, string]()
 	defer store.Close()
 
-	var computeCount int32
+	var computeCount atomic.Int32
 	var wg sync.WaitGroup
 
 	fmt.Println("With GetOrCompute atomic guarantees:")
@@ -81,7 +81,7 @@ func demonstrateSolution() {
 			// All goroutines call GetOrCompute at the same time
 			result := store.GetOrCompute("expensive-key", func() string {
 				// Only ONE goroutine will execute this function
-				count := atomic.AddInt32(&computeCount, 1)
+				count := computeCount.Add(1)
 				fmt.Printf("Goroutine %d: Computing expensive value (computation #%d)\n", id, count)
 
 				// Simulate expensive computation
@@ -97,7 +97,7 @@ func demonstrateSolution() {
 	wg.Wait()
 	elapsed := time.Since(startTime)
 
-	fmt.Printf("\nResult: Computed only %d time (efficient!)\n", computeCount)
+	fmt.Printf("\nResult: Computed only %d time (efficient!)\n", computeCount.Load())
 	fmt.Printf("Total time: %v (vs ~500ms if all computed)\n", elapsed)
 }
 
@@ -105,12 +105,12 @@ func demonstrateSolution() {
 func ExampleCachedComponent() {
 	fmt.Println("\n=== Real-world htmgo Example ===")
 
-	var renderCount int32
+	var renderCount atomic.Int32
 
 	// Create a cached component that simulates fetching user data
 	UserProfile := h.CachedPerKeyT(5*time.Minute, func(userID int) (int, h.GetElementFunc) {
 		return userID, func() *h.Element {
-			count := atomic.AddInt32(&renderCount, 1)
+			count := renderCount.Add(1)
 			fmt.Printf("Fetching and rendering user %d (render #%d)\n", userID, count)
 
 			// Simulate database query
@@ -137,7 +137,7 @@ func ExampleCachedComponent() {
 	}
 
 	wg.Wait()
-	fmt.Printf("\nTotal renders: %d (only one, despite 5 concurrent requests!)\n", renderCount)
+	fmt.Printf("\nTotal renders: %d (only one, despite 5 concurrent requests!)\n", renderCount.Load())
 }
 
 // Example showing cache stampede prevention
@@ -147,12 +147,12 @@ func ExampleCacheStampedePrevention() {
 	store := cache.NewLRUStore[string, string](100)
 	defer store.Close()
 
-	var dbQueries int32
+	var dbQueries atomic.Int32
 
 	// Simulate a popular cache key expiring
 	fetchPopularData := func(key string) string {
 		return store.GetOrCompute(key, func() string {
-			queries := atomic.AddInt32(&dbQueries, 1)
+			queries := dbQueries.Add(1)
 			fmt.Printf("Database query #%d for key: %s\n", queries, key)
 
 			// Simulate slow database query
@@ -182,5 +182,5 @@ func ExampleCacheStampedePrevention() {
 	}
 
 	wg.Wait()
-	fmt.Printf("\nTotal database queries: %d (prevented 19 redundant queries!)\n", dbQueries)
+	fmt.Printf("\nTotal database queries: %d (prevented 19 redundant queries!)\n", dbQueries.Load())
 }

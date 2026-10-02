@@ -1,8 +1,9 @@
 module github.com/franchb/htmgo/cli/htmgo/v2
 
-go 1.26.0
+go 1.27.0
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.10.2
 	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261002132359-daf092f0eb3d
 	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20261002132359-daf092f0eb3d
 	github.com/fsnotify/fsnotify v1.10.1
@@ -27,10 +28,6 @@ require (
 	github.com/valyala/fasthttp v1.74.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
-)
-
-require (
-	github.com/bmatcuk/doublestar/v4 v4.10.2
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
