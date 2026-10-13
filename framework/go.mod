@@ -6,7 +6,7 @@ require (
 	github.com/gofiber/fiber/v3 v3.5.0
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.12.1
-	github.com/valyala/fasthttp v1.74.0
+	github.com/valyala/fasthttp v1.75.0
 	golang.org/x/net v0.59.0
 	gopkg.in/yaml.v3 v3.0.1
 )
