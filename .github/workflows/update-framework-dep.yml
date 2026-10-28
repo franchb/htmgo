@@ -20,13 +20,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false  # Necessary to avoid using the runner's credentials for commit
           fetch-depth: 0  # Full history for committing back changes
 
       - name: Set up Go
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           # Must satisfy go.work (go 1.27.0); ">=1.20" resolved to 1.26.8 and the
           # script failed with "go.work requires go >= 1.27.0".
