@@ -1,0 +1,82 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**' # Runs on any pull request to any branch
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: go (${{ matrix.module }}, ${{ matrix.go }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - framework
+          - framework-ui
+          - cli/htmgo
+          - extensions/websocket
+          - tools/html-to-htmgo
+        go:
+          - '1.27.x'
+          - stable
+    env:
+      GOWORK: 'off'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: ${{ matrix.module }}/go.sum
+
+      - name: go vet
+        working-directory: ${{ matrix.module }}
+        run: go vet ./...
+
+      - name: go test
+        working-directory: ${{ matrix.module }}
+        run: go test -race -coverprofile=coverage.txt ./...
+
+      - name: Upload results to Codecov
+        if: matrix.go == '1.27.x'
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ matrix.module }}/coverage.txt
+          flags: ${{ matrix.module }}
+
+  js:
+    name: js (framework/assets/js)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: framework/assets/js/package-lock.json
+
+      - name: npm ci
+        working-directory: framework/assets/js
+        run: npm ci
+
+      - name: vitest
+        working-directory: framework/assets/js
+        run: npm test
