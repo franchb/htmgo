@@ -2,7 +2,7 @@ module astgen-project-sample
 
 go 1.27.0
 
-require github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028144127-3f070fa29c1f
+require github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028202540-06de5b9987c4
 
 require (
 	github.com/gofiber/fiber/v3 v3.6.1 // indirect

@@ -1,5 +1,5 @@
-github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028144127-3f070fa29c1f h1:tRo1VdE15gHszFGM8Z+U0vLUgrUKLr8/oXJCBXZQxG0=
-github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028144127-3f070fa29c1f/go.mod h1:1QdUyVBbsL3MWNFYyy/7gB6es67dT7yNowbLI3o1sNQ=
+github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028202540-06de5b9987c4 h1:R+tZQjvPAiHOxDOtONqmqxyTB2S5k9aML96qs5dUQtk=
+github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028202540-06de5b9987c4/go.mod h1:1QdUyVBbsL3MWNFYyy/7gB6es67dT7yNowbLI3o1sNQ=
 github.com/fxamacker/cbor/v2 v2.9.6 h1:NHZPxuUjJXQjX9itA785y/5NKSlI4HQ+S7noZsmI7hs=
 github.com/fxamacker/cbor/v2 v2.9.6/go.mod h1:4EaZp6ClVunETjQ4GHmGNzysDK91Lr+r6Yz6tJqzVCw=
 github.com/gofiber/fiber/v3 v3.6.1 h1:wYjbgqpJm6VErIVLSGzGpX7lLZyTNgElsj8nQ1i+iFo=

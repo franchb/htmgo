@@ -1,9 +1,9 @@
 github.com/bmatcuk/doublestar/v4 v4.10.4 h1:oTKkRmRuOsKMqFe1AQazd9gGBFNEpOmgKp/xzB97dnA=
 github.com/bmatcuk/doublestar/v4 v4.10.4/go.mod h1:xBQ8jztBU6kakFMg+8WGxn0c6z1fTSPVIjEY1Wr7jzc=
-github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028144127-3f070fa29c1f h1:tRo1VdE15gHszFGM8Z+U0vLUgrUKLr8/oXJCBXZQxG0=
-github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028144127-3f070fa29c1f/go.mod h1:1QdUyVBbsL3MWNFYyy/7gB6es67dT7yNowbLI3o1sNQ=
-github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20261028144127-3f070fa29c1f h1:EbC3KLLbZSXC58R66d7Y7eJbQ1GlCnSeZ57VHHEC4vc=
-github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20261028144127-3f070fa29c1f/go.mod h1:d3/+3nruve2w7BSNv4SJjH4TAoaqHwZTKwgBescI2GM=
+github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028202540-06de5b9987c4 h1:R+tZQjvPAiHOxDOtONqmqxyTB2S5k9aML96qs5dUQtk=
+github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028202540-06de5b9987c4/go.mod h1:1QdUyVBbsL3MWNFYyy/7gB6es67dT7yNowbLI3o1sNQ=
+github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20261028202540-06de5b9987c4 h1:1ri6skJFOAMcpfOIvI2TLZV3Q9PsSUs59f8aG6luh0g=
+github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20261028202540-06de5b9987c4/go.mod h1:f0T0o2hqIbubXo22xgyT8Gvn29U8sxLa8lpsRjmHf9o=
 github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx59Ho=
 github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
 github.com/fxamacker/cbor/v2 v2.9.6 h1:NHZPxuUjJXQjX9itA785y/5NKSlI4HQ+S7noZsmI7hs=

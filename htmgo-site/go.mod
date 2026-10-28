@@ -4,8 +4,8 @@ go 1.27.0
 
 require (
 	github.com/alecthomas/chroma/v2 v2.27.0
-	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028144127-3f070fa29c1f
-	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20261028144127-3f070fa29c1f
+	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028202540-06de5b9987c4
+	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20261028202540-06de5b9987c4
 	github.com/gofiber/fiber/v3 v3.6.1
 	github.com/google/uuid v1.6.0
 	github.com/yuin/goldmark v1.8.6
@@ -28,7 +28,7 @@ require (
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
-	golang.org/x/tools v0.51.0 // indirect
+	golang.org/x/tools v0.52.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
