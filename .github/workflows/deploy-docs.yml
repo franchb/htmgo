@@ -30,12 +30,17 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install htmgo CLI
         run: cd cli/htmgo && go install .
 
       - name: Build htmgo-site
+        # htmgo-site is not in go.work; without GOWORK=off the build fails with
+        # "current directory is contained in a module that is not one of the
+        # workspace modules listed in go.work".
+        env:
+          GOWORK: 'off'
         run: |
           cd htmgo-site
           npm install
