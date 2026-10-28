@@ -139,8 +139,6 @@ func main() {
 			downloadtemplate.DownloadTemplate(fmt.Sprintf("./%s", name))
 		} else if taskName == "build" {
 			run.Build()
-		} else if taskName == "generate" {
-			astgen.GenAst(process.ExitOnError)
 		} else {
 			fmt.Println(fmt.Sprintf("Usage: htmgo [%s]", strings.Join(commands, " | ")))
 		}

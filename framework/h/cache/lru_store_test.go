@@ -122,6 +122,9 @@ func TestLRUStore_LRUBehavior(t *testing.T) {
 	if !computeCalled {
 		t.Error("Expected 'b' to be evicted")
 	}
+	if val != "recomputed-b" {
+		t.Errorf("Expected 'recomputed-b', got %q", val)
+	}
 
 	// Now cache has: b (MRU), d, a
 	// and "c" should have been evicted when we added "b" back
