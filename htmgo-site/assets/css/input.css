@@ -1,2 +1,12 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+/* Code blocks on phones: chroma writes font-size and padding as inline
+   styles (no classes), so the override needs !important. */
+@media (width < 40rem) {
+  pre {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    padding: 8px !important;
+  }
+}

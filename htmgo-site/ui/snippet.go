@@ -7,8 +7,8 @@ import (
 	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
-	"github.com/google/uuid"
 	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"strings"
@@ -68,7 +68,7 @@ func CodeSnippet(props CodeSnippetProps) *h.Element {
 	}
 
 	return h.Div(
-		h.Class("relative max-w-[90vw]"),
+		h.Class("relative max-w-full"),
 		h.Div(
 			h.UnsafeRaw(props.Code),
 			h.Class("hidden"),
