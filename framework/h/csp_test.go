@@ -74,7 +74,7 @@ func TestInjectHtmxNonceConfig(t *testing.T) {
 	t.Parallel()
 	out := injectHtmxNonceConfig(`<!DOCTYPE html><html><head><title>t</title></head></html>`, "abc")
 	assert.Equal(t,
-		`<!DOCTYPE html><html><head><meta name="htmx-config" content="{&#34;inlineScriptNonce&#34;:&#34;abc&#34;,&#34;inlineStyleNonce&#34;:&#34;abc&#34;}"><title>t</title></head></html>`,
+		`<!DOCTYPE html><html><head><meta name="htmx-config" content="{&#34;inlineScriptNonce&#34;:&#34;abc&#34;,&#34;inlineStyleNonce&#34;:&#34;abc&#34;}"/><title>t</title></head></html>`,
 		out)
 
 	existing := `<html><head><meta name="htmx-config" content="{}"></head></html>`
@@ -102,7 +102,7 @@ func getCSPTestPage(t *testing.T, app *fiber.App) (*http.Response, string) {
 	t.Helper()
 	resp, err := app.Test(httptest.NewRequest(http.MethodGet, "/", nil))
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	return resp, string(body)

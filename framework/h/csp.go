@@ -68,7 +68,9 @@ func injectHtmxNonceConfig(rendered string, nonce string) string {
 		"inlineScriptNonce": nonce,
 		"inlineStyleNonce":  nonce,
 	})
-	meta := `<meta name="htmx-config" content="` + html.EscapeString(string(cfg)) + `">`
+	// Rendered as an element so the JSON goes through the renderer's
+	// attribute escaping like any other attribute value.
+	meta := Render(Meta("htmx-config", string(cfg)))
 	loc := headOpenRe.FindStringIndex(rendered)
 	if loc == nil {
 		return rendered
