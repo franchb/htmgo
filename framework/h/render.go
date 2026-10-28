@@ -39,6 +39,7 @@ func Render(node Ren, opts ...RenderOpt) string {
 		context.scripts = context.scripts[:0]
 	}
 	context.currentElement = nil
+	context.nonce = ""
 
 	options := &RenderOptions{}
 

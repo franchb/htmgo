@@ -145,7 +145,9 @@ func UnsafeRawF(text string, args any) *RawContent {
 // UnsafeRawScript is a helper function to create a script tag with the given text
 // The text is not escaped, do not use this function with user input
 func UnsafeRawScript(text string) *RawContent {
-	return UnsafeRaw("<script>" + text + "</script>")
+	raw := UnsafeRaw("<script>" + text + "</script>")
+	raw.isScript = true
+	return raw
 }
 
 func Pre(children ...Ren) *Element {

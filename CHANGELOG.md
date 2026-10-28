@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`framework/h`: opt-in CSP nonces.** Set `AppOpts.ContentSecurityPolicy` (for example `"script-src 'nonce-{nonce}' 'strict-dynamic'; object-src 'none'; base-uri 'none'"`). Each full page then gets a fresh 128-bit nonce on every `<script>` htmgo renders, a `Content-Security-Policy` header with `{nonce}` replaced, and a `<meta name="htmx-config">` that makes htmx 4 put the nonce on scripts in swapped partials. Cached components get the current request's nonce. `RequestContext.CSPNonce()` and `h.WithScriptNonce` are available for custom setups. With the option empty, output is unchanged. Not covered: inline event handlers (`h.OnClick` and friends render `onclick=` attributes, and `hx-on` needs `'unsafe-eval'`). Note that `inlineScriptNonce` makes htmx trust every script in a swapped response, so inside partials CSP no longer guards against injected scripts; escaping still does.
+
 ## [2.2.0] - Unreleased (draft)
 
 Draft for the next release, covering master since v2.1.0 plus the security, CI and hygiene fixes in #65–#68. Not tagged yet.

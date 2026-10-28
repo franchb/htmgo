@@ -43,13 +43,20 @@ type RenderContext struct {
 	builder        *strings.Builder
 	scripts        []ScriptEntry
 	currentElement *Element
+	nonce          string // CSP nonce for <script> tags, see WithScriptNonce
 }
 
 func (ctx *RenderContext) AddScript(funcName string, body string) {
 	var sb strings.Builder
 	sb.WriteString("\n\t<script id=\"")
 	sb.WriteString(funcName)
-	sb.WriteString("\">\n\t\tfunction ")
+	sb.WriteString("\"")
+	if ctx.nonce != "" {
+		sb.WriteString(` nonce="`)
+		sb.WriteString(html.EscapeString(ctx.nonce))
+		sb.WriteString(`"`)
+	}
+	sb.WriteString(">\n\t\tfunction ")
 	sb.WriteString(funcName)
 	sb.WriteString("(self, event) {\n\t\t\t\tlet e = event;\n\t\t\t\t")
 	sb.WriteString(body)
@@ -93,6 +100,9 @@ func (node *Element) Render(context *RenderContext) {
 				context.builder.WriteString(`"`)
 			}
 		})
+		if node.tag == "script" {
+			writeNonceAttr(context)
+		}
 	}
 
 	// Single-pass: render attribute-like children (within the tag)
@@ -195,6 +205,12 @@ func (t *TextContent) Render(context *RenderContext) {
 }
 
 func (r *RawContent) Render(context *RenderContext) {
+	if r.isScript && context.nonce != "" && strings.HasPrefix(r.Content, "<script>") {
+		context.builder.WriteString("<script")
+		writeNonceAttr(context)
+		context.builder.WriteString(r.Content[len("<script"):])
+		return
+	}
 	context.builder.WriteString(r.Content)
 }
 
