@@ -21,7 +21,7 @@
     "@types/node": "^26.6.4",
     "@vitest/ui": "^5.0.3",
     "jsdom": "^30.1.1",
-    "prettier": "^3.9.9",
+    "prettier": "^3.9.10",
     "shiki": "^4.5.0",
     "tailwindcss": "^4.3.3",
     "tsup": "^9.0.0",
