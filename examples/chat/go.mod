@@ -3,7 +3,7 @@ module chat
 go 1.27.0
 
 require (
-	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028123903-42e098e89a2d
+	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028144127-3f070fa29c1f
 	github.com/gofiber/fiber/v3 v3.6.1
 	github.com/google/uuid v1.6.0
 	github.com/mattn/go-sqlite3 v1.14.52
