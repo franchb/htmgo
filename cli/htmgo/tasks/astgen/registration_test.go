@@ -5,6 +5,7 @@ import (
 	"github.com/franchb/htmgo/cli/htmgo/v2/internal/dirutil"
 	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/process"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -31,23 +32,32 @@ func TestAstGen(t *testing.T) {
 
 	go func() {
 		// project was buildable after astgen, confirmed working
-		err = process.Run(process.NewRawCommand("server", "go run ."))
-		assert.NoError(t, err)
+		runErr := process.Run(process.NewRawCommand("server", "go run ."))
+		assert.NoError(t, runErr)
 	}()
 
-	time.Sleep(time.Second * 1)
+	defer func() {
+		if serverProcess := process.GetProcessByName("server"); assert.NotNil(t, serverProcess) {
+			process.KillProcess(*serverProcess)
+		}
+	}()
+
+	// `go run .` compiles the sample first, which can take well over a second
+	// on a cold CI runner; wait until the server answers instead of sleeping.
+	require.Eventually(t, func() bool {
+		resp, e := http.Get("http://localhost:3000/")
+		if e != nil {
+			return false
+		}
+		resp.Body.Close()
+		return true
+	}, 2*time.Minute, 250*time.Millisecond, "server did not start")
 
 	urls := []string{
 		"/astgen-project-sample/partials.CountersPartial",
 		"/",
 		"/astgen-project-sample/pages.TestPartial",
 	}
-
-	defer func() {
-		serverProcess := process.GetProcessByName("server")
-		assert.NotNil(t, serverProcess)
-		process.KillProcess(*serverProcess)
-	}()
 
 	wg := sync.WaitGroup{}
 
@@ -57,7 +67,10 @@ func TestAstGen(t *testing.T) {
 			defer wg.Done()
 			// ensure we can get a 200 response on the partials
 			resp, e := http.Get(fmt.Sprintf("http://localhost:3000%s", url))
-			assert.NoError(t, e)
+			if !assert.NoError(t, e) {
+				return
+			}
+			defer resp.Body.Close()
 			assert.Equal(t, http.StatusOK, resp.StatusCode, fmt.Sprintf("%s was not a 200 response", url))
 		}()
 	}
