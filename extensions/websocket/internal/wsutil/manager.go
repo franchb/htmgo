@@ -311,6 +311,9 @@ func (manager *SocketManager) Get(id string) *SocketConnection {
 		return nil
 	}
 	conn, ok := sockets.Load(id)
+	if !ok {
+		return nil
+	}
 	return &conn
 }
 
@@ -320,10 +323,6 @@ func (manager *SocketManager) Ping(id string) bool {
 		return manager.writeText(*conn, "ping")
 	}
 	return false
-}
-
-func (manager *SocketManager) writeCloseRaw(writer WriterChan, message string) {
-	manager.writeTextRaw(writer, message)
 }
 
 func (manager *SocketManager) writeTextRaw(writer WriterChan, message string) {

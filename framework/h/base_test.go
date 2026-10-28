@@ -113,6 +113,7 @@ func TestSwapManyPartial(t *testing.T) {
 	element2 := Span()
 
 	partial := SwapManyPartial(ctx, element1, element2)
+	assert.NotNil(t, partial)
 
 	// Ensuring the elements have been marked for swap
 	assert.Equal(t, 1, len(element1.children))
@@ -132,6 +133,7 @@ func TestSwapPartial(t *testing.T) {
 	element := Div()
 
 	partial := SwapPartial(ctx, element)
+	assert.NotNil(t, partial)
 
 	// Ensuring the element has been marked for swap
 	assert.Equal(t, 1, len(element.children))

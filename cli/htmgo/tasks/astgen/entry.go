@@ -44,9 +44,49 @@ var GeneratedFileLine = fmt.Sprintf("// Package %s THIS FILE IS GENERATED. DO NO
 func toPascaleCase(input string) string {
 	words := strings.Split(input, "_")
 	for i := range words {
-		words[i] = strings.Title(strings.ToLower(words[i]))
+		words[i] = titleWord(strings.ToLower(words[i]))
 	}
 	return strings.Join(words, "")
+}
+
+// titleWord upper-cases each letter that starts a word, with the same word
+// boundaries as the deprecated strings.Title. golang.org/x/text/cases is not a
+// drop-in replacement here: it would turn "32x32" into "32X32" and so rename
+// generated asset constants (e.g. Favicon32x32Png) that apps reference.
+func titleWord(s string) string {
+	prev := ' '
+	return strings.Map(func(r rune) rune {
+		if isWordSeparator(prev) {
+			prev = r
+			return unicode.ToTitle(r)
+		}
+		prev = r
+		return r
+	}, s)
+}
+
+// isWordSeparator reports whether r separates words, as in strings.Title.
+func isWordSeparator(r rune) bool {
+	// ASCII alphanumerics and underscore are not separators
+	if r <= 0x7F {
+		switch {
+		case '0' <= r && r <= '9':
+			return false
+		case 'a' <= r && r <= 'z':
+			return false
+		case 'A' <= r && r <= 'Z':
+			return false
+		case r == '_':
+			return false
+		}
+		return true
+	}
+	// Letters and digits are not separators
+	if unicode.IsLetter(r) || unicode.IsDigit(r) {
+		return false
+	}
+	// Otherwise, all we can do for now is treat spaces as separators.
+	return unicode.IsSpace(r)
 }
 
 func isValidGoVariableName(name string) bool {

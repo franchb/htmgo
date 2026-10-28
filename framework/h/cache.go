@@ -16,11 +16,6 @@ type CachedNode struct {
 	cache    cache.Store[any, string]
 }
 
-type Entry struct {
-	expiration time.Time
-	html       string
-}
-
 type GetElementFunc func() *Element
 type GetElementFuncT[T any] func(T) *Element
 type GetElementFuncT2[T any, T2 any] func(T, T2) *Element
