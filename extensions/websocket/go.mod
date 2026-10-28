@@ -3,7 +3,7 @@ module github.com/franchb/htmgo/extensions/websocket/v2
 go 1.27.0
 
 require (
-	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028120955-8da1801a1cdb
+	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028123903-42e098e89a2d
 	github.com/gobwas/ws v1.4.0
 	github.com/gofiber/fiber/v3 v3.6.1
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
