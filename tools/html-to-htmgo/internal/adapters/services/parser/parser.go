@@ -24,11 +24,12 @@ func (p Parser) FromBytes(in []byte) (*domain.CustomNode, error) {
 		if n.Data == "body" {
 			return n
 		}
-		var e *html.Node
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			e = findBody(c)
+			if e := findBody(c); e != nil {
+				return e
+			}
 		}
-		return e
+		return nil
 	}
 
 	body := findBody(hNode)
