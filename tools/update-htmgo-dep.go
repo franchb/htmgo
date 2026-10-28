@@ -3,13 +3,14 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 const frameworkRepo = "github.com/franchb/htmgo/framework/v2"
@@ -32,91 +33,118 @@ func RunCommand(path string, command string, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = path // Set the working directory to the current path.
-	return cmd.Run()
+	// Most apps (htmgo-site, templates, examples) are not in go.work; resolve
+	// every module from its own go.mod.
+	cmd.Env = append(os.Environ(), "GOWORK=off")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s %s in %s: %w", command, strings.Join(args, " "), path, err)
+	}
+	return nil
 }
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	// Get the latest commit hash from the remote repository.
 	latestCommitHash, err := getLatestCommitHash()
 	if err != nil {
-		fmt.Println("Error getting latest commit hash:", err)
-		return
+		return fmt.Errorf("getting latest commit hash: %w", err)
 	}
 
 	// Start from the current directory.
 	rootDir, err := os.Getwd()
 	if err != nil {
-		fmt.Println("Error getting working directory:", err)
-		return
+		return fmt.Errorf("getting working directory: %w", err)
 	}
 
-	wg := sync.WaitGroup{}
+	var errs []error
 	// Walk through directories.
-	err = filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+	err = filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+		if !d.IsDir() {
+			return nil
+		}
+		if d.Name() == "node_modules" || d.Name() == ".git" {
+			return filepath.SkipDir
+		}
 
 		// Check if the directory contains a go.mod file.
-		if info.IsDir() && fileExists(filepath.Join(path, "go.mod")) {
-			goModPath := filepath.Join(path, "go.mod")
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for _, s := range depsToUpdate {
-					updateDepToLatestVersion(s, goModPath, latestCommitHash)
+		goModPath := filepath.Join(path, "go.mod")
+		if fileExists(goModPath) {
+			for _, dep := range depsToUpdate {
+				if err := updateDepToLatestVersion(dep, goModPath, latestCommitHash); err != nil {
+					errs = append(errs, err)
 				}
-			}()
+			}
 		}
 
 		return nil
 	})
-
-	wg.Wait()
-
 	if err != nil {
-		fmt.Println("Error walking through directories:", err)
+		errs = append(errs, fmt.Errorf("walking directories: %w", err))
 	}
 
+	return errors.Join(errs...)
 }
 
 // fileExists checks if a file exists at the given path.
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
+	return err == nil
 }
 
-func updateDepToLatestVersion(dep string, goModPath string, latestCommitHash string) {
-	if containsDep(dep, goModPath) {
-		dir := filepath.Dir(goModPath)
-		// Run go get github.com/franchb/htmgo/framework@<latestCommitHash>.
-		fmt.Printf("Running 'go get' with latest commit hash in %s\n", dep)
-		RunCommand(dir, "go", "get", fmt.Sprintf("%s@%s", dep, latestCommitHash))
-		RunCommand(dir, "go", "mod", "tidy")
+func updateDepToLatestVersion(dep string, goModPath string, latestCommitHash string) error {
+	required, err := requiresDep(dep, goModPath)
+	if err != nil || !required {
+		return err
 	}
+	dir := filepath.Dir(goModPath)
+	// Run go get github.com/franchb/htmgo/framework/v2@<latestCommitHash>.
+	fmt.Printf("Updating %s to %s in %s\n", dep, latestCommitHash, dir)
+	if err := RunCommand(dir, "go", "get", fmt.Sprintf("%s@%s", dep, latestCommitHash)); err != nil {
+		return err
+	}
+	return RunCommand(dir, "go", "mod", "tidy")
 }
 
-// containsDep checks if 'github.com/franchb/htmgo/framework' is in the go.mod file.
-func containsDep(dep string, goModPath string) bool {
+// requiresDep reports whether the go.mod file has a require directive for dep.
+// The module's own "module" line and "replace" lines do not count.
+func requiresDep(dep string, goModPath string) (bool, error) {
 	file, err := os.Open(goModPath)
 	if err != nil {
-		fmt.Println("Error opening go.mod file:", err)
-		return false
+		return false, fmt.Errorf("opening %s: %w", goModPath, err)
 	}
 	defer file.Close()
 
+	inRequireBlock := false
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), dep) {
-			return true
+		fields := strings.Fields(scanner.Text())
+		switch {
+		case len(fields) == 0:
+		case inRequireBlock && fields[0] == ")":
+			inRequireBlock = false
+		case inRequireBlock && fields[0] == dep:
+			return true, nil
+		case fields[0] == "require" && len(fields) > 1 && fields[1] == "(":
+			inRequireBlock = true
+		case fields[0] == "require" && len(fields) > 1 && fields[1] == dep:
+			return true, nil
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading go.mod file:", err)
+		return false, fmt.Errorf("reading %s: %w", goModPath, err)
 	}
 
-	return false
+	return false, nil
 }
 
 // getLatestCommitHash fetches the latest commit hash from the GitHub API for the framework repository.

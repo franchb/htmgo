@@ -11,20 +11,33 @@ on:
       - master         # Trigger on pushes to master
     paths:
       - 'examples/todo-list/**'  # Trigger only if files in this directory change
+  pull_request:  # Build only (no push) to check the Dockerfile
+    paths:
+      - 'examples/todo-list/**'
+      - '.github/workflows/release-todo-example.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -32,19 +45,18 @@ jobs:
 
       - name: Get short commit hash
         id: vars
-        run: echo "::set-output name=short_sha::$(echo $GITHUB_SHA | cut -c1-7)"
+        run: echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      - name: Build Docker image
+      # Build from the repository root: examples/todo-list/go.mod replaces the framework
+      # with a relative path outside the app directory.
+      - name: Build and push Docker image
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/htmgo-todo-example
+          PUSH: ${{ github.event_name != 'pull_request' && '--push' || '' }}
         run: |
-          cd ./examples/todo-list && docker build -t ghcr.io/${{ github.repository_owner }}/htmgo-todo-example:${{ steps.vars.outputs.short_sha }} .
-
-      - name: Tag as latest Docker image
-        run: |
-          docker tag ghcr.io/${{ github.repository_owner }}/htmgo-todo-example:${{ steps.vars.outputs.short_sha }} ghcr.io/${{ github.repository_owner }}/htmgo-todo-example:latest
-
-      - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Push Docker image
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/htmgo-todo-example:latest
+          docker buildx build \
+            -f examples/todo-list/Dockerfile \
+            $PUSH \
+            -t "$IMAGE:${{ steps.vars.outputs.short_sha }}" \
+            -t "$IMAGE:latest" \
+            .
