@@ -83,9 +83,12 @@ jobs:
           go vet ./...
           go test ./...
       - name: Install htmgo
+        # Run even if the unit tests failed: the smoke test is an independent signal.
+        if: ${{ !cancelled() }}
         working-directory: cli/htmgo
         run: go install .
       - name: Create an app from the starter template
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           app="$RUNNER_TEMP/myapp"
@@ -98,6 +101,7 @@ jobs:
           git init -q
           go mod tidy
       - name: Edit a page three times while htmgo watch runs
+        if: ${{ !cancelled() }}
         shell: pwsh
         working-directory: ${{ runner.temp }}/myapp
         run: |
