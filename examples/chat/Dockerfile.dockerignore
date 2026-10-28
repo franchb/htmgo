@@ -1,0 +1,16 @@
+# The build context is the repository root (docker build -f examples/chat/Dockerfile .).
+# Exclude everything, then allow only the directories this image needs.
+*
+!cli/htmgo
+!framework
+!examples/chat
+
+# Project exclude paths
+**/tmp
+**/node_modules
+**/dist
+**/__htmgo
+**/.idea
+**/go.work
+**/go.work.sum
+!framework/assets/dist

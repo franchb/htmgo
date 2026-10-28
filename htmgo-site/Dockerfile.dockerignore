@@ -1,0 +1,17 @@
+# The build context is the repository root (docker build -f htmgo-site/Dockerfile .).
+# Exclude everything, then allow only the directories this image needs.
+*
+!cli/htmgo
+!framework
+!tools/html-to-htmgo
+!htmgo-site
+
+# Project exclude paths
+**/tmp
+**/node_modules
+**/dist
+**/__htmgo
+**/.idea
+**/go.work
+**/go.work.sum
+!framework/assets/dist

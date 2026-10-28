@@ -1,0 +1,17 @@
+# The build context is the repository root (docker build -f examples/ws-example/Dockerfile .).
+# Exclude everything, then allow only the directories this image needs.
+*
+!cli/htmgo
+!framework
+!extensions/websocket
+!examples/ws-example
+
+# Project exclude paths
+**/tmp
+**/node_modules
+**/dist
+**/__htmgo
+**/.idea
+**/go.work
+**/go.work.sum
+!framework/assets/dist

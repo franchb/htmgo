@@ -1,38 +1,54 @@
+# Build from the repository root so the relative replace directives in go.mod
+# resolve inside the build context, and the image is built from the same
+# commit as the framework:
+#
+#   docker build -f examples/ws-example/Dockerfile .
+#
+# examples/ws-example/Dockerfile.dockerignore limits the context to what this image needs.
+
 # Stage 1: Build the Go binary
-FROM golang:1.27-alpine AS builder
+FROM golang:1.27 AS builder
 
-RUN apk update
-RUN apk add git
-RUN apk add curl
+# The app is not part of go.work; resolve modules from its own go.mod.
+ENV GOWORK=off
+# Static binary, independent of the builder's glibc version.
+ENV CGO_ENABLED=0
 
-# Set the working directory inside the container
-WORKDIR /app
+# Mirror the repository layout so the relative replace paths resolve.
+WORKDIR /src
 
-# Copy go.mod and go.sum files
-COPY go.mod go.sum ./
+# Build the htmgo CLI from the same commit as the app.
+COPY cli/htmgo/ cli/htmgo/
+RUN cd cli/htmgo && go install .
 
-# Download and cache the Go modules
-RUN go mod download
+# Copy go.mod and go.sum files first so module downloads are cached
+COPY framework/go.mod framework/go.sum framework/
+COPY extensions/websocket/go.mod extensions/websocket/go.sum extensions/websocket/
+COPY examples/ws-example/go.mod examples/ws-example/go.sum examples/ws-example/
+RUN cd examples/ws-example && go mod download
 
 # Copy the source code into the container
-COPY . .
+COPY framework/ framework/
+COPY extensions/websocket/ extensions/websocket/
+COPY examples/ws-example/ examples/ws-example/
+
+WORKDIR /src/examples/ws-example
 
 # Build the Go binary for Linux
-RUN GOPRIVATE=github.com/franchb GOPROXY=direct go run github.com/franchb/htmgo/cli/htmgo/v2@latest build
+RUN htmgo build
 
 
 # Stage 2: Create the smallest possible image
-FROM gcr.io/distroless/base-debian11
+FROM gcr.io/distroless/base-debian12
 
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the Go binary from the    builder stage
-COPY --from=builder /app/dist .
+# Copy the Go binary from the builder stage
+COPY --from=builder /src/examples/ws-example/dist .
 
 # Expose the necessary port (replace with your server port)
 EXPOSE 3000
-
 
 # Command to run the binary
 CMD ["./ws-example"]
