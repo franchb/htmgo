@@ -135,6 +135,35 @@ func StartLogger() {
 	}()
 }
 
+// stopped records commands the CLI killed on purpose, so Run can tell a
+// deliberate restart from a crash. On Unix a killed process reports
+// "signal: killed", but on Windows taskkill makes it exit with status 1.
+var stopped sync.Map // *exec.Cmd -> struct{}
+
+func kill(command CmdWithFlags) error {
+	if command.Cmd != nil {
+		stopped.Store(command.Cmd, struct{}{})
+	}
+	return KillProcess(command)
+}
+
+// Stop kills the named process if it is running and waits up to timeout for
+// it to exit, so files it holds open (on Windows, its own executable) are
+// released before the caller continues.
+func Stop(name string, timeout time.Duration) {
+	existing := GetProcessByName(name)
+	if existing == nil || existing.Cmd == nil || existing.Cmd.Process == nil {
+		return
+	}
+	slog.Debug("stopping process", slog.String("command", name))
+	_ = kill(*existing)
+	pid := int32(existing.Cmd.Process.Pid)
+	deadline := time.Now().Add(timeout)
+	for PidExists(pid) && time.Now().Before(deadline) {
+		time.Sleep(25 * time.Millisecond)
+	}
+}
+
 func GetProcessByName(name string) *CmdWithFlags {
 	commandsMu.Lock()
 	defer commandsMu.Unlock()
@@ -197,7 +226,7 @@ func KillAll(skipFlag ...RunFlag) {
 		if shouldSkipKilling(command.Flags, skipFlag) {
 			continue
 		}
-		err := KillProcess(command)
+		err := kill(command)
 		if err != nil {
 			continue
 		}
@@ -214,7 +243,7 @@ func KillAll(skipFlag ...RunFlag) {
 			}
 			exists := PidExists(int32(c.Cmd.Process.Pid))
 			if exists {
-				KillProcess(c)
+				_ = kill(c)
 				finished = false
 			}
 		}
@@ -275,7 +304,7 @@ func Run(command RawCommand) error {
 
 	if existing != nil {
 		slog.Debug("process already running, killing it", slog.String("command", command.Name))
-		KillProcess(*existing)
+		_ = kill(*existing)
 		time.Sleep(time.Millisecond * 50)
 	} else {
 		slog.Debug("no existing process found for %s, safe to run...", slog.String("command", command.Name))
@@ -318,8 +347,9 @@ func Run(command RawCommand) error {
 		slog.String("error", fmt.Sprintf("%v", err)))
 
 	removeCommand(command.Name, cmd)
+	_, wasStopped := stopped.LoadAndDelete(cmd)
 
-	if err == nil {
+	if err == nil || wasStopped {
 		return nil
 	}
 
