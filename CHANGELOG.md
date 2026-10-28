@@ -6,6 +6,65 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.2.0] - Unreleased (draft)
+
+Draft for the next release, covering master since v2.1.0 plus the security, CI and hygiene fixes in #65–#68. Not tagged yet.
+
+### Breaking
+
+- **Minimum Go version is now 1.27.0** in every module (#58). Downstream modules that depend on any htmgo v2 module must build with Go ≥ 1.27.0, or let `GOTOOLCHAIN=auto` fetch it.
+- **`framework/h`: the unused `Entry` type is removed.** It had only unexported fields and nothing referenced it, but it was exported.
+
+### Security
+
+- **`golang.org/x/net` v0.62.0** in every module. Fixes GO-2026-6860, which was reachable from `tools/html-to-htmgo` through `html.Parse`, plus GO-2026-6866, GO-2026-6617, GO-2026-6612, GO-2026-6611, GO-2026-6610 and GO-2026-6603. `golang.org/x/crypto`, `x/sys`, `x/text` and `x/tools` move up with it.
+
+### Fixed
+
+- **`tools/html-to-htmgo`:** conversion no longer fails with `ParseErr` when a node, such as a comment, follows `</html>`. `findBody` used to keep only the last child's result.
+- **`cli/htmgo`:** data races in the process runner, which `htmgo watch` hits. The running-command map is now locked, and a command is published only after `Start` has set `cmd.Process`.
+- **`extensions/websocket`:** `SocketManager.Get` returns nil for an unknown connection id instead of a pointer to a zero `SocketConnection`.
+- **`cli/htmgo`:** removed an unreachable duplicate `generate` branch. Behaviour is unchanged.
+
+### Changed
+
+- All dependencies bumped (#57). Notable: `gofiber/fiber/v3` v3.5.0, `valyala/fasthttp` v1.74.0, TypeScript 7, vitest 5, jsdom 30.
+- `cli/htmgo` astgen no longer calls the deprecated `strings.Title`. Generated asset constant names are unchanged; a test now pins them.
+- Docker images for htmgo-site, the starter template and the examples are built from the same commit as the framework, use Debian-based Go builders, and run on `distroless/base-debian12`.
+- The README gained a "What this fork adds" section (#41).
+
+### CI
+
+- One `Tests` workflow runs `go vet` and `go test -race` for every library module on Go 1.27.x and stable, plus the vitest suite for the JS extensions.
+- New workflows: govulncheck for every library module, and golangci-lint.
+- Fixed the Cloudflare docs deploy, the GHCR release workflows and the framework-dependency updater.
+- Actions are pinned to commit SHAs, and workflow tokens are read-only by default.
+
+## [2.1.0] - 2026-07-09
+
+Tags: `cli/htmgo/v2.1.0`, `framework-ui/v2.1.0`, `extensions/websocket/v2.1.0`, `tools/html-to-htmgo/v2.1.0`, `framework/v2.0.4` (all at the same commit) and the repository tag `v2.1.0`. `framework/v2.0.3` (2026-07-08) carried the same `FiberConfig` feature.
+
+### Added
+
+- **`AppOpts.FiberConfig *fiber.Config`** (#36). When non-nil, it is passed verbatim to `fiber.New`, which gives access to body limits, timeouts, proxy headers, error handlers and the rest. Nil keeps the previous defaults.
+
+### Changed
+
+- `gofiber/fiber/v3` v3.4.0, `valyala/fasthttp` v1.72.0, `golang.org/x/net` v0.56.0 (Dependabot).
+
+### Fixed
+
+- Docker images and the docs deploy pinned Go 1.23, while all modules have required Go ≥ 1.26 since v2.0.0, so every deploy failed with `go.work requires go >= 1.26` (#37).
+
+## [2.0.2] - 2026-06-09
+
+All five v2 modules and the repository were tagged `v2.0.2` at the same commit.
+
+### Changed
+
+- `gofiber/fiber/v3` v3.3.0, `valyala/fasthttp` v1.71.0, `golang.org/x/net` v0.55.0 (Dependabot).
+- Dependabot is configured for the Go modules, npm and GitHub Actions.
+
 ## [2.0.1] - 2026-04-24
 
 ### Fixed
