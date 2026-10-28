@@ -381,9 +381,9 @@ func (c *CachedNode) Render(ctx *RenderContext) {
 		// For simple cached components, we use a single key
 		// Use GetOrCompute for atomic check-and-set
 		html := c.cache.GetOrCompute(_singleCacheKey, func() string {
-			return Render(c.cb())
+			return Render(c.cb(), withCachedNonceToken())
 		}, c.duration)
-		ctx.builder.WriteString(html)
+		writeCached(ctx, html)
 	}
 }
 
@@ -393,7 +393,7 @@ func (c *ByKeyEntry) Render(ctx *RenderContext) {
 
 	// Use GetOrCompute for atomic check-and-set
 	html := parentMeta.cache.GetOrCompute(key, func() string {
-		return Render(c.cb())
+		return Render(c.cb(), withCachedNonceToken())
 	}, parentMeta.duration)
-	ctx.builder.WriteString(html)
+	writeCached(ctx, html)
 }

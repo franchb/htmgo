@@ -28,6 +28,8 @@ type RequestContext struct {
 	hxRequestType     string
 	hxTriggerId       string
 	kv                map[string]interface{}
+	cspNonce          string
+	cspPolicy         string
 }
 
 // requestContextLocalsKey is the key used to store the RequestContext in Fiber's Locals.
@@ -156,6 +158,16 @@ type AppOpts struct {
 	// FiberConfig, when non-nil, is passed verbatim to fiber.New. Nil keeps
 	// Fiber defaults (previous behavior).
 	FiberConfig *fiber.Config
+	// ContentSecurityPolicy, when non-empty, turns on CSP nonces (opt-in).
+	// Each full page gets a fresh nonce on all of its <script> tags, htmx is
+	// configured to reuse it for swapped-in scripts, and the page response
+	// carries a Content-Security-Policy header with every "{nonce}" replaced,
+	// e.g. "script-src 'nonce-{nonce}' 'strict-dynamic'; object-src 'none'; base-uri 'none'".
+	// Not covered: inline event handlers. h.OnClick and other DOM-event
+	// helpers render onclick="..." attributes, which a nonce policy blocks
+	// (script-src-attr), and htmx evaluates hx-on attributes with
+	// new Function, which needs 'unsafe-eval'.
+	ContentSecurityPolicy string
 }
 
 type App struct {
@@ -262,8 +274,9 @@ func (app *App) start() {
 		}
 
 		cc := &RequestContext{
-			locator: app.Opts.ServiceLocator,
-			Fiber:   c,
+			locator:   app.Opts.ServiceLocator,
+			Fiber:     c,
+			cspPolicy: app.Opts.ContentSecurityPolicy,
 		}
 		populateHxFields(cc)
 		c.Locals(requestContextLocalsKey, cc)
@@ -356,7 +369,22 @@ func HtmlView(c fiber.Ctx, page *Page) error {
 		return nil
 	}
 	c.Set("Content-Type", "text/html; charset=utf-8")
-	rendered := Render(page.Root, WithDocType())
+
+	nonce := ""
+	if rc := GetRequestContext(c); rc != nil {
+		if rc.cspPolicy != "" {
+			nonce = rc.CSPNonce()
+			c.Set("Content-Security-Policy", strings.ReplaceAll(rc.cspPolicy, CSPNoncePlaceholder, nonce))
+		} else {
+			// The app may have asked for a nonce to set its own header.
+			nonce = rc.cspNonce
+		}
+	}
+
+	rendered := Render(page.Root, WithDocType(), WithScriptNonce(nonce))
+	if nonce != "" {
+		rendered = injectHtmxNonceConfig(rendered, nonce)
+	}
 	if IsDevelopment() {
 		rendered = injectLivereloadMeta(rendered)
 	}

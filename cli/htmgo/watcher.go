@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/franchb/htmgo/cli/htmgo/v2/internal"
 	"github.com/franchb/htmgo/cli/htmgo/v2/internal/dirutil"
 	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/module"
+	"github.com/fsnotify/fsnotify"
 )
 
 func startWatcher(cb func(version string, file []*fsnotify.Event)) {
@@ -41,6 +41,13 @@ func startWatcher(cb func(version string, file []*fsnotify.Event)) {
 			case event, ok := <-watcher.Events:
 				if !ok {
 					return
+				}
+
+				// The server binary is rebuilt here on every change. Watching it
+				// only produces noise, and on Windows the watch handle can keep
+				// the directory from being deleted and recreated.
+				if dirutil.IsBuildOutput(event.Name) {
+					continue
 				}
 
 				if event.Has(fsnotify.Remove) {
@@ -119,7 +126,7 @@ func startWatcher(cb func(version string, file []*fsnotify.Event)) {
 			return err
 		}
 		// Ignore directories in the ignoredDirs list
-		if dirutil.IsGlobExclude(path, config.WatchIgnore) {
+		if dirutil.IsGlobExclude(path, config.WatchIgnore) || dirutil.IsBuildOutput(path) {
 			return filepath.SkipDir
 		}
 

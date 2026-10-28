@@ -37,9 +37,10 @@ func TestAstGen(t *testing.T) {
 	}()
 
 	defer func() {
-		if serverProcess := process.GetProcessByName("server"); assert.NotNil(t, serverProcess) {
-			process.KillProcess(*serverProcess)
-		}
+		assert.NotNil(t, process.GetProcessByName("server"))
+		// Stop marks the kill as deliberate, so Run returns nil on Windows too,
+		// where taskkill makes the process exit with status 1.
+		process.Stop("server", 10*time.Second)
 	}()
 
 	// `go run .` compiles the sample first, which can take well over a second

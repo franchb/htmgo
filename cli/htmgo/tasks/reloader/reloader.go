@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/astgen"
 	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/copyassets"
 	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/css"
 	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/run"
 	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/util"
+	"github.com/fsnotify/fsnotify"
 )
 
 type Change struct {

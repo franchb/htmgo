@@ -15,7 +15,8 @@ type TextContent struct {
 }
 
 type RawContent struct {
-	Content string
+	Content  string
+	isScript bool // created by UnsafeRawScript; gets the CSP nonce when one is set
 }
 
 type ChildList struct {
