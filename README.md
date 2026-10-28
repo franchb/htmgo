@@ -4,7 +4,7 @@
 
 -------
 [![Go Report Card](https://goreportcard.com/badge/github.com/franchb/htmgo)](https://goreportcard.com/report/github.com/franchb/htmgo)
-![Build](https://github.com/franchb/htmgo/actions/workflows/run-framework-tests.yml/badge.svg)
+[![Tests](https://github.com/franchb/htmgo/actions/workflows/tests.yml/badge.svg)](https://github.com/franchb/htmgo/actions/workflows/tests.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/franchb/htmgo/framework/v2/h.svg)](https://pkg.go.dev/github.com/franchb/htmgo/framework/v2/h)
 
 **introduction:**

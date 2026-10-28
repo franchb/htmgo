@@ -19,15 +19,20 @@ func FuzzFromBytes(f *testing.F) {
 			t.Skip()
 		}
 		_, err := serviceParser.FromBytes(data)
-		if err != nil {
-			return
-		}
-		if !isExpectedError(err) {
-			t.Errorf("Unexpected error: %v", err)
+		if err != nil && !isExpectedError(err) {
+			t.Errorf("unexpected error: %v", err)
 		}
 	})
 }
 
 func isExpectedError(err error) bool {
 	return err != nil && errors.Is(err, ParseErr)
+}
+
+func TestFromBytesTrailingNodeAfterHtml(t *testing.T) {
+	t.Parallel()
+	_, err := New().FromBytes([]byte("<html><body><div>x</div></body></html><!-- trailing -->"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }

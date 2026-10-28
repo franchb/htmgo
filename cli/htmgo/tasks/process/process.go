@@ -37,14 +37,51 @@ func NewRawCommand(name string, args string, flags ...RunFlag) RawCommand {
 }
 
 var workingDir string
+
+// commands holds started processes by name; guard every access with commandsMu.
+// Only commands whose Start has returned are stored, so Cmd.Process is never
+// written while another goroutine may read it.
 var commands = make(map[string]CmdWithFlags)
+var commandsMu sync.Mutex
 
 func AppendRunning(cmd *exec.Cmd, raw RawCommand) {
 	slog.Debug("running", slog.String("command", strings.Join(cmd.Args, " ")),
 		slog.String("dir", cmd.Dir),
 		slog.String("cwd", GetWorkingDir()))
 
+	commandsMu.Lock()
+	defer commandsMu.Unlock()
 	commands[raw.Name] = CmdWithFlags{Flags: raw.Flags, Name: raw.Name, Cmd: cmd}
+}
+
+// snapshotCommands returns a copy of the running commands that is safe to
+// iterate without holding commandsMu.
+func snapshotCommands() []CmdWithFlags {
+	commandsMu.Lock()
+	defer commandsMu.Unlock()
+	snapshot := make([]CmdWithFlags, 0, len(commands))
+	for _, cmd := range commands {
+		snapshot = append(snapshot, cmd)
+	}
+	return snapshot
+}
+
+func resetCommands(keep []CmdWithFlags) {
+	commandsMu.Lock()
+	defer commandsMu.Unlock()
+	commands = make(map[string]CmdWithFlags, len(keep))
+	for _, cmd := range keep {
+		commands[cmd.Name] = cmd
+	}
+}
+
+// removeCommand forgets name, unless it has since been replaced by another run.
+func removeCommand(name string, cmd *exec.Cmd) {
+	commandsMu.Lock()
+	defer commandsMu.Unlock()
+	if existing, ok := commands[name]; ok && existing.Cmd == cmd {
+		delete(commands, name)
+	}
 }
 
 func GetWorkingDir() string {
@@ -80,7 +117,7 @@ func StartLogger() {
 		for {
 			time.Sleep(time.Second * 5)
 			items := make([]map[string]string, 0)
-			for _, cmd := range commands {
+			for _, cmd := range snapshotCommands() {
 				data := make(map[string]string)
 				data["command"] = fmt.Sprintf("%s %s", cmd.Cmd.Path, strings.Join(cmd.Cmd.Args, " "))
 				if cmd.Cmd.Process != nil {
@@ -99,17 +136,17 @@ func StartLogger() {
 }
 
 func GetProcessByName(name string) *CmdWithFlags {
-	for _, cmd := range commands {
-		if cmd.Name == name {
-			return &cmd
-		}
+	commandsMu.Lock()
+	defer commandsMu.Unlock()
+	if cmd, ok := commands[name]; ok {
+		return &cmd
 	}
 	return nil
 }
 
 func OnShutdown() {
 	// request for shutdown
-	for _, cmd := range commands {
+	for _, cmd := range snapshotCommands() {
 		if cmd.Cmd != nil && cmd.Cmd.Process != nil {
 			cmd.Cmd.Process.Signal(os.Interrupt)
 		}
@@ -127,7 +164,7 @@ func KillAll(skipFlag ...RunFlag) {
 	for {
 		tries++
 		allFinished := true
-		for _, cmd := range commands {
+		for _, cmd := range snapshotCommands() {
 			if cmd.Cmd.Process == nil {
 				allFinished = false
 				if tries > 50 {
@@ -148,14 +185,15 @@ func KillAll(skipFlag ...RunFlag) {
 		}
 	}
 
-	commands = make(map[string]CmdWithFlags)
+	running := make([]CmdWithFlags, 0, len(updatedCommands))
 	for _, command := range updatedCommands {
 		if command.Cmd != nil && command.Cmd.Process != nil {
-			commands[command.Name] = command
+			running = append(running, command)
 		}
 	}
+	resetCommands(running)
 
-	for _, command := range commands {
+	for _, command := range running {
 		if shouldSkipKilling(command.Flags, skipFlag) {
 			continue
 		}
@@ -167,7 +205,7 @@ func KillAll(skipFlag ...RunFlag) {
 
 	for {
 		finished := true
-		for _, c := range commands {
+		for _, c := range running {
 			if c.Cmd.Process == nil {
 				continue
 			}
@@ -189,7 +227,7 @@ func KillAll(skipFlag ...RunFlag) {
 		}
 	}
 
-	commands = make(map[string]CmdWithFlags)
+	resetCommands(nil)
 	slog.Debug("all processes killed\n")
 }
 
@@ -259,11 +297,18 @@ func Run(command RawCommand) error {
 		cmd.Dir = workingDir
 	}
 
-	AppendRunning(cmd, command)
+	// Start before publishing cmd so that cmd.Process is fully written before
+	// KillAll/KillProcess can read it from another goroutine.
+	err := cmd.Start()
+	if err == nil {
+		AppendRunning(cmd, command)
+	}
 
 	mutex.Unlock()
 
-	err := cmd.Run()
+	if err == nil {
+		err = cmd.Wait()
+	}
 
 	slog.Debug("command finished",
 		slog.String("command", command.Name),
@@ -272,7 +317,7 @@ func Run(command RawCommand) error {
 		slog.String("cwd", GetWorkingDir()),
 		slog.String("error", fmt.Sprintf("%v", err)))
 
-	delete(commands, command.Name)
+	removeCommand(command.Name, cmd)
 
 	if err == nil {
 		return nil
