@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/franchb/htmgo/extensions/websocket/v2 v2.0.0-00010101000000-000000000000
-	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261002132359-daf092f0eb3d
+	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028120805-93f538ebe684
 	github.com/gofiber/fiber/v3 v3.5.0
 )
 
