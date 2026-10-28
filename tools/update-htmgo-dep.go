@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const frameworkRepo = "github.com/franchb/htmgo/framework/v2"
@@ -108,10 +109,39 @@ func updateDepToLatestVersion(dep string, goModPath string, latestCommitHash str
 	dir := filepath.Dir(goModPath)
 	// Run go get github.com/franchb/htmgo/framework/v2@<latestCommitHash>.
 	fmt.Printf("Updating %s to %s in %s\n", dep, latestCommitHash, dir)
-	if err := RunCommand(dir, "go", "get", fmt.Sprintf("%s@%s", dep, latestCommitHash)); err != nil {
+	if err := withRetry(goGetRetryDelays, func() error {
+		return RunCommand(dir, "go", "get", fmt.Sprintf("%s@%s", dep, latestCommitHash))
+	}); err != nil {
 		return err
 	}
 	return RunCommand(dir, "go", "mod", "tidy")
+}
+
+// goGetRetryDelays are the waits between go get attempts. This workflow runs
+// right after a push to master, and the module proxy can briefly fail to
+// resolve a nested module (e.g. framework/v2) at the new commit and fall back
+// to the repository root module ("does not contain package"). A few minutes of
+// backoff covers that lag.
+var goGetRetryDelays = []time.Duration{
+	15 * time.Second,
+	30 * time.Second,
+	time.Minute,
+	2 * time.Minute,
+}
+
+// withRetry calls fn until it succeeds, sleeping delays[i] after the i-th
+// failure. It returns the last error once the delays are exhausted.
+func withRetry(delays []time.Duration, fn func() error) error {
+	err := fn()
+	for _, delay := range delays {
+		if err == nil {
+			return nil
+		}
+		fmt.Fprintf(os.Stderr, "%v; retrying in %s\n", err, delay)
+		time.Sleep(delay)
+		err = fn()
+	}
+	return err
 }
 
 // requiresDep reports whether the go.mod file has a require directive for dep.
