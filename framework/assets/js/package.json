@@ -17,7 +17,7 @@
     "htmx.org": "4.0.0-beta2"
   },
   "devDependencies": {
-    "@swc/core": "^1.16.13",
+    "@swc/core": "^1.16.20",
     "@types/node": "^26.6.5",
     "@vitest/ui": "^5.0.3",
     "jsdom": "^30.1.1",
