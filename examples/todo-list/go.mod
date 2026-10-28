@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028120805-93f538ebe684
+	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028120955-8da1801a1cdb
 	github.com/gofiber/fiber/v3 v3.5.0
 	github.com/google/uuid v1.6.0
 	github.com/mattn/go-sqlite3 v1.14.52
