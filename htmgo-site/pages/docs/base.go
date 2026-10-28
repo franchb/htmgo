@@ -134,18 +134,22 @@ func DocPage(ctx *h.RequestContext, children ...h.Ren) *h.Page {
 						ShowPreRelease: false,
 					}),
 					h.Main(
-						h.Div(
-							h.Class("w-full md:hidden bg-neutral-50 overflow-y-auto mb-4 border-b border-b-slate-300"),
+						h.Details(
+							h.Class("md:hidden bg-neutral-50 mb-4 border-b border-b-slate-300"),
+							h.Summary(
+								h.Class("px-4 py-3 font-semibold text-slate-900 cursor-pointer"),
+								h.Text("Documentation menu"),
+							),
 							DocSidebar(),
 						),
 						h.Class("overflow-y-auto overflow-x-hidden pb-6 items-center w-full"),
 						h.Div(
-							h.Class("flex flex-col mx-auto"),
+							h.Class("flex flex-col w-full mx-auto"),
 							h.Div(
-								h.Class("flex flex-col justify-center items-center md:mt-6 mx-auto"),
+								h.Class("flex flex-col justify-center items-center w-full md:mt-6 mx-auto"),
 								h.Div(
 									h.Class(
-										"w-full flex flex-col max-w-[90vw] md:max-w-[65vw] xl:max-w-4xl",
+										"w-full min-w-0 flex flex-col px-4 md:px-0 md:max-w-[65vw] xl:max-w-4xl",
 									),
 									h.Children(children...),
 								),

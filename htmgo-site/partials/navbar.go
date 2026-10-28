@@ -140,9 +140,9 @@ func NavBar(ctx *h.RequestContext, props NavBarProps) *h.Element {
 		h.A(
 			h.Href("/discord"),
 			h.Attribute("target", "_blank"),
-			h.Class("bg-blue-200 text-slate-700 text-center p-2 flex items-center justify-center gap-2"),
+			h.Class("hidden sm:flex bg-blue-200 text-slate-700 text-sm text-center px-2 py-1 items-center justify-center gap-2"),
 			h.Div(
-				h.Class("w-[30px] h-[30px]"),
+				h.Class("w-5 h-5"),
 				DiscordSvg(),
 			),
 			h.P(
@@ -156,7 +156,7 @@ func NavBar(ctx *h.RequestContext, props NavBarProps) *h.Element {
 		),
 	)
 	desktopNav := h.Nav(
-		h.Class("hidden sm:block bg-neutral-100 border border-b-slate-300 p-4 md:p-3 max-h-[100vh - 9rem] overflow-y-auto"),
+		h.Class("hidden sm:block bg-neutral-100 border-b border-b-slate-300 p-4 md:p-3"),
 		h.Div(
 			h.Class("max-w-[95%] md:max-w-3xl px-4 mx-auto"),
 			h.Div(
@@ -198,21 +198,21 @@ func NavBar(ctx *h.RequestContext, props NavBarProps) *h.Element {
 func MobileNav(ctx *h.RequestContext, expanded bool) *h.Element {
 	return h.Nav(
 		h.Id("mobile-nav"),
-		h.Class("block sm:hidden bg-neutral-100 border border-b-slate-300 p-4 md:p-3"),
+		h.Class("block sm:hidden bg-neutral-100 border-b border-b-slate-300 px-4 py-2"),
 		h.Div(
-			h.Class("max-w-[95%] md:max-w-prose mx-auto"),
+			h.Class("w-full"),
 			h.Div(
 				h.Class("flex justify-between items-center"),
 				h.Div(
 					h.Class("flex items-center"),
 					h.A(
 						h.Href("/"),
-						h.Class("mt-1 max-w-[125px]"),
+						h.Class("mt-1 max-w-[110px]"),
 						Logo(),
 					),
 				),
 				h.Div(
-					h.Class("flex items-center gap-3"),
+					h.Class("flex items-center gap-2"),
 					h.Div(
 						h.Class("mt-1"),
 						CachedStar(ctx),
@@ -230,12 +230,12 @@ func MobileNav(ctx *h.RequestContext, expanded bool) *h.Element {
 							"click",
 						),
 						h.AttributePairs(
-							"class",
-							"text-2xl",
 							"aria-expanded",
 							h.Ternary(expanded, "true", "false"),
+							"aria-label",
+							"Menu",
 						),
-						h.Class("text-2xl"),
+						h.Class("text-2xl w-11 h-11 flex items-center justify-center"),
 						h.UnsafeRaw("&#9776;"),
 					),
 				),
@@ -244,13 +244,13 @@ func MobileNav(ctx *h.RequestContext, expanded bool) *h.Element {
 		h.If(
 			expanded,
 			h.Div(
-				h.Class("mt-2 ml-2 flex flex-col gap-2"),
+				h.Class("mt-1 flex flex-col"),
 				h.List(navItems, func(item NavItem, index int) *h.Element {
 					return h.Div(
 						h.Class("flex items-center"),
 						h.A(
 							h.Boost(),
-							h.Class(""),
+							h.Class("block w-full py-2 text-lg"),
 							h.Href(item.Url),
 							h.Text(item.Name),
 						),
