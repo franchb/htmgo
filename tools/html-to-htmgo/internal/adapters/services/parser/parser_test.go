@@ -19,11 +19,8 @@ func FuzzFromBytes(f *testing.F) {
 			t.Skip()
 		}
 		_, err := serviceParser.FromBytes(data)
-		if err != nil {
-			return
-		}
-		if !isExpectedError(err) {
-			t.Errorf("Unexpected error: %v", err)
+		if err != nil && !isExpectedError(err) {
+			t.Errorf("unexpected error: %v", err)
 		}
 	})
 }
