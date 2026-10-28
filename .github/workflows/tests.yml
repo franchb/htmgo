@@ -61,6 +61,68 @@ jobs:
           files: ${{ matrix.module }}/coverage.txt
           flags: ${{ matrix.module }}
 
+  windows:
+    name: windows (cli/htmgo + htmgo watch smoke test)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      GOWORK: 'off'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.x'
+          cache-dependency-path: cli/htmgo/go.sum
+      - name: go vet + go test (cli/htmgo)
+        working-directory: cli/htmgo
+        run: |
+          go vet ./...
+          go test ./...
+      - name: Install htmgo
+        working-directory: cli/htmgo
+        run: go install .
+      - name: Create an app from the starter template
+        shell: bash
+        run: |
+          app="$RUNNER_TEMP/myapp"
+          cp -r templates/starter "$app"
+          fw="$(cygpath -m "$GITHUB_WORKSPACE")/framework"
+          cd "$app"
+          sed -i 's/module starter-template/module myapp/' go.mod
+          sed -i "s|=> ../../framework|=> $fw|" go.mod
+          find . -name '*.go' -exec sed -i 's/starter-template/myapp/g' {} +
+          git init -q
+          go mod tidy
+      - name: Edit a page three times while htmgo watch runs
+        shell: pwsh
+        working-directory: ${{ runner.temp }}/myapp
+        run: |
+          $env:PORT = "3000"
+          $p = Start-Process htmgo -ArgumentList "watch" -PassThru -NoNewWindow `
+            -RedirectStandardOutput watch.out.log -RedirectStandardError watch.err.log
+          $up = $false
+          for ($i = 0; $i -lt 180; $i++) {
+            try { Invoke-WebRequest http://localhost:3000 -UseBasicParsing -TimeoutSec 2 | Out-Null; $up = $true; break }
+            catch { Start-Sleep -Seconds 1 }
+          }
+          if (-not $up) { Get-Content watch.out.log, watch.err.log; throw "server never started" }
+          foreach ($n in 1..3) {
+            Add-Content pages/index.go "`n// edit $n"
+            Start-Sleep -Seconds 15
+          }
+          $status = (Invoke-WebRequest http://localhost:3000 -UseBasicParsing -TimeoutSec 10).StatusCode
+          taskkill /F /T /PID $p.Id | Out-Null
+          $log = (Get-Content watch.out.log, watch.err.log -Raw) -join "`n"
+          Write-Output $log
+          if ($log -match "error restarting server") { throw "htmgo watch failed to restart the server" }
+          $reloads = ([regex]::Matches($log, "reloaded in")).Count
+          if ($reloads -lt 3) { throw "expected 3 reloads, saw $reloads" }
+          if ($status -ne 200) { throw "server returned $status after the edits" }
+
   js:
     name: js (framework/assets/js)
     runs-on: ubuntu-latest
