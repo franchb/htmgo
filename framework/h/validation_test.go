@@ -29,7 +29,7 @@ func TestValidation_PatternWithoutMessageHasNoTitle(t *testing.T) {
 func TestValidation_ServerPath(t *testing.T) {
 	out := Render(Input("text", Name("email"), Validation(ValidatePath("/validate/email"))))
 	assert.Equal(t,
-		`<input type="text" name="email" hx-post="/validate/email" hx-trigger="change" hx-target="next div" hx-swap="innerHTML" hx-sync="this:replace"/>`,
+		`<input type="text" name="email" hx-post="/validate/email" hx-trigger="change" hx-target="next div" hx-swap="innerHTML" hx-sync="this:queue last"/>`,
 		out)
 }
 

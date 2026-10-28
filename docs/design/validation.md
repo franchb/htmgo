@@ -14,9 +14,22 @@ Tracking issue: [maddalax/htmgo#60](https://github.com/maddalax/htmgo/issues/60)
 - Server validation: `h.ValidatePartial(fn)` / `h.ValidatePath(path)` render
   `hx-post` on the field, triggered on `change` (override with `ValidateOn`).
   The response is swapped into `next div` with `innerHTML` (override with
-  `ValidateTarget` / `ValidateSwap`). `hx-sync="this:replace"` makes a newer
-  edit replace an in-flight request, so a slow response for an old value never
-  overwrites a newer one. An empty response clears the message.
+  `ValidateTarget` / `ValidateSwap`). `hx-sync="this:queue last"` allows one
+  request per field at a time and collapses edits made meanwhile into one
+  follow-up for the latest value, so a slow response for an old value never
+  overwrites a newer one. (`this:replace` was rejected: in htmx 4.0.0-beta2
+  `ReqQ.finish()` clears the current slot when the *aborted* request finishes,
+  so a third request can overlap the second.) An empty **200** response clears
+  the message; htmx does not swap 204/304.
+- Inside a `<form>`, htmx builds a POST body from the whole form, so the
+  validation endpoint receives every field, not just the one being validated.
+  htmx 4 has no `hx-params` to narrow it; switching to GET would send only the
+  field but put values in URLs and access logs. Open question for phase 2.
+- `pattern` only applies to text-like inputs (text, search, url, tel, email,
+  password); browsers ignore it on `textarea`, `select` and e.g. `number`.
+- Native constraints block a native submit or an `hx-post` on the `<form>`.
+  htmx does not validate requests from other elements (an `hx-post` button)
+  unless they carry `hx-validate="true"`.
 - Server validation is advisory and does not block submit. The handler that
   processes the submitted form must validate again.
 - No JavaScript is emitted, so it works under a nonce-only CSP
