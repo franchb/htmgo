@@ -3,7 +3,7 @@ module github.com/franchb/htmgo/cli/htmgo/v2
 go 1.27.0
 
 require (
-	github.com/bmatcuk/doublestar/v4 v4.10.2
+	github.com/bmatcuk/doublestar/v4 v4.10.4
 	github.com/franchb/htmgo/framework/v2 v2.0.5-0.20261028144127-3f070fa29c1f
 	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.1-0.20261028144127-3f070fa29c1f
 	github.com/fsnotify/fsnotify v1.10.1
