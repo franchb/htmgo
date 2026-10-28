@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`framework/h`: `h.Validation`** with `ValidateRequired`, `ValidatePattern`, `ValidatePartial`/`ValidatePath`, `ValidateOn`, `ValidateTarget` and `ValidateSwap`. It renders only attributes: native `required`/`pattern` (+`title`) checks, plus optional server validation that `hx-post`s the field to a partial on change and swaps the reply into the next `<div>`, with `hx-sync="this:replace"`. No JavaScript, so it is CSP-friendly. Design notes and next steps are in `docs/design/validation.md`.
+
 ## [2.2.0] - Unreleased (draft)
 
 Draft for the next release, covering master since v2.1.0 plus the security, CI and hygiene fixes in #65–#68. Not tagged yet.
