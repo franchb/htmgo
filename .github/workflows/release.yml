@@ -79,10 +79,24 @@ jobs:
             echo "::notice::Tests have not succeeded on ${merge::7} yet; the Tests run will start this workflow again."
             echo "ready=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # Keep these paths in sync with update-framework-dep.yml.
-          if ! git diff --quiet "$merge^" "$merge" -- framework tools/html-to-htmgo && ! succeeded update-framework-dep.yml "$merge"; then
-            echo "::notice::The framework-dependency updater has not succeeded on ${merge::7} yet; its run will start this workflow again."
-            echo "ready=false" >> "$GITHUB_OUTPUT"; exit 0
+          # Every framework change since the last release must have reached the
+          # other modules: some updater run must have succeeded on the newest
+          # such commit or a later one. Looking only at the latest merge is not
+          # enough, because a later merge can reject the push of an earlier
+          # merge's updater. Keep these paths in sync with update-framework-dep.yml.
+          base=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' HEAD)
+          fw=$(git log -1 --format=%H --invert-grep --fixed-strings --grep="$AUTO_UPDATE" \
+            "$base..HEAD" -- framework tools/html-to-htmgo)
+          if [ -n "$fw" ]; then
+            updated=false
+            for sha in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow update-framework-dep.yml \
+                --status success --limit 50 --json headSha --jq '.[].headSha'); do
+              if git merge-base --is-ancestor "$fw" "$sha" 2>/dev/null; then updated=true; break; fi
+            done
+            if [ "$updated" != true ]; then
+              echo "::notice::The framework-dependency updater has not succeeded on ${fw::7} or later yet; its run will start this workflow again. If it failed because master moved under it, run it by hand (Actions > Update HTMGO Framework Dependency > Run workflow)."
+              echo "ready=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
           fi
           # The updater may have pushed after the checkout. Release from the
           # current tip, as long as no newer merge has landed meanwhile (that
