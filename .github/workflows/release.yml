@@ -64,9 +64,11 @@ jobs:
           AUTO_UPDATE: Auto-update HTMGO framework version
         run: |
           set -euo pipefail
-          # The latest commit that is not the updater's.
+          # The latest commit that is not the updater's. No pipe: with
+          # pipefail, a reader that stops early (awk exit, head) kills git log
+          # with SIGPIPE and fails the step (exit 141).
           last_merge() {
-            git log --format='%H%x09%s' HEAD | awk -F'\t' -v s="$AUTO_UPDATE" '$2 != s { print $1; exit }'
+            git log -1 --format=%H -E --invert-grep --grep="^${AUTO_UPDATE}\$" HEAD
           }
           succeeded() { # workflow file, commit
             n=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$1" --commit "$2" --limit 20 \
