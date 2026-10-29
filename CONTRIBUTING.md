@@ -128,8 +128,54 @@ where possible. Add a regression test with every bug fix.
 
 ## Releases
 
-Each module is tagged separately with its directory as prefix, for
-example `framework/v2.1.0`, `cli/htmgo/v2.1.0`, plus a repository-wide
-`v2.1.0` tag. After a framework change lands on master, the
-"Update HTMGO Framework Dependency" workflow bumps the apps' framework
-requirement automatically.
+Releases are automatic. Every merge to `master` that changes a module in a
+way that matters to its users is tagged and released by the
+[Release workflow](.github/workflows/release.yml) once the Tests (and, for
+framework changes, the dependency updater) have succeeded on it.
+
+Each module is tagged separately, with its directory as the prefix
+(`framework/v2.1.0`, `cli/htmgo/v2.1.1`; see
+[the Go modules reference](https://go.dev/ref/mod#vcs-version)), and every
+release also gets a repository-wide tag (`v2.2.0`). That release is marked
+latest and carries the `htmgo` binaries, `SHA256SUMS` and build provenance.
+Asset names have no version in them, so
+`https://github.com/franchb/htmgo/releases/latest/download/htmgo_linux_amd64.tar.gz`
+always points to the newest build.
+
+How versions are chosen (`tools/release`):
+
+- A module takes part if it has at least one `<dir>/vX.Y.Z` tag. The
+  examples, the site and the templates have none and are never released.
+  To release a new module, tag its first version by hand.
+- Its next version comes from the commits since its latest tag on
+  `master` that touch its directory (nested modules excluded). The commit
+  subject (the squash-merge title, i.e. the PR title) decides the bump:
+  - `type!:` or a `BREAKING CHANGE:` footer: major
+  - `feat`: minor
+  - `fix`, `perf`, `security`, `revert`, `deps`, `build(deps)`,
+    `chore(deps-dev)`, and the updater's "Auto-update HTMGO framework
+    version" commits: patch
+  - anything else (`chore`, `ci`, `docs`, `test`, `refactor`, …): no release
+- The repository tag gets the largest bump of the modules released, but at
+  most a minor one.
+- A breaking change cannot be released as v2.x, and a /v2 module path cannot
+  carry v3 tags ([major version suffixes](https://go.dev/ref/mod#major-version-suffixes)).
+  So a breaking commit stops the release workflow with an error until either
+  the module path moves to `/v3` (the next release is then `v3.0.0`) or a
+  maintainer decides the change is compatible and pushes the next tag by hand
+  (later releases continue from it).
+- A module whose `go.mod` has `replace` directives is not released.
+
+Try a plan locally (it only reads the repository):
+
+```bash
+cd tools/release && GOWORK=off go run . -repo ../.. -head origin/master \
+  -out /tmp/release -repo-url https://github.com/franchb/htmgo -binary cli/htmgo=htmgo
+```
+
+or run the Release workflow by hand with "dry run" checked: it plans and
+builds, and creates no tags or releases.
+
+After a framework change lands on master, the
+"Update HTMGO Framework Dependency" workflow bumps the other modules'
+framework requirement first, so the tags land on that commit.

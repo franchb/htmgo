@@ -8,7 +8,7 @@ A lightweight Go web framework for building interactive websites using Go + htmx
 
 ## Repository Layout (multi-module monorepo)
 
-- **framework/** — Core framework module (`github.com/franchb/htmgo/framework/v2`). The main package is `h/` which contains the HTML builder, renderer, request context, lifecycle events, caching, and swap logic. Sub-packages: `hx/` (htmx constants), `service/` (service locator DI), `config/`, `h/cache/` (pluggable cache stores), `assets/`, `js/`. Four library modules use `/v2` import paths as of v2.0.0: `framework`, `framework-ui`, `extensions/websocket`, `tools/html-to-htmgo`. The CLI (`cli/htmgo`) is a binary and stays bare.
+- **framework/** — Core framework module (`github.com/franchb/htmgo/framework/v2`). The main package is `h/` which contains the HTML builder, renderer, request context, lifecycle events, caching, and swap logic. Sub-packages: `hx/` (htmx constants), `service/` (service locator DI), `config/`, `h/cache/` (pluggable cache stores), `assets/`, `js/`. All five released modules use `/v2` module paths as of v2.0.0: `framework`, `framework-ui`, `extensions/websocket`, `tools/html-to-htmgo` and the CLI (`github.com/franchb/htmgo/cli/htmgo/v2`). Releases are automatic; see CONTRIBUTING.md "Releases" and `tools/release/`.
 - **framework-ui/** — Pre-built UI component library built on top of the framework.
 - **cli/htmgo/** — CLI tool. Commands: `template`, `run`, `watch`, `build`, `setup`, `css`, `schema`, `generate`, `format`, `version`. Key task packages live under `cli/htmgo/tasks/` (astgen, copyassets, css, reloader, run, etc.).
 - **extensions/websocket/** — WebSocket extension module.
