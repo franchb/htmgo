@@ -6,21 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added
+## [2.2.0] - 2026-10-29
 
-- **Automatic releases.** Merges to master are tagged and released per module from Conventional Commit subjects. Each module continues from its own latest tag (`framework/v2.0.4` → `framework/v2.1.0` while the others go from v2.1.0 to v2.1.1), and the repository tag moves too. Releases attach reproducible `htmgo` binaries for Linux, macOS and Windows (amd64/arm64), with `SHA256SUMS` and GitHub build provenance. Rules are in CONTRIBUTING.md, "Releases". The planner is `tools/release`, a stdlib-only Go module.
-- **`htmgo version`** reports the real release version (from the release build, or from `go install …@vX.Y.Z`), or `dev` for a source build. Before, it always printed `2.0.0`.
-- **`framework/h`: opt-in CSP nonces.** Set `AppOpts.ContentSecurityPolicy` (for example `"script-src 'nonce-{nonce}' 'strict-dynamic'; object-src 'none'; base-uri 'none'"`). Each full page then gets a fresh 128-bit nonce on every `<script>` htmgo renders, a `Content-Security-Policy` header with `{nonce}` replaced, and a `<meta name="htmx-config">` that makes htmx 4 put the nonce on scripts in swapped partials. Cached components get the current request's nonce. `RequestContext.CSPNonce()` and `h.WithScriptNonce` are available for custom setups. With the option empty, output is unchanged. Not covered: inline event handlers (`h.OnClick` and friends render `onclick=` attributes, and `hx-on` needs `'unsafe-eval'`). Note that `inlineScriptNonce` makes htmx trust every script in a swapped response, so inside partials CSP no longer guards against injected scripts; escaping still does.
-- **`framework/h`: `h.Validation`** with `ValidateRequired`, `ValidatePattern`, `ValidatePartial`/`ValidatePath`, `ValidateOn`, `ValidateTarget` and `ValidateSwap`. It renders only attributes: native `required`/`pattern` (+`title`) checks, plus optional server validation that `hx-post`s the field to a partial on change and swaps the reply into the next `<div>`, with `hx-sync="this:queue last"`. No JavaScript, so it is CSP-friendly. Design notes and next steps are in `docs/design/validation.md`.
-
-## [2.2.0] - Unreleased (draft)
-
-Draft for the next release, covering master since v2.1.0 plus the security, CI and hygiene fixes in #65–#68. Not tagged yet.
+Tags: `framework/v2.1.0`, `cli/htmgo/v2.1.1`, `framework-ui/v2.1.1`, `extensions/websocket/v2.1.1`, `tools/html-to-htmgo/v2.1.1` and the repository tag `v2.2.0`, all at the same commit. This is the first release made by the Release workflow, and the first with prebuilt `htmgo` binaries.
 
 ### Breaking
 
 - **Minimum Go version is now 1.27.0** in every module (#58). Downstream modules that depend on any htmgo v2 module must build with Go ≥ 1.27.0, or let `GOTOOLCHAIN=auto` fetch it.
 - **`framework/h`: the unused `Entry` type is removed.** It had only unexported fields and nothing referenced it, but it was exported.
+
+### Added
+
+- **`framework/h`: opt-in CSP nonces.** Set `AppOpts.ContentSecurityPolicy` (for example `"script-src 'nonce-{nonce}' 'strict-dynamic'; object-src 'none'; base-uri 'none'"`). Each full page then gets a fresh 128-bit nonce on every `<script>` htmgo renders, a `Content-Security-Policy` header with `{nonce}` replaced, and a `<meta name="htmx-config">` that makes htmx 4 put the nonce on scripts in swapped partials. Cached components get the current request's nonce. `RequestContext.CSPNonce()` and `h.WithScriptNonce` are available for custom setups. With the option empty, output is unchanged. Not covered: inline event handlers (`h.OnClick` and friends render `onclick=` attributes, and `hx-on` needs `'unsafe-eval'`). Note that `inlineScriptNonce` makes htmx trust every script in a swapped response, so inside partials CSP no longer guards against injected scripts; escaping still does.
+- **`framework/h`: `h.Validation`** with `ValidateRequired`, `ValidatePattern`, `ValidatePartial`/`ValidatePath`, `ValidateOn`, `ValidateTarget` and `ValidateSwap`. It renders only attributes: native `required`/`pattern` (+`title`) checks, plus optional server validation that `hx-post`s the field to a partial on change and swaps the reply into the next `<div>`, with `hx-sync="this:queue last"`. No JavaScript, so it is CSP-friendly. Design notes and next steps are in `docs/design/validation.md`.
+- **Automatic releases.** Merges to master are tagged and released per module from Conventional Commit subjects. Each module continues from its own latest tag, and the repository tag moves with them. Releases attach reproducible `htmgo` binaries for Linux, macOS and Windows (amd64/arm64), with `SHA256SUMS` and GitHub build provenance. Rules are in CONTRIBUTING.md, "Releases". The planner is `tools/release`, a stdlib-only Go module.
 
 ### Security
 
@@ -31,6 +30,8 @@ Draft for the next release, covering master since v2.1.0 plus the security, CI a
 - **`tools/html-to-htmgo`:** conversion no longer fails with `ParseErr` when a node, such as a comment, follows `</html>`. `findBody` used to keep only the last child's result.
 - **`cli/htmgo`:** data races in the process runner, which `htmgo watch` hits. The running-command map is now locked, and a command is published only after `Start` has set `cmd.Process`.
 - **`extensions/websocket`:** `SocketManager.Get` returns nil for an unknown connection id instead of a pointer to a zero `SocketConnection`.
+- **`cli/htmgo`: `htmgo watch` works on Windows** (#81). The old server is stopped before the rebuild, so the build can replace the running binary.
+- **`cli/htmgo`: `htmgo version`** reports the real release version (from the release build, or from `go install …@vX.Y.Z`), or `dev` for a source build. Before, it always printed `2.0.0`.
 - **`cli/htmgo`:** removed an unreachable duplicate `generate` branch. Behaviour is unchanged.
 
 ### Changed
@@ -38,6 +39,8 @@ Draft for the next release, covering master since v2.1.0 plus the security, CI a
 - All dependencies bumped (#57). Notable: `gofiber/fiber/v3` v3.5.0, `valyala/fasthttp` v1.74.0, TypeScript 7, vitest 5, jsdom 30.
 - `cli/htmgo` astgen no longer calls the deprecated `strings.Title`. Generated asset constant names are unchanged; a test now pins them.
 - Docker images for htmgo-site, the starter template and the examples are built from the same commit as the framework, use Debian-based Go builders, and run on `distroless/base-debian12`.
+- `gofiber/fiber/v3` v3.6.1 and `valyala/fasthttp` v1.77.0 (#69), plus Dependabot updates for `golang.org/x/tools`, `golang.org/x/mod`, `doublestar` and the JS toolchain.
+- htmgo.dev works on phones: compact nav, a collapsible docs menu and code blocks that fit the screen (#84).
 - The README gained a "What this fork adds" section (#41).
 
 ### CI
@@ -45,6 +48,7 @@ Draft for the next release, covering master since v2.1.0 plus the security, CI a
 - One `Tests` workflow runs `go vet` and `go test -race` for every library module on Go 1.27.x and stable, plus the vitest suite for the JS extensions.
 - New workflows: govulncheck for every library module, and golangci-lint.
 - Fixed the Cloudflare docs deploy, the GHCR release workflows and the framework-dependency updater.
+- The framework-dependency updater retries `go get` while the module proxy catches up with a new commit (#87).
 - Actions are pinned to commit SHAs, and workflow tokens are read-only by default.
 
 ## [2.1.0] - 2026-07-09
