@@ -24,6 +24,7 @@ jobs:
           - cli/htmgo
           - extensions/websocket
           - tools/html-to-htmgo
+          - tools/release
         go:
           - '1.27.x'
           - stable

@@ -36,6 +36,7 @@ jobs:
           - cli/htmgo
           - extensions/websocket
           - tools/html-to-htmgo
+          - tools/release
     env:
       GOWORK: 'off'
     steps:

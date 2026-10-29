@@ -19,8 +19,6 @@ import (
 	"github.com/franchb/htmgo/cli/htmgo/v2/tasks/run"
 )
 
-const version = "2.0.0"
-
 func main() {
 	needsSignals := true
 
@@ -91,7 +89,7 @@ func main() {
 		startWatcher(reloader.OnFileChange)
 	} else {
 		if taskName == "version" {
-			fmt.Printf("htmgo cli version %s\n", version)
+			fmt.Printf("htmgo cli version %s\n", cliVersion())
 			os.Exit(0)
 		}
 		if taskName == "format" {

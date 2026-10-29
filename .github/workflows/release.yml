@@ -1,0 +1,322 @@
+name: Release
+
+# Tags and releases every Go module that has changed since its latest tag,
+# from Conventional Commits (see CONTRIBUTING.md, "Releases"), and attaches
+# htmgo CLI binaries to the release.
+#
+# It runs after the Tests and the framework-dependency updater runs for a
+# merge to master. It releases only once both have succeeded for that merge,
+# so the tags land on the updater's "Auto-update" commit when there is one.
+# Pushes made with GITHUB_TOKEN start no workflows, so that commit gets no
+# push event of its own. Running the plan twice is harmless: a second run
+# finds nothing new.
+on:
+  workflow_run:
+    workflows:
+      - Tests
+      - Update HTMGO Framework Dependency
+    types:
+      - completed
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Plan and build only; create no tags or releases
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       contains(fromJSON('["push", "workflow_dispatch"]'), github.event.workflow_run.event))
+    permissions:
+      contents: read
+      actions: read # gh run list
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      head: ${{ steps.plan.outputs.head }}
+      binary_ref: ${{ steps.plan.outputs.binary_ref }}
+      binary_version: ${{ steps.plan.outputs.binary_version }}
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: master
+          fetch-depth: 0 # full history and all tags
+          persist-credentials: false
+
+      - name: Check CI on the latest merge
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTO_UPDATE: Auto-update HTMGO framework version
+        run: |
+          set -euo pipefail
+          # The latest commit that is not the updater's.
+          last_merge() {
+            git log --format='%H%x09%s' HEAD | awk -F'\t' -v s="$AUTO_UPDATE" '$2 != s { print $1; exit }'
+          }
+          succeeded() { # workflow file, commit
+            n=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$1" --commit "$2" --limit 20 \
+              --json conclusion --jq 'map(select(.conclusion == "success")) | length')
+            [ "$n" -gt 0 ]
+          }
+          merge=$(last_merge)
+          echo "Latest merge: $(git log -1 --format='%h %s' "$merge")"
+          if ! succeeded tests.yml "$merge"; then
+            echo "::notice::Tests have not succeeded on ${merge::7} yet; the Tests run will start this workflow again."
+            echo "ready=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # Every framework change since the last release must have reached the
+          # other modules: some updater run must have succeeded on the newest
+          # such commit or a later one. Looking only at the latest merge is not
+          # enough, because a later merge can reject the push of an earlier
+          # merge's updater. Keep these paths in sync with update-framework-dep.yml.
+          base=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' HEAD)
+          fw=$(git log -1 --format=%H --invert-grep --fixed-strings --grep="$AUTO_UPDATE" \
+            "$base..HEAD" -- framework tools/html-to-htmgo)
+          if [ -n "$fw" ]; then
+            updated=false
+            for sha in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow update-framework-dep.yml \
+                --status success --limit 50 --json headSha --jq '.[].headSha'); do
+              if git merge-base --is-ancestor "$fw" "$sha" 2>/dev/null; then updated=true; break; fi
+            done
+            if [ "$updated" != true ]; then
+              echo "::notice::The framework-dependency updater has not succeeded on ${fw::7} or later yet; its run will start this workflow again. If it failed because master moved under it, run it by hand (Actions > Update HTMGO Framework Dependency > Run workflow)."
+              echo "ready=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+          fi
+          # The updater may have pushed after the checkout. Release from the
+          # current tip, as long as no newer merge has landed meanwhile (that
+          # merge's own runs release it).
+          git fetch --quiet --tags origin master
+          git checkout --quiet --detach FETCH_HEAD
+          if [ "$(last_merge)" != "$merge" ]; then
+            echo "::notice::master moved past ${merge::7}; the newer merge will be released by its own runs."
+            echo "ready=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Go
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.x'
+          cache: false # tools/release has no dependencies
+
+      - name: Plan
+        id: plan
+        if: steps.gate.outputs.ready == 'true'
+        working-directory: tools/release
+        env:
+          GOWORK: 'off'
+          OUT: ${{ runner.temp }}/release
+        run: |
+          set -euo pipefail
+          go run . -repo ../.. -head HEAD -out "$OUT" \
+            -repo-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            -binary cli/htmgo=htmgo | tee -a "$GITHUB_STEP_SUMMARY"
+          plan="$OUT/plan.json"
+          head=$(jq -r .head "$plan")
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          if [ "$(jq -r '.root != null' "$plan")" != true ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          # Build the binary from the commit being tagged, or from its
+          # existing tag when the CLI module is unchanged.
+          if [ "$(jq -r .binary.new "$plan")" = true ]; then
+            echo "binary_ref=$head" >> "$GITHUB_OUTPUT"
+          else
+            echo "binary_ref=$(git rev-parse "$(jq -r .binary.tag "$plan")^{commit}")" >> "$GITHUB_OUTPUT"
+          fi
+          echo "binary_version=$(jq -r .binary.version "$plan")" >> "$GITHUB_OUTPUT"
+          {
+            echo
+            echo '<details><summary>Release notes</summary>'
+            echo
+            cat "$OUT/notes/$(jq -r .root.tag "$plan").md"
+            echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload plan
+        if: steps.plan.outputs.release == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-plan
+          path: ${{ runner.temp }}/release
+          retention-days: 30
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: windows, goarch: arm64 }
+    env:
+      GOWORK: 'off'
+      CGO_ENABLED: '0'
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      VERSION: ${{ needs.plan.outputs.binary_version }}
+    steps:
+      - name: Checkout the CLI source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.binary_ref }}
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.x'
+          cache-dependency-path: cli/htmgo/go.sum
+
+      - name: Build
+        working-directory: cli/htmgo
+        run: |
+          set -euo pipefail
+          ext=""; [ "$GOOS" = windows ] && ext=".exe"
+          name="htmgo_${GOOS}_${GOARCH}"
+          stage="$RUNNER_TEMP/$name"
+          mkdir -p "$stage" "$RUNNER_TEMP/dist"
+          go build -trimpath -mod=readonly -ldflags "-s -w -X main.version=$VERSION" -o "$stage/htmgo$ext" .
+          cp ../../LICENSE ../../README.md "$stage/"
+          if [ "$GOOS" = linux ] && [ "$GOARCH" = amd64 ]; then
+            got=$("$stage/htmgo" version)
+            [ "$got" = "htmgo cli version $VERSION" ] || { echo "unexpected version output: $got"; exit 1; }
+          fi
+          # Archives that do not depend on the build time or the runner.
+          epoch=$(git log -1 --format=%ct)
+          find "$stage" -exec touch -h -d "@$epoch" {} +
+          cd "$RUNNER_TEMP"
+          if [ "$GOOS" = windows ]; then
+            find "$name" -print | LC_ALL=C sort | zip -X -q "dist/$name.zip" -@
+          else
+            tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cf - "$name" | gzip -n > "dist/$name.tar.gz"
+          fi
+
+      - name: Upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: htmgo_${{ matrix.goos }}_${{ matrix.goarch }}
+          path: ${{ runner.temp }}/dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: [plan, build]
+    if: needs.plan.outputs.release == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push tags, create releases
+      id-token: write # build provenance
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAD_SHA: ${{ needs.plan.outputs.head }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.head }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download plan
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-plan
+          path: ${{ runner.temp }}/release
+
+      - name: Download binaries
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: htmgo_*
+          path: ${{ runner.temp }}/dist
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: ${{ runner.temp }}/dist
+        run: |
+          sha256sum -- * | LC_ALL=C sort -k2 > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: ${{ runner.temp }}/dist/SHA256SUMS
+
+      - name: Push tags
+        run: |
+          set -euo pipefail
+          PLAN="$RUNNER_TEMP/release/plan.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          new=()
+          for tag in $(jq -r '.modules[].tag, .root.tag' "$PLAN"); do
+            # A re-run after a partial publish finds its own tags in place.
+            if existing=$(git rev-parse -q --verify "refs/tags/$tag^{commit}"); then
+              [ "$existing" = "$HEAD_SHA" ] || { echo "::error::$tag already exists at ${existing::7}"; exit 1; }
+              continue
+            fi
+            git tag -a "$tag" -m "$tag" "$HEAD_SHA"
+            new+=("refs/tags/$tag")
+          done
+          if [ ${#new[@]} -gt 0 ]; then
+            git push --atomic "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "${new[@]}"
+          fi
+
+      - name: Create releases
+        run: |
+          set -euo pipefail
+          PLAN="$RUNNER_TEMP/release/plan.json" NOTES="$RUNNER_TEMP/release/notes" DIST="$RUNNER_TEMP/dist"
+          notes() { echo "$NOTES/$(echo "$1" | tr / _).md"; }
+          release() { # tag, latest, upload-binaries
+            if ! gh release view "$1" >/dev/null 2>&1; then
+              gh release create "$1" --verify-tag --title "$1" --notes-file "$(notes "$1")" --latest="$2"
+            fi
+            if [ "$3" = true ]; then
+              gh release upload "$1" --clobber "$DIST"/*
+            fi
+          }
+          binary_tag=$(jq -r .binary.tag "$PLAN")
+          for tag in $(jq -r '.modules[].tag' "$PLAN"); do
+            release "$tag" false "$([ "$tag" = "$binary_tag" ] && echo true || echo false)"
+          done
+          # Last, so that it is the newest and the one marked latest:
+          # releases/latest/download/htmgo_linux_amd64.tar.gz always works.
+          release "$(jq -r .root.tag "$PLAN")" true true
+
+      - name: Ask the Go module proxy to fetch the new versions
+        # pkg.go.dev and `go get` pick the versions up sooner. Not needed for
+        # correctness; the proxy fetches on first request anyway.
+        continue-on-error: true
+        run: |
+          PLAN="$RUNNER_TEMP/release/plan.json"
+          for mv in $(jq -r '.modules[] | "\(.module)@\(.version)"' "$PLAN"); do
+            for i in 1 2 3; do
+              curl -fsS "https://proxy.golang.org/${mv%@*}/@v/${mv#*@}.info" && echo && break
+              sleep $((i * 10))
+            done
+          done
