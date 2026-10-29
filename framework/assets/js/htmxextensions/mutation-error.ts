@@ -16,7 +16,7 @@ const HX_ON_ATTRS = [
 function broadcast(status: number, exclude?: Element) {
   const seen = new Set<Element>();
   for (const attr of HX_ON_ATTRS) {
-    const selector = `[${attr.replace(/:/g, "\\:")}]`;
+    const selector = `[${CSS.escape(attr)}]`;
     document.querySelectorAll(selector).forEach((el) => {
       if (seen.has(el)) return;
       // htmx.trigger dispatches bubbling CustomEvents, so ancestors of the

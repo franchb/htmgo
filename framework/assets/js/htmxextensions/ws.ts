@@ -1,5 +1,6 @@
 import htmx from "htmx.org";
 import { removeAssociatedScripts } from "./htmgo";
+import { applyOobSwap } from "./oob";
 
 const processed = new Set<string>();
 const sockets = new WeakMap<Element, { socket: WebSocket; url: string }>();
@@ -78,67 +79,4 @@ function connectWs(ele: Element, url: string, attempt = 0): WebSocket | null {
   });
 
   return socket;
-}
-
-/**
- * Parses the WS message text and applies OOB swaps via htmx 4's htmx.swap().
- *
- * htmx 4 removed the internal api methods makeFragment / makeSettleInfo /
- * oobSwap / getAttributeValue that htmx 2 exposed.  The replacement is the
- * public htmx.swap(ctx) which accepts a plain ctx object and processes all
- * hx-swap-oob children automatically.
- *
- * The one htmgo-specific behaviour that htmx.swap() does NOT handle is the
- * appending of <script id="__eval…"> elements to document.body.  We extract
- * those from the parsed fragment ourselves before handing the rest off to
- * htmx.swap(), so they are not lost.
- */
-function applyOobSwap(ele: Element, responseText: string) {
-  // Parse the HTML into a document fragment so we can inspect children.
-  // DOMParser is always available in the browser environments htmgo targets.
-  const doc = new DOMParser().parseFromString(
-    `<template>${responseText}</template>`,
-    "text/html"
-  );
-  const templateEl = doc.querySelector("template");
-  if (!templateEl) {
-    // Fallback: hand the raw text to htmx.swap() with swap:'none' so OOB
-    // attributes are still processed by htmx core.
-    (htmx as any).swap({
-      sourceElement: ele,
-      target: ele,
-      swap: "none",
-      text: responseText,
-      transition: false,
-    });
-    return;
-  }
-
-  // Extract and append __eval scripts first (htmgo-specific behaviour).
-  // These must be appended to document.body so the browser executes them.
-  // Use querySelectorAll so scripts nested inside OOB wrappers are still found.
-  const content = templateEl.content;
-  const evalScripts = Array.from(
-    content.querySelectorAll('script[id^="__eval"]'),
-  ) as HTMLScriptElement[];
-  for (const script of evalScripts) {
-    script.remove(); // remove from fragment before swap
-    document.body.appendChild(script);
-  }
-
-  // Pass the (now __eval-stripped) HTML to htmx.swap().
-  // htmx 4's swap() calls __processOOB internally, so all children carrying
-  // hx-swap-oob will be handled correctly.  We use swap:'none' for the main
-  // target because htmgo WS messages are entirely OOB — there is no primary
-  // target to replace.
-  (htmx as any).swap({
-    sourceElement: ele,
-    target: ele,
-    swap: "none",
-    // Serialise fragment back to string for htmx.swap()'s __makeFragment.
-    text: Array.from(content.children)
-      .map((c) => c.outerHTML)
-      .join(""),
-    transition: false,
-  });
 }

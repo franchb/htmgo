@@ -105,3 +105,27 @@ describe("mutation-error extension", () => {
     ).toBe(0);
   });
 });
+
+describe("mutation-error broadcast", () => {
+  it("reaches unrelated elements carrying either hx-on attribute spelling", async () => {
+    await import("../mutation-error");
+    const ext = registered["mutation-error"];
+    document.body.innerHTML = "";
+    const camel = document.createElement("div");
+    camel.setAttribute("hx-on::onMutationError", "");
+    const kebab = document.createElement("div");
+    kebab.setAttribute("hx-on::on-mutation-error", "");
+    const elt = document.createElement("button");
+    document.body.append(camel, kebab, elt);
+    triggered.length = 0;
+    ext.htmx_after_request(elt, {
+      ctx: { request: { method: "DELETE" }, response: { status: 0 } },
+    });
+    const targets = triggered
+      .filter((t) => t.evt === "htmx:onMutationError")
+      .map((t) => t.elt);
+    expect(targets).toContain(camel);
+    expect(targets).toContain(kebab);
+    expect(targets).toContain(elt);
+  });
+});
