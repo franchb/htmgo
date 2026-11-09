@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/franchb/htmgo/framework/v2 v2.1.1-0.20261029172802-e5f08679c931
-	github.com/gobwas/ws v1.4.0
+	github.com/gobwas/ws v1.5.0
 	github.com/gofiber/fiber/v3 v3.6.1
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
 	github.com/stretchr/testify v1.12.1
@@ -12,7 +12,6 @@ require (
 
 require (
 	github.com/gobwas/httphead v0.1.0 // indirect
-	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gofiber/schema v1.8.8 // indirect
 	github.com/gofiber/utils/v2 v2.6.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
