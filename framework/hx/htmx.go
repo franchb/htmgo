@@ -55,7 +55,7 @@ const (
 )
 
 const (
-	// Htmx Events (htmx 4 colon-form, verified against htmx.org/dist/htmx.js 4.0.0-beta2)
+	// Htmx Events (htmx 4 colon-form, verified against htmx.org/dist/htmx.js 4.0.1)
 	AbortEvent                Event = "htmx:abort"
 	AfterOnLoadEvent          Event = "htmx:after:init"
 	AfterProcessNodeEvent     Event = "htmx:after:process"
@@ -78,7 +78,7 @@ const (
 	OnMutationErrorEvent      Event = "htmx:onMutationError" // htmgo-fork custom event; kept as-is (emitted by mutation-error extension)
 	PromptEvent               Event = "htmx:prompt"
 
-	// SSE (extracted to hx-sse.js in alpha8 — verified against htmx.org/dist/ext/hx-sse.js 4.0.0-beta2)
+	// SSE (extracted to hx-sse.js in alpha8 — verified against htmx.org/dist/ext/hx-sse.js 4.0.1)
 	SseConnectedEvent     Event = "htmx:after:sse:connection"
 	SseConnectingEvent    Event = "htmx:before:sse:connection"
 	SseClosedEvent        Event = "htmx:sse:close"

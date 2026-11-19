@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **htmx bumped from 4.0.0-beta2 to 4.0.1** (stable). Event names are a superset of beta2 (new: `htmx:before:on:init`, `htmx:finally:swap`, `htmx:response:error`, `htmx:scope`); the SSE/WS extension events are unchanged. htmx 4.0.1 adds its indicator CSS through a constructed stylesheet, so the `inlineStyleNonce` key htmgo still puts in `htmx-config` is now unused and harmless. `framework/assets/dist/htmgo.js` rebuilt.
+
 ## [2.2.0] - 2026-10-29
 
 Tags: `framework/v2.1.0`, `cli/htmgo/v2.1.1`, `framework-ui/v2.1.1`, `extensions/websocket/v2.1.1`, `tools/html-to-htmgo/v2.1.1` and the repository tag `v2.2.0`, all at the same commit. This is the first release made by the Release workflow, and the first with prebuilt `htmgo` binaries.
