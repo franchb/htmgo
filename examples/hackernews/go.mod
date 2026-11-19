@@ -3,7 +3,7 @@ module hackernews
 go 1.27.0
 
 require (
-	github.com/franchb/htmgo/framework/v2 v2.1.1-0.20261029172802-e5f08679c931
+	github.com/franchb/htmgo/framework/v2 v2.1.2-0.20261119194604-ebd8604941bd
 	github.com/gofiber/fiber/v3 v3.6.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 )

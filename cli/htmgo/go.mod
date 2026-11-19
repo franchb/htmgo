@@ -4,8 +4,8 @@ go 1.27.0
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.10.4
-	github.com/franchb/htmgo/framework/v2 v2.1.1
-	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.2-0.20261029172802-e5f08679c931
+	github.com/franchb/htmgo/framework/v2 v2.1.2-0.20261119194604-ebd8604941bd
+	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.2-0.20261119194604-ebd8604941bd
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/mod v0.42.0
@@ -29,6 +29,6 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
