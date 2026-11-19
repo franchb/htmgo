@@ -4,8 +4,8 @@ go 1.27.0
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.10.4
-	github.com/franchb/htmgo/framework/v2 v2.1.3-0.20261119202108-15ad1a7dad37
-	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.3-0.20261119202108-15ad1a7dad37
+	github.com/franchb/htmgo/framework/v2 v2.1.3-0.20261119202705-3b6a8d15206a
+	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.3-0.20261119202705-3b6a8d15206a
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/mod v0.43.0
