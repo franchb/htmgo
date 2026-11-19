@@ -8,7 +8,7 @@ require (
 	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.2-0.20261119194604-ebd8604941bd
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/mod v0.42.0
+	golang.org/x/mod v0.43.0
 	golang.org/x/sys v0.49.0
 	golang.org/x/tools v0.52.0
 )
