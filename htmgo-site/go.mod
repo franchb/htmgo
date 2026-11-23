@@ -4,8 +4,8 @@ go 1.27.0
 
 require (
 	github.com/alecthomas/chroma/v2 v2.27.0
-	github.com/franchb/htmgo/framework/v2 v2.1.3-0.20261119202705-3b6a8d15206a
-	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.3-0.20261119202705-3b6a8d15206a
+	github.com/franchb/htmgo/framework/v2 v2.1.4-0.20261123150459-803a8411e48f
+	github.com/franchb/htmgo/tools/html-to-htmgo/v2 v2.1.3-0.20261123150459-803a8411e48f
 	github.com/gofiber/fiber/v3 v3.7.0
 	github.com/google/uuid v1.6.0
 	github.com/yuin/goldmark v1.8.6
