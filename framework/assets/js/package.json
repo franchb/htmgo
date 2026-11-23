@@ -19,7 +19,7 @@
   "devDependencies": {
     "@swc/core": "^1.16.22",
     "@types/node": "^26.6.6",
-    "@vitest/ui": "^5.1.0",
+    "@vitest/ui": "^5.1.1",
     "jsdom": "^31.0.0",
     "prettier": "^3.9.10",
     "shiki": "^4.5.0",
