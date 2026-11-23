@@ -8,7 +8,7 @@ how to build and test it. Please also read the
 ## Prerequisites
 
 - Go 1.27.0 or newer
-- Node.js 22 and npm (JS extensions, Tailwind plugins for htmgo-site)
+- Node.js and npm for JS tests and site builds. CI uses Node 22.x. On that line, the locked dependencies require 22.22.2 or newer.
 - Optional: [Task](https://taskfile.dev) for the examples' `Taskfile.yml`
 - Optional: Docker or Podman to build the release images
 
@@ -68,17 +68,19 @@ htmgo build      # production binary in ./dist
 `__htmgo/` is generated and gitignored. Never edit it by hand, and do not
 commit it.
 
-For htmgo-site, run `npm install` first (Tailwind plugins).
+For htmgo-site, run `npm ci` first (Tailwind plugins).
 
 ## Tests
 
 What CI runs (`.github/workflows/tests.yml`), per library module:
 
 ```bash
-for m in framework framework-ui cli/htmgo extensions/websocket tools/html-to-htmgo; do
-  (cd $m && GOWORK=off go vet ./... && GOWORK=off go test -race ./...) || echo "FAIL $m"
+for m in framework framework-ui cli/htmgo extensions/websocket tools/html-to-htmgo tools/release; do
+  (cd "$m" && GOWORK=off go vet ./... && GOWORK=off go test -race ./...) || exit 1
 done
 ```
+
+Run `python3 tools/check-doc-examples.py` from the repository root to compile the README, agent skill, and selected documentation-site examples against the local framework.
 
 A single test:
 

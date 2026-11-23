@@ -20,6 +20,7 @@
 /docs/htmx-extensions/overview
 /docs/htmx-extensions/trigger-children
 /docs/htmx-extensions/mutation-error
+/docs/htmx-extensions/alpine-compat
 /docs/misc/tailwind-intellisense
 /docs/misc/formatter
 /docs/config/htmgo-config

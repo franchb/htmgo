@@ -16,19 +16,19 @@ func IfElse(ctx *h.RequestContext) *h.Page {
 				If / else statements are useful when you want to conditionally render attributes or elements / components.
 				htmgo provides a couple of utilities to do so:
 			`),
-			Text("Example: Rendering an icon if the task is complete"),
+			Text("Render an icon if the task is complete."),
 			ui.GoCodeSnippet(IfElseExample),
-			Text("Example: Using ternary operator to call different partials based on a condition"),
-			ui.GoCodeSnippet(TenaryExample),
-			Text(`Example: Rendering multiple classes based on a condition`),
+			Text("Choose which partial handles a request with <code>h.Ternary</code>."),
+			ui.GoCodeSnippet(TernaryExample),
+			Text(`Apply multiple classes based on a condition.`),
 			ui.GoCodeSnippet(ConditionalClassExample),
-			Text("Example: Rendering a single class based on a condition"),
+			Text("Apply a single class based on a condition."),
 			ui.GoCodeSnippet(ClassIfElseExample),
-			Text("Example: Rendering different elements based on a condition"),
+			Text("Render different elements based on a condition."),
 			ui.GoCodeSnippetSingleLine(IfElseExample2),
 			Text(`
-				<b>Note:</b> This will execute both <b>EditTaskForm</b> and <b>ViewTask</b>, no matter if the condition is true or false, since a function is being called here.
-				If you do not want to call the function at all unless the condition is true, use <b>h.IfElseLazy</b>
+				Go evaluates both <code>EditTaskForm()</code> and <code>ViewTask()</code> before calling <code>h.IfElse</code>.
+				Pass the functions to <code>h.IfElseLazy</code> to call only the selected one.
 			`),
 			ui.GoCodeSnippetSingleLine(IfElseExample3),
 			NextStep(
@@ -42,24 +42,23 @@ func IfElse(ctx *h.RequestContext) *h.Page {
 
 const IfElseExample = `
 h.Div(
-	h.If(
-		task.CompletedAt != nil,
-		CompleteIcon()
-	)
+	h.If(task.CompletedAt != nil, h.Span(h.Text("✓"))),
 )
 `
 
-const TenaryExample = `h.Div(
+const TernaryExample = `h.Button(
+	h.Type("button"),
 	h.PostPartialWithQs(
-		h.Ternary(!editing, StartEditing, SaveEditing),
-		h.NewQs("id", record.Id),
+		h.Ternary(editing, SaveEditing, StartEditing),
+		h.NewQs("id", recordID),
 	),
+	h.Text(h.Ternary(editing, "Save", "Edit")),
 )
 `
 
-const ConditionalClassExample = `h.ClassX("w-10 h-10 border rounded-full", map[string]bool {
-				"border-green-500": task.CompletedAt != nil,
-				"border-slate-400": task.CompletedAt == nil,
+const ConditionalClassExample = `h.ClassX("w-10 h-10 border rounded-full", h.ClassMap{
+	"border-green-500": task.CompletedAt != nil,
+	"border-slate-400": task.CompletedAt == nil,
 })`
 
 const IfElseExample2 = `h.IfElse(editing, EditTaskForm(), ViewTask())`

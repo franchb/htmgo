@@ -12,11 +12,11 @@ func TriggerChildren(ctx *h.RequestContext) *h.Page {
 			h.Class("flex flex-col gap-3"),
 			Title("Trigger Children"),
 			Text(`
-				The 'trigger-children' extension allows you to trigger an event on all children and siblings of an element.
-				This is useful for things such as letting a child element (such as a button) inside a form know the form was submitted
+				The <code>trigger-children</code> extension forwards supported htmx events to descendants that declare matching listeners.
+				For example, a button inside a form can react when the form sends a request.
 			`),
-			Link("View Example", "https://htmgo.dev/examples/form"),
-			HelpText(`In this example: The trigger-children extension will trigger hx-before-request and hx-after-request on all children of the form when the form is submitted, and the button reacts to that by showing a loading state.`),
+			Link("View Example", "/examples/form"),
+			HelpText(`The loading indicator listens for <code>htmx:before:request</code> and <code>htmx:after:request</code> to update the button during submission.`),
 			NextStep(
 				"mt-4",
 				PrevBlock("HTMX Extensions", DocPath("/htmx-extensions/overview")),
@@ -25,13 +25,3 @@ func TriggerChildren(ctx *h.RequestContext) *h.Page {
 		),
 	)
 }
-
-const TriggerChildrenExample = `
-func MyForm() *h.Element {
-	return h.Form(
-		h.Button(
-			h.Text("Submit"),
-		),
-	)
-}
-`

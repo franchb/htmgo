@@ -1,5 +1,7 @@
 # htmgo-guidance skill — resume notes (2026-04-18)
 
+> Historical checkpoint from April 2026. The completed [v2 skill](../../../.claude/skills/htmgo-guidance/SKILL.md) is the current guide.
+
 Checkpoint for continuing execution of `docs/superpowers/plans/2026-04-18-htmgo-claude-skills.md` in a fresh Claude Code session.
 
 ## State

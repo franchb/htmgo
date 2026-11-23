@@ -10,8 +10,8 @@ func IndexPage(ctx *h.RequestContext) *h.Page {
   return h.NewPage(
     h.Div(
       h.Class("flex gap-2"),
-      h.TextF("the current time is %s", now.String())
-    )
+      h.TextF("the current time is %s", now.String()),
+    ),
   )
 }
 ```
@@ -20,7 +20,7 @@ func IndexPage(ctx *h.RequestContext) *h.Page {
 
 1. deployable single binary
 2. live reload (rebuilds css, go, ent schema, and routes upon change)
-3. automatic page and partial registration based on file path
+3. file-based page routing and automatic registration of partial handlers
 4. built in tailwindcss support, no need to configure anything by default
 5. custom [htmx extensions](https://github.com/franchb/htmgo/tree/master/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
 

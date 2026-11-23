@@ -13,15 +13,17 @@ htmgo is a lightweight pure go way to build interactive websites / web applicati
 
 By combining the speed & simplicity of go + hypermedia attributes ([htmx](https://htmx.org)) to add interactivity to websites, all conveniently wrapped in pure go, you can build simple, fast, interactive websites without touching javascript. All compiled to a **single deployable binary**.
 
+A page in `pages/index.go` can use `time` and `github.com/franchb/htmgo/framework/v2/h` to render the current time.
+
 ```go
 func IndexPage(ctx *h.RequestContext) *h.Page {
-  now := time.Now()
-  return h.NewPage(
-    h.Div(
-      h.Class("flex gap-2"),
-      h.TextF("the current time is %s", now.String())
-    )
-  )
+	now := time.Now()
+	return h.NewPage(
+		h.Div(
+			h.Class("flex gap-2"),
+			h.TextF("the current time is %s", now.String()),
+		),
+	)
 }
 ```
 
@@ -29,7 +31,7 @@ func IndexPage(ctx *h.RequestContext) *h.Page {
 
 1. deployable single binary
 2. live reload (rebuilds css, go, ent schema, and routes upon change)
-3. automatic page and partial registration based on file path
+3. file-based page routes and automatic registration of partial handlers
 4. built in tailwindcss support, no need to configure anything by default
 5. custom [htmx extensions](https://github.com/franchb/htmgo/tree/master/framework/assets/js/htmxextensions) to reduce boilerplate with common tasks
 
@@ -44,7 +46,7 @@ It keeps the original's design and API shape while modernizing the stack and add
 new capabilities:
 
 - **Fiber v3 routing** — replaces `go-chi/chi/v5` with [`gofiber/fiber/v3`](https://github.com/gofiber/fiber). `RequestContext` wraps `fiber.Ctx`, and `AppOpts.FiberConfig` exposes the underlying Fiber config.
-- **htmx 4** — upgraded to htmx `4.0.0-beta2` (from htmx 2). Colon-form event constants, explicit attribute inheritance via `Hx*Inherited` helpers, self-registering extensions (no more `hx-ext`), and all JS extensions rewritten for htmx 4's `registerExtension` API. New helpers: `HxSource`, `HxSourceID`, `HxRequestType`, `StatusAttr`, `ConfigAttr`.
+- **htmx 4** — the bundled client supports colon-form events, explicit attribute inheritance through `Hx*Inherited` helpers, and extensions that register on import. The [JS manifest](framework/assets/js/package.json) pins the bundled version.
 - **Alpine.js integration** — a bundled `alpine-compat` htmx extension preserves Alpine state across morph swaps, plus a new `framework/ax/` Go package with Alpine directive builders that mirror `framework/hx/`.
 - **Tailwind CSS v4** — docs site and starter template migrated to Tailwind v4 (CSS-based config, no `tailwind.config.js`).
 - **Go 1.27** across all modules (up from 1.23).
@@ -54,30 +56,17 @@ new capabilities:
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the full 2.0.0 breaking-change list and migration recipe.
 
-## Claude Code skills
+## Claude Code skill
 
-This repo ships [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) skills under `.claude/skills/` that teach AI coding sessions how to work with htmgo:
+The repository ships [htmgo-guidance](.claude/skills/htmgo-guidance/SKILL.md) for writing v2 apps. It covers pages, partials, htmx and Alpine helpers, caching, and the CLI.
 
-- `htmgo-guidance` — writing htmgo apps (builder, pages, partials, hx/ax helpers, caching, CLI).
-- `htmx-guidance` — htmx 4 patterns and best practices.
-- `htmx-debugging`, `htmx-extension-authoring`, `htmx-migration`, `htmx-upgrade-from-htmx2` — specialized htmx skills.
-
-To use `htmgo-guidance` in a project that consumes this fork:
+Claude Code can use the skill from this checkout. To install it in a consumer project, run the following from that project's root:
 
 ```bash
-# From your consumer project root:
-mkdir -p .claude/skills
-
-# If you have htmgo cloned locally:
-cp -r /path/to/htmgo/.claude/skills/htmgo-guidance .claude/skills/
-
-# Or fetch directly:
-git clone --depth=1 https://github.com/franchb/htmgo.git /tmp/htmgo
-cp -r /tmp/htmgo/.claude/skills/htmgo-guidance .claude/skills/
-rm -rf /tmp/htmgo
+mkdir -p .claude/skills/htmgo-guidance
+curl -fsSL https://raw.githubusercontent.com/franchb/htmgo/master/.claude/skills/htmgo-guidance/SKILL.md \
+  -o .claude/skills/htmgo-guidance/SKILL.md
 ```
-
-Run `/skills` in Claude Code to verify `htmgo-guidance` is loaded. Repeat for any other skills you want.
 
 ## Star History
 

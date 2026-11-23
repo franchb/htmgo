@@ -50,7 +50,6 @@ var sections = []Section{
 		Pages: []*Page{
 			{Title: "Swapping", Path: DocPath("/interactivity/swapping")},
 			{Title: "Events", Path: DocPath("/interactivity/events")},
-			{Title: "Evaluating Javascript", Path: DocPath("/interactivity/events")},
 			{Title: "Eval Commands", Path: DocPath("/interactivity/eval-commands")},
 		},
 	},
@@ -99,7 +98,7 @@ func DocSidebar() *h.Element {
 			h.Div(
 				h.Class("mb-3"),
 				h.A(
-					h.Href("#quick-start-introduction"),
+					h.Href(DocPath("/introduction")),
 					h.Text("Documentation"),
 					h.Class("md:mt-4 text-xl text-slate-900 font-bold"),
 				),

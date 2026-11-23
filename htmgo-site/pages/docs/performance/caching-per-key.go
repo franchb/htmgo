@@ -13,37 +13,17 @@ func CachingPerKey(ctx *h.RequestContext) *h.Page {
 			h.Class("flex flex-col gap-3"),
 			Title("Caching Components Per Key"),
 			Text(`
-				If you need to cache a component per unique identifier, you can use the <b>CachedPerKey</b> functions. 
-				These functions allow you to cache a component by a specific key. This key can be any string that uniquely identifies the user.
-				Note: I'm using the term 'user' to simply mean a unique identifier. This could be a user ID, session ID, or any other unique identifier.
+				Use <code>h.CachedPerKey</code> or one of its typed variants when the component's output varies by key. The key can be any comparable Go value, such as a product ID or a struct containing a product ID and locale.
+				Declare the wrapper at package scope. Its callback returns the key and a render function. The callback runs on each call, while the render function runs when the key is missing or expired.
 			`),
-			Text("<b>Methods for caching per key:</b>"),
-			ui.GoCodeSnippet(CachingMethodsPerKey),
-			Text(`<b>Usage:</b>`),
 			ui.GoCodeSnippet(CachedPerKeyExample),
-			Text(`
-				We are using CachedPerKeyT because the component takes one argument, the RequestContext.
-			  If the component takes more arguments, use CachedPerKeyT2, CachedPerKeyT3, etc.
-			`),
-			Text(
-				`
-				<b>Important Note:</b> 
-				The cached value is stored globally in memory by key, it is shared across all requests. Ensure if you are storing request-specific data in a cached component, you are using a unique key for each user.
-        The arguments passed into cached component <b>DO NOT</b> affect the cache key. The only thing that affects the cache key is the key returned by the GetElementFuncWithKey function.
-        Ensure the declaration of the cached component is outside the function that uses it. This is to prevent the component from being redeclared on each request.
-			`),
-			Text(`
-				<b>New: Custom Cache Stores with Atomic Guarantees</b><br/>
-				htmgo now supports pluggable cache stores with built-in concurrency protection. The framework uses an atomic 
-				GetOrCompute method that ensures only one goroutine computes a value for any given key, preventing duplicate 
-				expensive operations like database queries or complex renders. This eliminates race conditions that could 
-				previously cause the same content to be rendered multiple times.
-			`),
-			Text(`
-				You can implement custom caching backends like Redis, Memcached, or memory-bounded stores. 
-				This helps prevent memory exhaustion attacks and enables distributed caching.
-				See <a href="/docs/performance/pluggable-caches" class="text-blue-500 hover:text-blue-400">Creating Custom Cache Stores</a> for more details.
-			`),
+			Text(`In <code>pages/products.$id.go</code>, the page passes a product ID as its one argument to <code>h.CachedPerKeyT</code>. Requests for the same ID reuse that ID's cached HTML.`),
+			Text(`Use <code>h.CachedPerKey</code> for zero arguments, <code>h.CachedPerKeyT</code> for one, and <code>h.CachedPerKeyT2</code>, <code>h.CachedPerKeyT3</code>, or <code>h.CachedPerKeyT4</code> for two to four. The key returned by the callback determines which HTML to reuse. For private data, authorize each request before reading from the cache, and include every value that affects who can see the rendered content in the key.`),
+			h.P(
+				h.Text("The default in-memory store coordinates misses for each key through GetOrCompute. Other backends implement that contract through "),
+				Link("custom cache stores", DocPath("/performance/pluggable-caches")),
+				h.Text("."),
+			),
 			NextStep(
 				"mt-4",
 				PrevBlock("Caching Globally", DocPath("/performance/caching-globally")),
@@ -53,58 +33,19 @@ func CachingPerKey(ctx *h.RequestContext) *h.Page {
 	)
 }
 
-const CachingMethodsPerKey = `
-// No arguments passed to the component, the component can be cached by a specific key
-h.CachedPerKey(duration time.Duration, cb GetElementFuncWithKey)
-// One argument passed to the component, the component can be cached by a specific key
-h.CachedPerKeyT1(duration time.Duration, cb GetElementFuncWithKey)
-// Two argument passed to the component, the component can be cached by a specific key
-h.CachedPerKeyT2(duration time.Duration, cb GetElementFuncWithKey)
-// Three arguments passed to the component, the component can be cached by a specific key
-h.CachedPerKeyT3(duration time.Duration, cb GetElementFuncWithKey)
-// Four arguments passed to the component, the component can be cached by a specific key
-h.CachedPerKeyT4(duration time.Duration, cb GetElementFuncWithKey)
-`
-
 const CachedPerKeyExample = `
-var CachedUserDocuments = h.CachedPerKeyT(time.Minute*15, func(ctx *h.RequestContext) (string, h.GetElementFunc) {
-	userId := getUserIdFromSession(ctx)
-	return userId, func() *h.Element {
-		return UserDocuments(ctx)
+var CachedProductCard = h.CachedPerKeyT(15*time.Minute, func(productID string) (string, h.GetElementFunc) {
+	return productID, func() *h.Element {
+		return h.Div(
+			h.H3(h.TextF("Product %s", productID)),
+			h.P(h.TextF("Generated at %s", time.Now().Format(time.RFC3339))),
+		)
 	}
 })
 
-func UserDocuments(ctx *h.RequestContext) *h.Element {
-	docService := NewDocumentService(ctx)
-	// Expensive call
-	docs := docService.getDocuments()
-	return h.Div(
-		h.Class("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"),
-		h.List(docs, func(doc Document, index int) *h.Element {
-			return h.Div(
-				h.Class("p-4 bg-white border border-gray-200 rounded-md"),
-				h.H3(doc.Title),
-				h.P(doc.Description),
-			)
-		}),
+func ProductPage(ctx *h.RequestContext) *h.Page {
+	return h.NewPage(
+		CachedProductCard(ctx.UrlParam("id")),
 	)
-}
-
-func MyPage(ctx *h.RequestContext) *h.Page {
-	
-	// Note this is not a real way to create a context, just an example
-	user1 := &h.RequestContext{
-		Session: "user_1_session",
-    }
-	
-	user2 := &h.RequestContext{
-		Session: "user_2_session",
-	}
-	
-	// Different users will get different cached components
-    return h.NewPage(
-        CachedUserDocuments(user1),
-        CachedUserDocuments(user2),
-    )
 }
 `

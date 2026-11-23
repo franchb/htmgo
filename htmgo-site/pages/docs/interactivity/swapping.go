@@ -10,40 +10,19 @@ func Swapping(ctx *h.RequestContext) *h.Page {
 		h.Div(
 			h.Class("flex flex-col gap-3"),
 			Title("Swapping"),
-			Text(`
-				Swapping is the process of swapping out the content of an element with another element.
-				This is the primary way htmgo allows you to add interactivity to your website through htmx.
-			`),
+			Text(`An htmx request can replace part of a page with HTML from a partial. Use an out-of-band swap to update several elements from one response.`),
 			h.P(
-				h.Text("The swapping examples below utilize "),
-				Link("hx-swap-oob", "https://htmx.org/attributes/hx-swap-oob/"),
-				h.Text(" behind the scenes to swap out the content of an element."),
+				h.Text("The counter form uses "),
+				Link("hx-swap-oob", "https://four.htmx.org/reference/attributes/hx-swap-oob/"),
+				h.Text(" to replace the form and its separate status message by ID."),
 			),
-			Text("Example: A simple counter"),
+			Text(`Add these functions under <code>pages/</code> in the starter project and import <code>strconv</code>.`),
 			ui.GoCodeSnippet(SwapExample),
-			Text(`
-				In this example, when the form is submitted, an HTTP POST will be sent to the server and call <b>CounterPartial</b>.
-				CounterPartial will then update the count and return it back to the client via <b>h.SwapManyPartial</b>.
-				The h.SwapManyPartial function is a helper function that allows you to swap out multiple elements on the page.
-			`),
-			Text(`
-				All the routing is handled behind the scenes by htmgo, so you can reference partials directly by their function reference, 
-				instead of having to wire up routes for each partial.
-			`),
-			Text(`
-          Sometimes you may need to pass additional information when calling the partial, such as an id of the current entity you are working with.
-					This can be done by like so:
-		   `),
-			Text("Example: Getting the http path to the partial with extra qs parameters"),
+			Text(`Submitting the form sends a POST to <code>CounterPartial</code>. <code>h.NoSwap</code> suppresses the main swap. <code>h.SwapManyPartial</code> marks both returned elements for out-of-band swaps. Give each replacement the same ID as the element already in the page.`),
+			Text(`Use <code>h.GetPartialPathWithQs</code> to construct a partial URL with query parameters. Use <code>ctx.QueryParam</code> to read them in the receiving handler.`),
 			ui.GoCodeSnippet(SwapGetPartialPathWithQsExample),
-			Text("Example: Posting to the partial path on blur"),
+			Text(`Pass a trigger such as <code>hx.BlurEvent</code> to <code>h.PostPartial</code> to submit when an input loses focus.`),
 			ui.GoCodeSnippet(SwapGetPartialPathExampleOnBlur),
-			h.P(
-				h.Text("Note: if your swapping is not working as expected, make sure the element you are swapping has an id and it matches. "),
-				h.Text("For further details on how oob works behind the scenes, see the "),
-				Link("hx-swap-oob", "https://htmx.org/attributes/hx-swap-oob/"),
-				h.Text(" docs."),
-			),
 			NextStep(
 				"mt-4",
 				PrevBlock("Loops / Dealing With Lists", DocPath("/control/loops")),
@@ -54,57 +33,52 @@ func Swapping(ctx *h.RequestContext) *h.Page {
 }
 
 const SwapExample = `
-func CounterPartial(ctx *h.RequestContext) *h.Partial {
-	count, _ := strconv.ParseInt(ctx.FormValue("count"), 10, 64)
-
-	count++
-
-	return h.SwapManyPartial(
-		ctx,
-		CounterForm(int(count)),
-		h.ElementIf(count > 10, SubmitButton("New record!")),
+func CounterPage(ctx *h.RequestContext) *h.Page {
+	return RootPage(
+		h.Div(CounterForm(0), CounterStatus(0)),
 	)
+}
+
+func CounterPartial(ctx *h.RequestContext) *h.Partial {
+	count, _ := strconv.Atoi(ctx.FormValue("count"))
+	count++
+	return h.SwapManyPartial(ctx, CounterForm(count), CounterStatus(count))
 }
 
 func CounterForm(count int) *h.Element {
 	return h.Form(
 		h.Id("counter-form"),
 		h.PostPartial(CounterPartial),
-		h.Input(
-			"text",
-			h.Class("hidden"),
-			h.Value(count),
-			h.Name("count"),
-		),
-		h.P(
-			h.Id("counter"),
-          	h.Name("count"),
-			h.TextF("Count: %d", count),
-		),
-		h.Button(
-			h.Type("submit"),
-			h.Text("Increment"),
-		),
+		h.NoSwap(),
+		h.Input("hidden", h.Name("count"), h.Value(count)),
+		h.Button(h.Type("submit"), h.Text("Increment")),
+	)
+}
+
+func CounterStatus(count int) *h.Element {
+	return h.P(
+		h.Id("counter-status"),
+		h.TextF("Count: %d", count),
 	)
 }
 `
 
 const SwapGetPartialPathWithQsExample = `
-func MyComponent() *h.Element {
-	return h.Div(
-		h.GetPartialPathWithQs(
-			CounterPartial,
-			h.NewQs("count", count),
-		),
+func CounterPath(count int) string {
+	return h.GetPartialPathWithQs(
+		CounterPartial,
+		h.NewQs("count", strconv.Itoa(count)),
 	)
 }
 `
 
 const SwapGetPartialPathExampleOnBlur = `
-func MyComponent() *h.Element {
-	path := h.GetPartialPath(CounterPartial)
-	return h.Input(
-		h.Post(path, hx.BlurEvent),
+func CounterInput(count int) *h.Element {
+	return h.Input("number",
+		h.Name("count"),
+		h.Value(count),
+		h.PostPartial(CounterPartial, hx.BlurEvent),
+		h.NoSwap(),
 	)
 }
 `

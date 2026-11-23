@@ -8,6 +8,7 @@ type Snippet struct {
 	sidebarName    string
 	path           string
 	partial        h.PartialFunc
+	requiresServer bool
 	externalRoute  string
 	sourceCodePath string
 	category       string
