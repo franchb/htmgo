@@ -40,7 +40,7 @@ func HiddenCopyOutput(content string) *h.Element {
 	return h.Div(
 		h.Class("hidden"),
 		h.Id("go-output-raw"),
-		h.UnsafeRaw(content),
+		h.Text(content),
 	)
 }
 

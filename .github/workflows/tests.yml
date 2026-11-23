@@ -50,6 +50,10 @@ jobs:
         working-directory: ${{ matrix.module }}
         run: go test -race -coverprofile=coverage.txt ./...
 
+      - name: Compile documentation examples
+        if: matrix.module == 'framework' && matrix.go == '1.27.x'
+        run: python3 tools/check-doc-examples.py
+
       - name: Upload results to Codecov
         if: matrix.go == '1.27.x'
         # Coverage upload must not hold up or fail the tests (the Codecov CLI

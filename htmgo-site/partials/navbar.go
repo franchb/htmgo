@@ -1,10 +1,11 @@
 package partials
 
 import (
-	"fmt"
-	"github.com/franchb/htmgo/framework/v2/h"
-	"htmgo-site/internal/httpjson"
 	"time"
+
+	"github.com/franchb/htmgo/framework/v2/h"
+
+	"htmgo-site/internal/httpjson"
 )
 
 type NavItem struct {
@@ -16,18 +17,6 @@ var navItems = []NavItem{
 	{Name: "Docs", Url: "/docs"},
 	{Name: "Examples", Url: "/examples"},
 	{Name: "Convert HTML", Url: "/html-to-go"},
-}
-
-type NavBarProps struct {
-	Expanded       bool
-	ShowPreRelease bool
-}
-
-func ToggleNavbar(ctx *h.RequestContext) *h.Partial {
-	return h.SwapManyPartial(
-		ctx,
-		MobileNav(ctx, h.GetQueryParam(ctx, "expanded") == "true"),
-	)
 }
 
 var CachedStar = h.CachedT(time.Minute*15, func(t *h.RequestContext) *h.Element {
@@ -65,10 +54,8 @@ func Star(ctx *h.RequestContext) *h.Element {
 		StarCount int `json:"stargazers_count"`
 	}
 
-	fmt.Printf("making github star request\n")
 	count := 0
 	response, err := httpjson.Get[Repo]("https://api.github.com/repos/franchb/htmgo")
-
 	if err == nil && response != nil {
 		count = response.StarCount
 	}
@@ -134,7 +121,7 @@ func DiscordSvg() *h.Element {
 	)
 }
 
-func NavBar(ctx *h.RequestContext, props NavBarProps) *h.Element {
+func NavBar(ctx *h.RequestContext) *h.Element {
 	banner := h.If(
 		true,
 		h.A(
@@ -190,72 +177,43 @@ func NavBar(ctx *h.RequestContext, props NavBarProps) *h.Element {
 	return h.Div(
 		h.Id("navbar"),
 		banner,
-		MobileNav(ctx, props.Expanded),
+		mobileNav(CachedStar(ctx)),
 		desktopNav,
 	)
 }
 
-func MobileNav(ctx *h.RequestContext, expanded bool) *h.Element {
+func mobileNav(star *h.Element) *h.Element {
 	return h.Nav(
 		h.Id("mobile-nav"),
 		h.Class("block sm:hidden bg-neutral-100 border-b border-b-slate-300 px-4 py-2"),
 		h.Div(
-			h.Class("w-full"),
+			h.Class("relative"),
 			h.Div(
-				h.Class("flex justify-between items-center"),
-				h.Div(
-					h.Class("flex items-center"),
-					h.A(
-						h.Href("/"),
-						h.Class("mt-1 max-w-[110px]"),
-						Logo(),
-					),
+				h.Class("flex min-h-11 items-center justify-between gap-2 pr-11"),
+				h.A(
+					h.Href("/"),
+					h.Attribute("aria-label", "htmgo home"),
+					h.Class("max-w-[110px]"),
+					Logo(),
 				),
-				h.Div(
-					h.Class("flex items-center gap-2"),
-					h.Div(
-						h.Class("mt-1"),
-						CachedStar(ctx),
-					),
-					h.Button(
-						h.Boost(),
-						h.GetPartialWithQs(
-							ToggleNavbar,
-							h.NewQs(
-								"expanded",
-								h.Ternary(expanded, "false", "true"),
-								"test",
-								"true",
-							),
-							"click",
-						),
-						h.AttributePairs(
-							"aria-expanded",
-							h.Ternary(expanded, "true", "false"),
-							"aria-label",
-							"Menu",
-						),
-						h.Class("text-2xl w-11 h-11 flex items-center justify-center"),
-						h.UnsafeRaw("&#9776;"),
-					),
-				),
+				star,
 			),
-		),
-		h.If(
-			expanded,
-			h.Div(
-				h.Class("mt-1 flex flex-col"),
-				h.List(navItems, func(item NavItem, index int) *h.Element {
-					return h.Div(
-						h.Class("flex items-center"),
-						h.A(
-							h.Boost(),
-							h.Class("block w-full py-2 text-lg"),
+			h.Details(
+				h.Summary(
+					h.Attribute("aria-label", "Menu"),
+					h.Class("absolute top-0 right-0 flex h-11 w-11 cursor-pointer list-none items-center justify-center text-2xl [&::-webkit-details-marker]:hidden"),
+					h.UnsafeRaw("&#9776;"),
+				),
+				h.Div(
+					h.Class("mt-1 flex flex-col"),
+					h.List(navItems, func(item NavItem, index int) *h.Element {
+						return h.A(
+							h.Class("block py-2 text-lg"),
 							h.Href(item.Url),
 							h.Text(item.Name),
-						),
-					)
-				}),
+						)
+					}),
+				),
 			),
 		),
 	)

@@ -11,15 +11,9 @@ func TagsAndAttributes(ctx *h.RequestContext) *h.Page {
 			h.Class("flex flex-col gap-3"),
 			Title("Tags and Attributes"),
 			Text(`
-				In htmgo, html is built using a set of functions that return <b>*h.Element</b>. 
-				These functions are all defined in the <b>'h'</b> package in htmgo/framework
-				htmgo provides methods to render most if not all html tags and attributes.
+				Build HTML with tag and attribute helpers from <code>github.com/franchb/htmgo/framework/v2/h</code>. Tag helpers return <code>*h.Element</code> and accept attributes and child elements.
 			`),
-			Text(`Example:`),
 			ui.GoCodeSnippet(TagExample),
-			Text(`
-				All methods can be found in the 'h' package in htmgo/framework			
-			`),
 			Text("<b>h.Tag</b> and <b>h.Attribute</b> are available to use when you need to render a tag or attribute that htmgo does not provide a method for."),
 			ui.GoCodeSnippet(TagExampleUsingTagFunc),
 			Text(`
@@ -27,8 +21,8 @@ func TagsAndAttributes(ctx *h.RequestContext) *h.Page {
 			htmgo provides various methods to add attributes to elements, as well as adding attributes based on a condition.
 			`),
 			ui.GoCodeSnippet(AttributeExample),
-			HelpText("In this example we are conditionally adding an attribute based on if there is an error on not, you'll learn more about conditionals in the next few pages."),
-			Text("Example using htmx attributes:"),
+			HelpText("The error class is added when errorMessage is nonempty."),
+			Text(`This button sends the input named <code>q</code> to <code>GET /search</code> and places the returned fragment in <code>#search-results</code>. Your server supplies the search handler.`),
 			ui.GoCodeSnippet(HxAttributeExample),
 			NextStep(
 				"mt-4",
@@ -50,7 +44,7 @@ const TagExample = `h.Div(
 const TagExampleUsingTagFunc = `h.Tag("my-custom-tag",
 	h.Class("flex gap-2"),
 	h.Button(
-        h.Attribute("x-custom-attr", "my-value"),
+		h.Attribute("x-custom-attr", "my-value"),
 		h.Text("Submit"),
 	),
 )
@@ -59,26 +53,22 @@ const TagExampleUsingTagFunc = `h.Tag("my-custom-tag",
 const AttributeExample = `h.Div(
 	h.Class("flex gap-2"),
 	h.Id("my-div"),
-    h.If(
-      error != "",
-	  h.Class("p-4 bg-rose-400 text-white rounded"),
-	)
+	h.ClassIf(errorMessage != "", "p-4 bg-rose-400 text-white rounded"),
 )
 `
 
-const HxAttributeExample = `h.Tr(
-	h.Class("flex gap-2"),
-	h.HxInclude("input")
-	h.Td(
-		h.Input("text",
-			h.Class("p-4 rounded"),
-			h.Placeholder("Type something"),
-			h.Name("my-input"),
-		)
+const HxAttributeExample = `h.Div(
+	h.Input("text",
+		h.Id("search-query"),
+		h.Name("q"),
+		h.Placeholder("Search"),
 	),
-   	h.Td(
-		h.Button(
-			h.Text("Submit"),
-		)
+	h.Button(
+		h.Type("button"),
+		h.Get("/search"),
+		h.HxInclude("#search-query"),
+		h.HxTarget("#search-results"),
+		h.Text("Search"),
 	),
+	h.Div(h.Id("search-results")),
 )`

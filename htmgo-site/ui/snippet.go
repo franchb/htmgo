@@ -9,8 +9,6 @@ import (
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/franchb/htmgo/framework/v2/h"
 	"github.com/google/uuid"
-	"io"
-	"net/http"
 	"strings"
 )
 
@@ -56,7 +54,7 @@ func CodeSnippet(props CodeSnippetProps) *h.Element {
 		return h.Div(
 			h.Class("flex items-center w-full"),
 			h.Div(
-				h.UnsafeRaw(props.Code),
+				h.Text(props.Code),
 				h.Class("hidden"),
 				h.Id(id),
 			),
@@ -70,7 +68,7 @@ func CodeSnippet(props CodeSnippetProps) *h.Element {
 	return h.Div(
 		h.Class("relative max-w-full"),
 		h.Div(
-			h.UnsafeRaw(props.Code),
+			h.Text(props.Code),
 			h.Class("hidden"),
 			h.Id(id),
 		),
@@ -113,19 +111,4 @@ func GoCodeSnippetSingleLine(code string, customStyles ...string) *h.Element {
 		CustomStyles: customStyles,
 		SingleLine:   true,
 	})
-}
-
-func CodeSnippetFromUrl(url string, props CodeSnippetProps) *h.Element {
-	data, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("error: %s\n", err.Error())
-		return h.Empty()
-	}
-	defer data.Body.Close()
-	b, err := io.ReadAll(data.Body)
-	if err != nil {
-		return h.Empty()
-	}
-	props.Code = string(b)
-	return CodeSnippet(props)
 }

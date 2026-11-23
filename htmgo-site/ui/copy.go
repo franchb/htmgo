@@ -17,7 +17,7 @@ func CopyButton(selector string, classes ...string) *h.Element {
 				if(!navigator.clipboard) {
 					return;
 				}
-				let text = document.querySelector("%s").innerText;
+				let text = document.querySelector("%s").textContent;
 				navigator.clipboard.writeText(text);
 				self.innerText = "Copied!";
 				setTimeout(() => {

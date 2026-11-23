@@ -21,15 +21,12 @@ func RawHtml(ctx *h.RequestContext) *h.Page {
 			Text("Rendering a script:"),
 			ui.GoCodeSnippetSingleLine(RawHtmlExample3),
 			Text(`
-        Important: Be careful when using these methods, these methods do not escape the HTML content
-        and should never be used with user input unless you have sanitized the input.
+				Use <code>h.Text</code> to render untrusted values as escaped text. When you intend to render user-supplied HTML markup, sanitize it before passing it to the raw HTML helpers.
 			`),
 			h.P(
-				h.Text("Sanitizing input can be done using "),
-				Link("html.EscapeString", "https://pkg.go.dev/html#EscapeString"),
-				h.Text(" or by using "),
-				Link("bluemonday", "https://github.com/microcosm-cc/bluemonday."),
-				h.Text(" for more control over sanitization."),
+				h.Text("For example, "),
+				Link("bluemonday", "https://github.com/microcosm-cc/bluemonday"),
+				h.Text(" lets you define which HTML elements and attributes to allow."),
 			),
 			NextStep(
 				"mt-4",

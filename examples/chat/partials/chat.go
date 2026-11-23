@@ -3,8 +3,10 @@ package partials
 import (
 	"chat/components"
 	"chat/sse"
+
 	"github.com/franchb/htmgo/framework/v2/h"
 	"github.com/franchb/htmgo/framework/v2/service"
+	"github.com/gofiber/fiber/v3"
 )
 
 func SendMessage(ctx *h.RequestContext) *h.Partial {
@@ -31,5 +33,6 @@ func SendMessage(ctx *h.RequestContext) *h.Partial {
 		"message": message,
 	})
 
+	ctx.Fiber.Status(fiber.StatusNoContent)
 	return h.EmptyPartial()
 }

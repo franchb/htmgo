@@ -6,9 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Changed
+### Fixed
+
+- Corrected v2 imports, route registration, cache configuration and Go examples in the documentation and the bundled agent skill.
+- Fixed the mobile menu and the clock preview on the static documentation site.
+- The starter app serves embedded JavaScript and CSS when its production binary runs outside the project directory.
+
+## [2.2.4](https://github.com/franchb/htmgo/releases/tag/v2.2.4) - 2026-11-23
+
+- The browser bundle now ships htmx 4.0.2. Updated fasthttp to 1.79.0 and `golang.org/x/net` to 0.63.0. The framework module is v2.1.4 and the CLI is v2.1.5.
+
+## [2.2.3](https://github.com/franchb/htmgo/releases/tag/v2.2.3) - 2026-11-19
+
+- Updated Fiber to 3.7.0, fasthttp to 1.78.0 and `gobwas/ws` to 1.5.0.
 
 - **htmx bumped from 4.0.0-beta2 to 4.0.1** (stable). Event names are a superset of beta2 (new: `htmx:before:on:init`, `htmx:finally:swap`, `htmx:response:error`, `htmx:scope`); the SSE/WS extension events are unchanged. htmx 4.0.1 adds its indicator CSS through a constructed stylesheet, so the `inlineStyleNonce` key htmgo still puts in `htmx-config` is now unused and harmless. `framework/assets/dist/htmgo.js` rebuilt.
+
+## [2.2.2](https://github.com/franchb/htmgo/releases/tag/v2.2.2) - 2026-11-19
+
+- Updated the framework's Vitest UI dependency, `golang.org/x/text` in the HTML converter, and framework requirements in dependent modules.
+
+## [2.2.1](https://github.com/franchb/htmgo/releases/tag/v2.2.1) - 2026-10-29
+
+- Fixed WebSocket and server-sent event message parsing and selector escaping in the browser extensions.
 
 ## [2.2.0] - 2026-10-29
 

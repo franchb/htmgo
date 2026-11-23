@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
+
+var client = &http.Client{Timeout: 3 * time.Second}
 
 // Get sends a GET request and decodes the response JSON into a generic type T
 func Get[T any](url string) (*T, error) {
-	resp, err := http.Get(url)
+	resp, err := client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make GET request: %w", err)
 	}

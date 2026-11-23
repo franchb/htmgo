@@ -13,12 +13,12 @@ func MutationError(ctx *h.RequestContext) *h.Page {
 			h.Class("flex flex-col gap-3"),
 			Title("Mutation Error"),
 			Text(`
-				The 'mutation-error' extension allows you to trigger an event when a request returns a >= 400 status code.
-				This is useful for things such as letting a child element (such as a button) inside a form know there was an error.
+				The <code>mutation-error</code> extension emits <code>htmx:onMutationError</code> for POST, PUT, PATCH, and DELETE requests with an HTTP status of 400 or higher.
+				Attach a handler with <code>h.HxOnMutationError</code> to respond to the event.
 			`),
 			Text(`<b>Example:</b>`),
 			ui.GoCodeSnippet(MutationErrorExample),
-			Text(`It can also be used on children elements that do not make an xhr request, if you combine it with the TriggerChildren extension.`),
+			Text(`The extension also notifies elements with a mutation-error listener, such as a submit button inside the requesting form.`),
 			NextStep(
 				"mt-4",
 				PrevBlock("Trigger Children", DocPath("/htmx-extensions/trigger-children")),
@@ -29,14 +29,20 @@ func MutationError(ctx *h.RequestContext) *h.Page {
 }
 
 const MutationErrorExample = `
-h.Form(
-    h.HxTriggerChildren(),
-    h.HxMutationError(
-        js.Alert("An error occurred"),
-    ),
-    h.Button(
-        h.Type("submit"),
-        h.Text("Submit"),
-    ),
-)
+func SaveForm() *h.Element {
+	return h.Form(
+		h.PostPartial(Save),
+		h.NoSwap(),
+		h.Button(
+			h.Type("submit"),
+			h.HxOnMutationError(js.Alert("Save failed.")),
+			h.Text("Save"),
+		),
+	)
+}
+
+func Save(ctx *h.RequestContext) *h.Partial {
+	ctx.Fiber.Status(400)
+	return h.EmptyPartial()
+}
 `

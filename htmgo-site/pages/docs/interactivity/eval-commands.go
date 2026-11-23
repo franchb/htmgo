@@ -13,31 +13,13 @@ func EvalCommands(ctx *h.RequestContext) *h.Page {
 		h.Div(
 			h.Class("flex flex-col gap-3"),
 			Title("Eval Commands"),
-			Text(`
-				Now that we've learned how about events/commands, I want to highlight a few useful commands.
-		    One in particular is EvalCommands, which allows you to evaluate any command against any element just by referencing it in Go.
-			`),
-			SubTitle("Referencing an element directly"),
-			Text("Example: Setting the text of an element on click of another element"),
+			Text(`Pass an element and commands to <code>js.EvalCommands</code> to run the commands against it when an event fires.`),
+			SubTitle("Reference an element directly"),
 			ui.GoCodeSnippet(EvalCommandsSnippet),
-			Text(
-				`We are calling <b>js.EvalCommands</b> with the text variable and the command to toggle the text of the element.
-				This always you to run any commands against any element, without having to query for it via a selector.
-			`,
-			),
-			h.P(
-				h.A(
-					h.Class("underline text-blue-500"),
-					h.Href("/examples/js-hide-children-on-click"),
-					h.Text("View the demo"),
-				),
-				h.Text(" for more details on what this could be used for."),
-			),
-			h.Div(
-				h.Class("mt-4"),
-			),
-			SubTitle("Using a selector"),
-			Text("If needed, you can query by selector"),
+			Text(`The button toggles the paragraph text. <code>js.EvalCommands</code> assigns a selector to the referenced paragraph as it builds the elements.`),
+			Link("View the related demo", "/examples/js-hide-children-on-click"),
+			SubTitle("Use a selector"),
+			Text(`Use <code>js.EvalCommandsOnSelector</code> to target an element using its CSS selector.`),
 			ui.GoCodeSnippet(EvalCommandsSnippetWithSelector),
 			NextStep(
 				"mt-4",
@@ -48,11 +30,12 @@ func EvalCommands(ctx *h.RequestContext) *h.Page {
 	)
 }
 
-const EvalCommandsSnippetWithSelector = `	
-func MyComponent(ctx *h.RequestContext) *h.Element {
-	text := h.Pf("Text Before", h.Id("my-element"))
+const EvalCommandsSnippetWithSelector = `
+func ToggleTextButton() *h.Element {
+	text := h.P(h.Id("my-element"), h.Text("Text Before"))
 	return h.Div(
 		h.Button(
+			h.Type("button"),
 			h.Text("Toggle Text"),
 			h.OnClick(
 				js.EvalCommandsOnSelector(
@@ -63,13 +46,14 @@ func MyComponent(ctx *h.RequestContext) *h.Element {
 		),
 		text,
 	)
-}	
+}
 `
 
-var EvalCommandsSnippet = `func MyComponent(ctx *h.RequestContext) *h.Element {
-	text := h.Pf("Text Before")
+const EvalCommandsSnippet = `func ToggleTextButton() *h.Element {
+	text := h.P(h.Text("Text Before"))
 	return h.Div(
 		h.Button(
+			h.Type("button"),
 			h.Text("Toggle Text"),
 			h.OnClick(
 				js.EvalCommands(

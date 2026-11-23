@@ -1,8 +1,8 @@
 package base
 
 import (
-	"github.com/google/uuid"
 	"github.com/franchb/htmgo/framework/v2/h"
+	"github.com/google/uuid"
 	"htmgo-site/__htmgo/assets"
 	"htmgo-site/partials"
 )
@@ -48,7 +48,7 @@ func ConfigurableRootPage(ctx *h.RequestContext, props RootPageProps) *h.Page {
 				h.Meta("description", description),
 				h.Meta("og:title", title),
 				h.Meta("og:url", ctx.Fiber.OriginalURL()),
-				h.Link("canonical", canonical),
+				h.Link(canonical, "canonical"),
 				h.Link("https://cdn.jsdelivr.net/npm/@docsearch/css@3", "stylesheet"),
 				h.Meta("og:description", description),
 				h.LinkWithVersion(assets.MainCss, "stylesheet", Version),
@@ -104,10 +104,7 @@ func PageWithNav(ctx *h.RequestContext, children ...h.Ren) *h.Page {
 	return RootPage(
 		ctx,
 		h.Fragment(
-			partials.NavBar(ctx, partials.NavBarProps{
-				Expanded:       false,
-				ShowPreRelease: true,
-			}),
+			partials.NavBar(ctx),
 			h.Div(
 				children...,
 			),

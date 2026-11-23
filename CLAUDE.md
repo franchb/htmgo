@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is htmgo
 
-A lightweight Go web framework for building interactive websites using Go + htmx, compiled to a single deployable binary. No JavaScript required. Original upstream: `github.com/franchb/htmgo`.
+A lightweight Go web framework for building interactive websites using Go + htmx, compiled to a single deployable binary. No JavaScript required. The original upstream is `github.com/maddalax/htmgo`.
 
 ## Repository Layout (multi-module monorepo)
 
-- **framework/** — Core framework module (`github.com/franchb/htmgo/framework/v2`). The main package is `h/` which contains the HTML builder, renderer, request context, lifecycle events, caching, and swap logic. Sub-packages: `hx/` (htmx constants), `service/` (service locator DI), `config/`, `h/cache/` (pluggable cache stores), `assets/`, `js/`. All five released modules use `/v2` module paths as of v2.0.0: `framework`, `framework-ui`, `extensions/websocket`, `tools/html-to-htmgo` and the CLI (`github.com/franchb/htmgo/cli/htmgo/v2`). Releases are automatic; see CONTRIBUTING.md "Releases" and `tools/release/`.
+- **framework/** — Core framework module (`github.com/franchb/htmgo/framework/v2`). The main package is `h/` which contains the HTML builder, renderer, request context, lifecycle events, caching, and swap logic. Sub-packages: `hx/` (htmx constants), `service/` (service locator DI), `config/`, `h/cache/` (pluggable cache stores), `assets/`, `js/`. All five released modules now use `/v2` module paths: `framework`, `framework-ui`, `extensions/websocket`, `tools/html-to-htmgo` and the CLI (`github.com/franchb/htmgo/cli/htmgo/v2`). Releases are automatic; see CONTRIBUTING.md "Releases" and `tools/release/`.
 - **framework-ui/** — Pre-built UI component library built on top of the framework.
 - **cli/htmgo/** — CLI tool. Commands: `template`, `run`, `watch`, `build`, `setup`, `css`, `schema`, `generate`, `format`, `version`. Key task packages live under `cli/htmgo/tasks/` (astgen, copyassets, css, reloader, run, etc.).
 - **extensions/websocket/** — WebSocket extension module.
-- **examples/** — Example apps (chat, hackernews, simple-auth, todo-list, ws-example, minimal-htmgo). Each has its own `Taskfile.yml`.
+- **examples/** — Example apps (chat, hackernews, simple-auth, todo-list, ws-example, minimal-htmgo). The full apps have a `Taskfile.yml`. The minimal app runs directly with Go.
 - **htmgo-site/** — Documentation website source.
 - **templates/** — Starter project templates.
 
@@ -35,12 +35,14 @@ cd framework && go test ./h/ -run TestSimpleRender
 
 ### Running examples (requires `task` CLI — https://taskfile.dev)
 ```bash
-cd examples/todo-list && task watch   # live-reload dev mode
-cd examples/todo-list && task build   # production build
-cd examples/todo-list && task run     # run built binary
+cd examples/todo-list
+export GOWORK=off
+task watch   # live-reload dev mode
+task build   # production build
+task run     # build and run without the watcher
 ```
 
-Examples use `go run github.com/franchb/htmgo/cli/htmgo@latest <command>` under the hood. The htmgo-site Taskfile calls `htmgo` directly (requires `go install ./cli/htmgo`).
+Examples use `go run github.com/franchb/htmgo/cli/htmgo/v2@latest <command>` under the hood. The htmgo-site Taskfile calls `htmgo` directly (requires `go install ./cli/htmgo`).
 
 ### Install htmgo CLI from source
 ```bash
@@ -49,9 +51,9 @@ cd cli/htmgo && go install .
 
 ### Building htmgo-site (documentation)
 ```bash
-cd htmgo-site && npm install && htmgo build   # or: task build
+cd htmgo-site && npm ci && GOWORK=off htmgo build
 ```
-Projects using Tailwind CSS plugins (e.g., `@tailwindcss/typography`) need `npm install` before building.
+The site and example apps sit outside the root Go workspace. Use `GOWORK=off` for their Go and htmgo commands.
 
 ## Project Configuration (htmgo.yml)
 
@@ -69,7 +71,7 @@ Everything renderable implements the `Ren` interface (`Render(*RenderContext)`).
 ### Page vs Partial
 - `Page` — Full HTML page response. Created with `h.NewPage(root)`. Route handlers return `*h.Page`.
 - `Partial` — HTMX fragment response with optional response headers. Created with `h.NewPartial(root)`. Used for htmx partial updates.
-- Routes are auto-registered from file paths via AST generation (`cli/htmgo/tasks/astgen/`).
+- Page URLs come from files under `pages/`. The generator registers exported partial handlers by module, package, and function name for all HTTP methods. Use `h.GetPartial` or `h.PostPartial` for the URL and check the request method in handlers that require a specific verb.
 
 ### RequestContext
 Wraps a Fiber v3 `fiber.Ctx` (exposed as `RequestContext.Fiber`) with htmx-aware helpers: `FormValue`, `QueryParam`, `UrlParam`, `IsHxRequest`, `Redirect`, header access, cookie management. Use `GetRequestContext(c fiber.Ctx)` to retrieve it inside Fiber handlers/middleware.
@@ -78,23 +80,24 @@ Wraps a Fiber v3 `fiber.Ctx` (exposed as `RequestContext.Fiber`) with htmx-aware
 `service.NewLocator()` provides dependency injection with `Singleton` and `Transient` lifecycles. Register with `service.Set[T](locator, lifecycle, provider)`, resolve with `service.Get[T](locator)`.
 
 ### Lifecycle & Commands
-`h/lifecycle.go` — Event handlers (`OnClick`, `OnLoad`, etc.) that emit JavaScript `Command` objects (either `SimpleJsCommand` or `ComplexJsCommand`). These translate to htmx event attributes.
+`h/lifecycle.go` — Event handlers (`OnClick`, `OnLoad`, etc.) that emit JavaScript `Command` objects (either `SimpleJsCommand` or `ComplexJsCommand`). DOM helpers such as `OnClick` emit native inline handlers. htmx lifecycle hooks emit `hx-on::…` attributes.
 
 ### HTMX Integration
-Targets **htmx 4.0.1** (exact pin in `framework/assets/js/package.json`). `hx/` package defines constants for htmx attributes, events (colon form, e.g. `htmx:after:swap`), swap strategies, and headers. Attribute inheritance is **explicit** — use `HxTargetInherited`, `HxIncludeInherited`, etc. to propagate to descendants. `hx-ext` is gone: extensions self-register on import. Custom TypeScript extensions live in `framework/assets/js/htmxextensions/` (`htmgo`, `debug`, `livereload`, `mutation-error`, `path-deps`, `trigger-children`, `response-targets`, `sse`, `ws`, `ws-event-handler`, `alpine-compat`), built with `tsup` and tested with `vitest`. See `CHANGELOG.md` 2.0.0 for the full breaking list and migration recipe.
+Targets **htmx 4**. The [JS manifest](framework/assets/js/package.json) pins the bundled version. `hx/` package defines constants for htmx attributes, events (colon form, e.g. `htmx:after:swap`), swap strategies, and headers. Attribute inheritance is **explicit** — use `HxTargetInherited`, `HxIncludeInherited`, etc. to propagate to descendants. `hx-ext` is gone: extensions self-register on import. Custom TypeScript extensions live in `framework/assets/js/htmxextensions/` (`htmgo`, `debug`, `livereload`, `mutation-error`, `path-deps`, `trigger-children`, `response-targets`, `sse`, `ws`, `ws-event-handler`, `alpine-compat`), built with `tsup` and tested with `vitest`. See `CHANGELOG.md` 2.0.0 for the full breaking list and migration recipe.
 
 ### JS asset build & tests
 ```bash
 cd framework/assets/js
+npm ci
 npm run build        # tsup → framework/assets/dist/htmgo.js
 npm test             # vitest run
 ```
 
 ### Routing
-Uses **Fiber v3** (`github.com/gofiber/fiber/v3`) — migrated from `go-chi/chi/v5`. `App.Router` is a `*fiber.App`. App startup in `h/app.go` via `h.Start(h.AppOpts{...})`. The auto-generated `__htmgo.Register(router)` function registers all page/partial routes based on file structure. Downstream consumers that previously embedded chi handlers must port to Fiber's `fiber.Ctx`-based handler signature.
+Uses **Fiber v3** (`github.com/gofiber/fiber/v3`) — migrated from `go-chi/chi/v5`. `App.Router` is a `*fiber.App`. App startup in `h/app.go` via `h.Start(h.AppOpts{...})`. The auto-generated `__htmgo.Register(router)` function installs the generated page and partial handlers. Downstream consumers that previously embedded chi handlers must port to Fiber's `fiber.Ctx`-based handler signature.
 
 ### Caching
-`h/cache.go` provides high-level caching helpers. `h/cache/` defines the `Store[K,V]` interface with `Set`, `GetOrCompute`, `Delete`, `Purge`, `Close` methods. Built-in: `TTLStore`. `LRUStore` is provided as an example implementation in `h/cache/lru_store_example.go`.
+`h/cache.go` provides high-level caching helpers. `h/cache/` defines the `Store[K,V]` interface with `Set`, `Get`, `GetOrCompute`, `Delete`, `Purge`, `Close` methods. Built-in: `TTLStore`. `LRUStore` is provided as an example implementation in `h/cache/lru_store_example.go`.
 
 ### Auto-generated Code
 The `__htmgo/` directory in each app is generated by the CLI (`htmgo generate` / `astgen`). Contains `pages-generated.go`, `partials-generated.go`, and `setup-generated.go`. Do not edit these files manually — they are regenerated on build/watch.
@@ -116,10 +119,11 @@ When a Playwright MCP server is available, validate the htmgo-site builds and re
 ### 1. Build and start the site
 ```bash
 cd htmgo-site
-npm install                         # needed for Tailwind CSS plugins
+npm ci                              # installs Tailwind CSS plugins
 export PATH="$(go env GOPATH)/bin:$PATH"
-htmgo build
-PORT=3123 ./dist/htmgo-site &       # background; use non-default port to avoid conflicts
+GOWORK=off htmgo build
+PORT=3123 ./dist/htmgo-site &       # use a non-default port to avoid conflicts
+site_pid=$!
 ```
 
 ### 2. Browser checks (via Playwright MCP tools)
@@ -131,5 +135,5 @@ PORT=3123 ./dist/htmgo-site &       # background; use non-default port to avoid 
 
 ### 3. Stop the server
 ```bash
-pkill -f "dist/htmgo-site"
+kill "$site_pid"
 ```

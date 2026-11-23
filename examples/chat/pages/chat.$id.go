@@ -16,22 +16,22 @@ func ChatRoom(ctx *h.RequestContext) *h.Page {
 		RootPage(
 			h.Div(
 				h.Attribute("sse-connect", fmt.Sprintf("/sse/chat/%s", roomId)),
+				h.Attribute("data-room-id", roomId),
 				h.HxOnSseOpen(
 					js.ConsoleLog("Connected to chat room"),
 				),
 				h.HxOnSseError(
-					js.EvalJs(fmt.Sprintf(`
-						const reason = e.detail.event.data
-						if(['invalid room', 'no session', 'invalid user'].includes(reason)) {
-							window.location.href = '/?roomId=%s';
-						} else if(e.detail.event.code === 1011) { 
-							window.location.reload()
-						} else if (e.detail.event.code === 1008 || e.detail.event.code === 1006) {
-								window.location.href = '/?roomId=%s';
-						} else {
-							console.error('Connection closed:', e.detail.event)
+					js.EvalJs("console.error('Chat SSE connection error', event.detail.event);"),
+				),
+				h.HxOnSseClose(
+					js.EvalJs(`
+						const reason = event.detail.event.data;
+						if (["invalid room", "no session", "invalid user"].includes(reason)) {
+							const joinURL = new URL("/", window.location.origin);
+							joinURL.searchParams.set("roomId", self.dataset.roomId);
+							window.location.assign(joinURL);
 						}
-					`, roomId, roomId)),
+					`),
 				),
 				// Adjusted flex properties for responsive layout
 				h.Class("flex flex-row h-screen bg-neutral-100 overflow-x-hidden"),
@@ -45,7 +45,7 @@ func ChatRoom(ctx *h.RequestContext) *h.Page {
 					// Room name at the top, fixed
 					CachedRoomHeader(ctx),
 					h.HxAfterSseMessage(
-						js.EvalJsOnSibling("#messages",
+						js.EvalJsOnChildren("#messages",
 							`element.scrollTop = element.scrollHeight;`),
 					),
 					// Chat Messages
@@ -142,9 +142,6 @@ func MessageInput() *h.Element {
 		h.Name("message"),
 		h.MaxLength(1000),
 		h.Placeholder("Type a message..."),
-		h.HxAfterSseMessage(
-			js.SetValue(""),
-		),
 	)
 }
 
@@ -154,7 +151,9 @@ func Form() *h.Element {
 		h.Form(
 			h.NoSwap(),
 			h.PostPartial(partials.SendMessage),
-			h.Attribute("ws-send", ""),
+			h.HxAfterRequest(
+				js.EvalJs("if (event.detail.ctx.response?.status === 204) self.reset();"),
+			),
 			h.Class("flex flex-grow"),
 			MessageInput(),
 		),

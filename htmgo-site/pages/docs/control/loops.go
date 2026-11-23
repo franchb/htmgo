@@ -11,9 +11,7 @@ func Loops(ctx *h.RequestContext) *h.Page {
 			h.Class("flex flex-col gap-3"),
 			Title("Loops / Dealing With Lists"),
 			Text(`
-				Very commonly you will need to render a list or slice of items onto the page. 
-				Frameworks generally solve this in different ways, such as React uses regular JS .map function to solve it.
-				htmgo provides a couple of utilities to do so:
+				Use <code>h.List</code> to render a slice in its existing order. Use <code>h.IterMap</code> to render a map when iteration order can vary.
 			`),
 			Text("Example: Rendering a list of tasks"),
 			ui.GoCodeSnippet(ListExample),
@@ -29,27 +27,26 @@ func Loops(ctx *h.RequestContext) *h.Page {
 }
 
 const ListExample = `
-var items = []string{"item1", "item2", "item3"}				
-h.List(items, func(item string, index int) *h.Element {
-	if tab == TabComplete && item.CompletedAt == nil {
-       return h.Empty()
-    }
-	return h.Div(
-		h.Text(item),
+func TaskList() *h.Element {
+	tasks := []string{"Write docs", "Review examples", "Ship release"}
+	return h.Ul(
+		h.List(tasks, func(task string, _ int) *h.Element {
+			return h.Li(h.Text(task))
+		}),
 	)
-})
+}
 `
 
 const MapExample = `
-var values = map[string]string{
-	"key1": "value1",
-	"key2": "value2",
-	"key3": "value3",
-}
-h.IterMap(values, func(key string, value string) *h.Element {
-	return h.Div(
-		h.Text(key),
-		h.Text(value),
+func StatusList() *h.Element {
+	statuses := map[string]string{
+		"docs": "ready",
+		"release": "pending",
+	}
+	return h.Ul(
+		h.IterMap(statuses, func(name, status string) *h.Element {
+			return h.Li(h.TextF("%s: %s", name, status))
+		}),
 	)
-})		
+}
 `

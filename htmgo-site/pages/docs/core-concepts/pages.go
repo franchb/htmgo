@@ -6,34 +6,33 @@ import (
 	"htmgo-site/ui"
 )
 
-var ExcludeRootSnippet = `automatic_page_routing_ignore: ["pages/root.go"]`
+const ExcludeRootSnippet = `automatic_page_routing_ignore: ["root.go"]`
 
-var AbstractedRootPageUsageSnippet = `func UserPage(ctx *h.RequestContext) *h.Page {
-	return base.RootPage(
-		h.Div(
-			h.Pf("User ID: %s", ctx.UrlParam("id")),
-		),
-}`
-
-var RootPageSnippet = `func RootPage(children ...h.Ren) *h.Page {
-	return h.NewPage(
-		h.Html(
-		h.Head(
-			h.Meta("viewport", "width=device-width, initial-scale=1"),
-			h.Link("/public/main.css", "stylesheet"),
-			h.Script("/public/htmgo.js"),
-		),
-		h.Body(
-			h.Class("bg-stone-50 min-h-screen overflow-x-hidden"),
-			ui.NavBar(),
-			h.Fragment(children...),
-		),
-	  )
-   )
+const AbstractedRootPageUsageSnippet = `func UserPage(ctx *h.RequestContext) *h.Page {
+	return RootPage(
+		h.Pf("User ID: %s", ctx.UrlParam("id")),
+	)
 }
 `
 
-var PagesSnippet = `// route will be automatically registered based on the file name
+const RootPageSnippet = `func RootPage(children ...h.Ren) *h.Page {
+	return h.NewPage(
+		h.Html(
+			h.Head(
+				h.Meta("viewport", "width=device-width, initial-scale=1"),
+				h.Link("/public/main.css", "stylesheet"),
+				h.Script("/public/htmgo.js"),
+			),
+			h.Body(children...),
+		),
+	)
+}
+`
+
+const PagesSnippet = `package pages
+
+import "github.com/franchb/htmgo/framework/v2/h"
+
 func HelloHtmgoPage(ctx *h.RequestContext) *h.Page {
 	return h.NewPage(
 		h.Html(
@@ -42,11 +41,12 @@ func HelloHtmgoPage(ctx *h.RequestContext) *h.Page {
 				h.Script("/public/htmgo.js"),
 			),
 			h.Body(
-				h.Pf("Hello, htmgo!"),
+				h.P(h.Text("Hello, htmgo!")),
 			),
 		),
 	)
-}`
+}
+`
 
 func Pages(ctx *h.RequestContext) *h.Page {
 	return DocPage(
@@ -59,10 +59,7 @@ func Pages(ctx *h.RequestContext) *h.Page {
 				A simple page may look like:
 			`),
 			ui.GoCodeSnippet(PagesSnippet),
-			h.Text(`
-				htmgo uses Fiber v3 as its web server, *h.RequestContext is a thin wrapper around fiber.Ctx.
-				A page must return *h.Page, and accept *h.RequestContext as a parameter
-			`),
+			Text(`A page handler accepts <code>*h.RequestContext</code>, which wraps Fiber v3's <code>fiber.Ctx</code>, and returns <code>*h.Page</code>. Put this one in <code>pages/hello.go</code> to serve it at <code>/hello</code>.`),
 			autoRegistration(),
 			tips(),
 			NextStep(
@@ -77,35 +74,27 @@ func Pages(ctx *h.RequestContext) *h.Page {
 func autoRegistration() *h.Element {
 	return h.Div(
 		h.Class("flex flex-col gap-2"),
-		SubTitle("Auto Registration"),
-		Text(`
-		htmgo uses file based routing. This means that we will automatically generate and register your routes with Fiber based on the files you have in the 'pages' directory.
-		For example, if you have a directory structure like so below, it will get registered into Fiber router as follows:
-
-		index.go -> /index
-		users.go -> /users
-		users.$id.go -> /users/:id 
-		`),
-		HelpText(`Note: id parameter can be accessed in your page with ctx.UrlParam("id")`),
-		Text(`
-		You may put any functions you like in your pages file, auto registration will ONLY register functions that return *h.Page
-		`),
+		SubTitle("Automatic Routing"),
+		Text(`htmgo registers GET routes with Fiber for exported functions under <code>pages/</code> with a single named <code>*h.RequestContext</code> parameter and a <code>*h.Page</code> return value. The file path determines the URL.`),
+		h.Ul(
+			h.Class("list-disc list-inside"),
+			h.Li(h.Text("pages/index.go → /")),
+			h.Li(h.Text("pages/users.go → /users")),
+			h.Li(h.Text("pages/users.$id.go → /users/:id")),
+		),
+		HelpText(`Read the <code>id</code> route parameter with <code>ctx.UrlParam("id")</code>.`),
 	)
 }
 
 func tips() *h.Element {
 	return h.Div(
 		h.Class("flex flex-col gap-2"),
-		SubTitle("Tips:"),
-		Text(`
-			Generally it is it recommended to abstract common parts of your page into its own component and re-use it, such as script tags, including styling, etc.
-			Example:
-		`),
+		SubTitle("Shared page layout"),
+		Text(`Use a shared function to reuse your page layout, stylesheets, and scripts. This helper belongs in <code>pages/root.go</code> in the <code>pages</code> package.`),
 		ui.GoCodeSnippet(RootPageSnippet),
-		Text("Usage:"),
+		Text(`Call it from <code>pages/users.$id.go</code> in the same package.`),
 		ui.GoCodeSnippet(AbstractedRootPageUsageSnippet),
-		Text("You need to then update <strong>htmgo.yml</strong> to exclude that file from auto registration"),
-		ui.SingleLineBashCodeSnippet(ExcludeRootSnippet),
-		HelpText("In this example, my root page is in a file called root.go in the pages dir, so I need to exclude it from auto registration, otherwise htmgo wil try to generate a route for it."),
+		Text(`The route generator skips this <code>RootPage</code> because its signature accepts children. To exclude a file explicitly, add it to <code>htmgo.yml</code>.`),
+		ui.CodeSnippet(ui.CodeSnippetProps{Code: ExcludeRootSnippet, Lang: "yaml", SingleLine: true}),
 	)
 }

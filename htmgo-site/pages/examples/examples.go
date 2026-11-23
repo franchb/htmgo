@@ -3,21 +3,23 @@ package examples
 import "htmgo-site/partials/snippets"
 
 var FormWithLoadingStateSnippet = Snippet{
-	category:    "Forms",
-	name:        "Form",
-	description: "A simple form submission example with a loading state",
-	sidebarName: "Form With Loading State",
-	path:        "/examples/form",
-	partial:     snippets.FormExample,
+	category:       "Forms",
+	name:           "Form",
+	description:    "A simple form submission example with a loading state",
+	sidebarName:    "Form With Loading State",
+	path:           "/examples/form",
+	partial:        snippets.FormExample,
+	requiresServer: true,
 }
 
 var FormWithBlurValidationSnippet = Snippet{
-	category:    "Forms",
-	name:        "Form",
-	description: "A simple form submission example with validation on blur",
-	sidebarName: "Form With Blur Validation",
-	path:        "/examples/form-with-blur-validation",
-	partial:     snippets.FormWithBlurValidation,
+	category:       "Forms",
+	name:           "Form",
+	description:    "A simple form submission example with validation on blur",
+	sidebarName:    "Form With Blur Validation",
+	path:           "/examples/form-with-blur-validation",
+	partial:        snippets.FormWithBlurValidation,
+	requiresServer: true,
 }
 
 var UserAuthSnippet = Snippet{
@@ -71,12 +73,13 @@ var TodoListSnippet = Snippet{
 }
 
 var ClickToEditSnippet = Snippet{
-	category:    "Forms",
-	name:        "Inline Click To Edit",
-	description: "List view of items with a click to edit button and persistence",
-	sidebarName: "Inline Click To Edit",
-	path:        "/examples/click-to-edit",
-	partial:     snippets.ClickToEdit,
+	category:       "Forms",
+	name:           "Inline Click To Edit",
+	description:    "List view of items with a click to edit button and persistence",
+	sidebarName:    "Inline Click To Edit",
+	path:           "/examples/click-to-edit",
+	partial:        snippets.ClickToEdit,
+	requiresServer: true,
 }
 
 var JsSetTextOnClick = Snippet{

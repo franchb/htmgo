@@ -129,10 +129,7 @@ func DocPage(ctx *h.RequestContext, children ...h.Ren) *h.Page {
 				),
 				h.Div(
 					h.Class("flex flex-col flex-1 overflow-hidden"),
-					partials.NavBar(ctx, partials.NavBarProps{
-						Expanded:       false,
-						ShowPreRelease: false,
-					}),
+					partials.NavBar(ctx),
 					h.Main(
 						h.Details(
 							h.Class("md:hidden bg-neutral-50 mb-4 border-b border-b-slate-300"),
