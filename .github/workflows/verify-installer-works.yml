@@ -63,29 +63,17 @@ jobs:
           cd myapp
           htmgo build
 
-      # Step 6: Verify that the dist directory exists
-      - name: Verify build output
+      - name: Verify the standalone binary serves its page and embedded assets
+        working-directory: ${{ runner.temp }}
         run: |
-          if [ ! -d "./myapp/dist" ]; then
-            echo "Build directory ./dist/myapp does not exist"
-            exit 1
-          fi
-        shell: bash
-
-
-      # Step 7: Start the server
-      - name: Start myapp server
-        run: |
-         nohup ./myapp/dist/myapp &
-
-      # Step 8: Wait for server to start
-      - name: Wait for server startup
-        run: sleep 5
-
-      # Step 9: Send curl request to verify the server is running
-      - name: Test server with curl
-        run: |
-          curl --fail http://localhost:3000 || exit 1
+          "$GITHUB_WORKSPACE/myapp/dist/myapp" &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          curl --fail --retry 15 --retry-connrefused --retry-delay 1 http://localhost:3000/ -o index.html
+          for asset in htmgo.js main.css; do
+            curl --fail "http://localhost:3000/public/$asset" -o "$asset"
+            cmp "$asset" "$GITHUB_WORKSPACE/myapp/assets/dist/$asset"
+          done
 
   verify-public-install:
     # Runs on push to master after tags are published. Confirms the
