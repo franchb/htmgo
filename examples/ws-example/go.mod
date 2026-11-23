@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/franchb/htmgo/extensions/websocket/v2 v2.0.0-00010101000000-000000000000
-	github.com/franchb/htmgo/framework/v2 v2.1.3-0.20261119202705-3b6a8d15206a
+	github.com/franchb/htmgo/framework/v2 v2.1.3
 	github.com/gofiber/fiber/v3 v3.7.0
 )
 
@@ -23,10 +23,10 @@ require (
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.79.0 // indirect
-	golang.org/x/crypto v0.58.0 // indirect
-	golang.org/x/net v0.62.0 // indirect
+	golang.org/x/crypto v0.59.0 // indirect
+	golang.org/x/net v0.63.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
