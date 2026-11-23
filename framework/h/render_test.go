@@ -5,8 +5,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
+	"github.com/franchb/htmgo/framework/v2/h/cache"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -454,23 +456,27 @@ func TestCacheByKeyT1Expired(t *testing.T) {
 
 func TestCacheByKeyT1Expired_2(t *testing.T) {
 	t.Parallel()
-	renderCount := 0
-	cachedItem := CachedPerKeyT(time.Millisecond*5, func(key string) (any, GetElementFunc) {
-		return key, func() *Element {
-			renderCount++
-			return Pf(key)
-		}
-	})
+	synctest.Test(t, func(t *testing.T) {
+		store := cache.NewTTLStore[any, string]()
+		defer store.Close()
+		renderCount := 0
+		cachedItem := CachedPerKeyT(time.Millisecond*5, func(key string) (any, GetElementFunc) {
+			return key, func() *Element {
+				renderCount++
+				return Pf(key)
+			}
+		}, WithCacheStore(store))
 
-	assert.Equal(t, "<p>one</p>", Render(cachedItem("one")))
-	time.Sleep(time.Millisecond * 3)
-	assert.Equal(t, "<p>two</p>", Render(cachedItem("two")))
-	assert.Equal(t, "<p>two</p>", Render(cachedItem("two")))
-	assert.Equal(t, "<p>two</p>", Render(cachedItem("two")))
-	time.Sleep(time.Millisecond * 3)
-	assert.Equal(t, "<p>one</p>", Render(cachedItem("one")))
-	assert.Equal(t, "<p>two</p>", Render(cachedItem("two")))
-	assert.Equal(t, 3, renderCount)
+		assert.Equal(t, "<p>one</p>", Render(cachedItem("one")))
+		time.Sleep(time.Millisecond * 3)
+		assert.Equal(t, "<p>two</p>", Render(cachedItem("two")))
+		assert.Equal(t, "<p>two</p>", Render(cachedItem("two")))
+		assert.Equal(t, "<p>two</p>", Render(cachedItem("two")))
+		time.Sleep(time.Millisecond * 3)
+		assert.Equal(t, "<p>one</p>", Render(cachedItem("one")))
+		assert.Equal(t, "<p>two</p>", Render(cachedItem("two")))
+		assert.Equal(t, 3, renderCount)
+	})
 }
 
 func TestClearExpiredCached(t *testing.T) {
